@@ -9,7 +9,10 @@ from fdna import v2, v2data
 from fdna.evalutil import op_metrics
 
 D = sys.argv[1] if len(sys.argv) > 1 else "data_v2"
+import os
 N_LIST = [25, 100]
+CELL_IDX = os.environ.get("CELL_IDX")
+NJ = int(os.environ.get("N_JOBS", 8))
 K_TR, K_VA, K_TE = 20, 10, 8
 N_TRIALS = 12
 w = v2.build_world()
@@ -36,7 +39,7 @@ def arm_features(d, s):
 def fit_tuned(Xtr, ytr, Xva, yva, seed):
     best = None
     for p in grid:
-        m = lgb.LGBMRegressor(n_estimators=400, random_state=seed, verbose=-1, n_jobs=24, bagging_fraction=0.8, bagging_freq=1, **p)
+        m = lgb.LGBMRegressor(n_estimators=400, random_state=seed, verbose=-1, n_jobs=NJ, bagging_fraction=0.8, bagging_freq=1, **p)
         m.fit(Xtr, ytr, eval_set=[(Xva, yva)], callbacks=[lgb.early_stopping(30, verbose=False)])
         e = float(((m.predict(Xva) - yva) ** 2).mean())
         if best is None or e < best[0]:
@@ -46,7 +49,7 @@ def fit_tuned(Xtr, ytr, Xva, yva, seed):
 
 rows, info = [], {}
 t0 = time.time()
-for (q, s) in v2.CELLS:
+for (q, s) in ([v2.CELLS[int(CELL_IDX)]] if CELL_IDX is not None else v2.CELLS):
     dva = v2data.build(va, F["val"], w, q, s, K_VA, seed=11)
     fva, _ = arm_features(dva, s)
     dte = v2data.build(te, F["test"], w, q, s, K_TE, seed=13, only_n2=True)
@@ -68,8 +71,11 @@ for (q, s) in v2.CELLS:
                 rows.append(dict(q=q, s=s, n=n, arm=name, op=int(o), **op_metrics(dte["y"][mm], pr[mm], dte["key"][mm])))
         print(f"cell q={q} s={s} n={n} done {time.time()-t0:.0f}s", flush=True)
 r = pd.DataFrame(rows)
-r.to_parquet(f"{D}/e1_results.parquet")
-json.dump(info, open(f"{D}/e1_params.json", "w"), default=float)
+sfx = f"_{CELL_IDX}" if CELL_IDX is not None else ""
+r.to_parquet(f"{D}/e1_results{sfx}.parquet")
+json.dump(info, open(f"{D}/e1_params{sfx}.json", "w"), default=float)
+if CELL_IDX is not None:
+    sys.exit(0)
 rng = np.random.default_rng(3)
 print("\nE1: mean per-op R-precision (test ops 200-279, N-2 outages, K=8 draws) and oracle-minus-best-tree gap [95% cluster CI]")
 print("prevalence:", r.groupby(["q", "s"]).prev.mean().round(3).to_dict())
