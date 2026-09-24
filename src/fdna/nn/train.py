@@ -13,9 +13,14 @@ def to_t(*arrs):
     return [torch.as_tensor(np.asarray(a), dtype=torch.float32, device=DEV) for a in arrs]
 
 
+Y_SCALE = 100.0  # targets are shed fractions ~1e-2; unscaled MSE starves gradients (Phase-2 diagnosis, scripts/nn_diagnose.py)
+
+
 def fit(model, inputs_tr, y_tr, inputs_va, y_va, epochs=60, lr=2e-3, bs=2048, patience=8, seed=0, wd=0.0):
     torch.manual_seed(seed)
     model.to(DEV)
+    model.y_scale = Y_SCALE
+    y_tr, y_va = np.asarray(y_tr) * Y_SCALE, np.asarray(y_va) * Y_SCALE
     Xtr, Xva = to_t(*inputs_tr), to_t(*inputs_va)
     ytr, yva = to_t(y_tr)[0], to_t(y_va)[0]
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
@@ -48,4 +53,4 @@ def predict(model, inputs, bs=200_000):
     with torch.no_grad():
         for a in range(0, len(X[0]), bs):
             out.append(model(*[x[a:a + bs] for x in X]).cpu().numpy())
-    return np.concatenate(out)
+    return np.concatenate(out) / getattr(model, "y_scale", 1.0)

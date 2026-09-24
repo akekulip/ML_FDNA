@@ -54,3 +54,10 @@ arms:
   A6: A5 with shuffled dependency edges
   A7: unconstrained layer of identical size
   oracle: exact posterior mean of the value table (Bayes-optimal given the generative model)
+
+variants:   # pre-registered variants after a diagnosed failure (each committed before it runs)
+  B3v2_monotone_rescaled:
+    parent: B3_monotone
+    reason: Branch 3 neural arms scored 0.34-0.58 vs trees 0.70-0.93; diagnosis (scripts/nn_diagnose.py, validation data only) found target scale starved gradients
+    change: NN targets multiplied by 100 (fit/predict handle it); nothing else changes; same kill rule (monotone within 0.02 of monotone GBM at n<=25)
+  B3_original_status: invalid_training_recipe (not a test of monotonicity); reported as such
