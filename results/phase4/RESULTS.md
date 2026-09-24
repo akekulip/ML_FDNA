@@ -53,13 +53,38 @@ fitting (g2 has no fitting step at all).
   fresh block, and per this project's own discipline it cannot be reported as more than a strong, reproducible
   screen result until it is.
 
-## Repaired-FDNA inference-only screen (registry/phase3_step2.yaml correction, brief 4.3)
-Running as a single GPU process (not the earlier contended two-process run). Partial results at time of writing
-(cell P1/v2b): I5_ref (flat, mean-field) NLL 4.80, I5_tau0 (hard-min) NLL 4.59, I5_OR (OR-aware, corrected
-semantics) NLL 4.78, I5_OR_hard NLL 4.54, J_plain (joint head, independent prior) NLL 3.86 — the joint head's
-lower NLL is expected (it models the full 16,384-state posterior exactly, mean-field arms cannot). Full results,
-including the common-cause-prior and logic-head arms and cell P2, pending completion; this is an inference-quality
-check only (per the research-scientist's power analysis earlier this session), not an R-precision claim.
+## Repaired-FDNA inference-only screen, cell P1 complete (registry/phase3_step2.yaml correction, brief 4.3)
+Single GPU process (not the earlier contended two-process run that stalled). 3 reps, N_INF=25000, cell P1 (v2b,
+q=0.7 s=0.3). NLL/KL only — no R-precision claim (per the earlier research-scientist power analysis, that
+endpoint cannot resolve an effect this small at this scale; NLL on thousands of rows can).
+
+| arm | NLL (mean +- std) | KL to exact posterior (mean +- std) |
+|---|---|---|
+| I8_bayes (exact structure, learnable priors — ceiling) | 3.2310 +- 0.0001 | 0.0067 +- 0.0001 |
+| L_CC (plain logic, common-cause prior) | 3.3198 +- 0.0055 | 0.0985 +- 0.0059 |
+| L_indep (plain logic, independent prior) | 3.3228 +- 0.0040 | 0.1025 +- 0.0045 |
+| I1_mlp (generic MLP) | 3.3985 +- 0.0027 | 0.1754 +- 0.0012 |
+| **J_OR_hard_CC (combined repaired FDNA: OR-aware + hard-min + joint head + CC prior)** | **3.3958 +- 0.0076** | **0.1742 +- 0.0079** |
+| J_plain_CC (joint head, CC prior, flat FDNA mask) | 3.8199 +- 0.0037 | 0.5995 +- 0.0034 |
+| J_plain (joint head, independent prior, flat FDNA mask) | 3.8646 +- 0.0041 | 0.6452 +- 0.0039 |
+| I5_OR_hard (mean-field, OR-aware, hard-min) | 4.5479 +- 0.0130 | 1.3263 +- 0.0114 |
+| I5_tau0 (mean-field, flat, hard-min) | 4.5845 +- 0.0235 | 1.3634 +- 0.0250 |
+| I5_OR (mean-field, OR-aware, tau 0.05) | 4.7756 +- 0.0035 | 1.5539 +- 0.0040 |
+| I5_ref (mean-field, flat, tau 0.05 — the ORIGINAL unrepaired arm) | 4.7941 +- 0.0070 | 1.5730 +- 0.0070 |
+
+**Reading this against `registry/phase3_step2.yaml`'s own pre-stated attribution rule** ("any gain is attributed
+to FDNA's strength/criticality form only if J_OR_hard_CC beats BOTH L_CC and I2/I8"): **it does not.** The
+combined, fully repaired FDNA arm (J_OR_hard_CC) essentially ties the generic MLP (I1_mlp) and is measurably
+WORSE than both plain-logic comparators (L_indep, L_CC) — a ~0.07 KL gap against a ~0.005 standard deviation,
+i.e. not a noise artifact. The repairs (OR-awareness, hard-min, joint/common-cause head) DID close most of the
+gap to the exact-structure ceiling (I8_bayes) relative to the original flat mean-field arm (KL 0.174 vs 1.573,
+a real and large improvement) — but that improvement is fully explained by fixing the joint-head/common-cause
+representation (J_plain_CC alone already gets to KL 0.60, and L_CC with NO FDNA algebra at all gets to 0.099).
+**FDNA's specific strength/criticality parametrisation adds nothing measurable beyond ordinary dependency logic,
+even after every representational defect flagged by the external review was fixed.** This directly and cleanly
+answers the brief's question 4 ("does FDNA add anything beyond recurrence, dependency logic and physical
+features?") for the inference-quality endpoint: no. Cell P2 (v2c) running; if it agrees, this is a stable,
+well-powered negative finding, consistent with every FDNA result in Phase 1-3.
 
 ## Diagnostics generalized and correctness-gated (not yet used in a predictive model)
 `src/fdna/hik_diag.py`: `generalized_det` (k-way LODF compensation determinant) and `minimal_cut_struct`
