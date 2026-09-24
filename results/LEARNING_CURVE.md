@@ -5,7 +5,15 @@ generated after the hypothesis commit (a1ccb2e). The runs used labels hashed und
 re-verified identical under the current code (operating points 0, 100, 200, 300 regenerated exactly). 5 replicates per training
 size; hyper-parameters fixed to the values tuned on the full training set; early stopping on the fixed validation points.
 
-## Result: H1 NOT SUPPORTED, and the observed direction is opposite
+## CORRECTION after post-hoc diagnostics (`results/LC_DIAGNOSTICS.md`, exploratory, added later)
+The pre-specified result below stands (H1 not supported), but two statements in this file were overstated:
+(a) "the sign is reversed / explicit is worse at every small size" is largely a **hyper-parameter confound**: each feature set used
+parameters tuned at full size, and the explicit set's parameters (min_child_samples 200, 31 leaves) hurt at n<=10. With identical
+parameters the gap at n=5 is about +0.003 (not -0.067). (b) the "Interpretation" that raw flags carry extra information is
+**refuted**: the label is exactly a function of (operating point, outage, control vector), so the explicit vector is a sufficient
+statistic. A smaller raw edge of about 0.02 remains at n=25 under matched parameters, for a reason not yet identified.
+
+## Result (as pre-specified): H1 NOT SUPPORTED
 Primary cell (fresh points, novel control vectors, N-2, physics pair), R-precision difference explicit minus raw flags:
 
 | training operating points | 5 | 10 | 25 | 50 | 100 |
@@ -25,9 +33,7 @@ n=100 value (0.815) within 100.
 - The exploratory test points (200-279) give the same picture (novel, physics pair: -0.060, -0.028, -0.025, -0.017, -0.013).
 
 ## Interpretation and limits
-- The explicit control vector is a deterministic function of the raw flags, so the raw set carries at least the same information;
-  trees may exploit which specific component failed (or split on binary flags more readily) in ways the summary vector hides.
-  That is a hypothesis for the mechanism, not something this experiment tested.
+- Mechanism: withdrawn as stated. See the correction above and `results/LC_DIAGNOSTICS.md`.
 - Hyper-parameters were tuned at full size and early stopping used the validation set at every size, which may favour one set.
 - One communication wiring with binary reachability truth; tree models only; 5 replicates.
 - Nothing here bears on whether an FDNA layer could help with partial capacity, stale parameters or changed wiring.
