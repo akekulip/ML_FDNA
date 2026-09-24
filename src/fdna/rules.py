@@ -1,25 +1,41 @@
-"""Pre-declared confirmatory decision rules (registry/addendum_H4.yaml): point estimate >= SESOI AND Holm-adjusted one-sided
-bootstrap p < 0.05 over the declared family; structure claims are intersection-unions over their components."""
+"""Pre-declared confirmatory decision rules. Statistics fixed after the H5 audit: margin tests (H0: effect <= margin), p-value floor
+(1+count)/(B+1), two-way bootstrap over test operating points AND training replicates (training noise is not ignored), NaNs counted
+not silently dropped, explicit family size."""
 from __future__ import annotations
 
 import numpy as np
 
 SESOI = 0.05
+NEGLIGIBLE = 0.02
 ALPHA = 0.05
 
 
-def boot_p(diff: np.ndarray, n_boot: int = 20000, seed: int = 0) -> tuple[float, float, float, float]:
-    """diff: per-operating-point paired differences. Returns (mean, p one-sided H0: mean <= 0, ci_lo, ci_hi)."""
+def _as_matrix(x) -> np.ndarray:
+    x = np.asarray(x, float)
+    return x[:, None] if x.ndim == 1 else x
+
+
+def boot(diff, margin: float = 0.0, n_boot: int = 20000, seed: int = 0) -> dict:
+    """diff: (operating points x replicates) paired differences (a vector is treated as one replicate).
+    Returns mean, one-sided p for H0: mean <= margin, one-sided 95% lower bound and 90% two-sided interval."""
+    d = _as_matrix(diff)
+    n_nan = int(np.isnan(d).sum())
+    if n_nan:
+        raise ValueError(f"{n_nan} NaN paired differences: refusing to drop them silently")
     rng = np.random.default_rng(seed)
-    diff = np.asarray(diff, float)
-    diff = diff[~np.isnan(diff)]
-    idx = rng.integers(0, len(diff), (n_boot, len(diff)))
-    m = diff[idx].mean(1)
-    return float(diff.mean()), float((m <= 0).mean()), float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))
+    n_op, n_rep = d.shape
+    io = rng.integers(0, n_op, (n_boot, n_op))
+    ir = rng.integers(0, n_rep, (n_boot, n_rep))
+    m = np.empty(n_boot)
+    for b in range(n_boot):
+        m[b] = d[np.ix_(io[b], ir[b])].mean()
+    p = (1 + int((m <= margin).sum())) / (n_boot + 1)
+    return dict(mean=float(d.mean()), p=p, lo95_one_sided=float(np.percentile(m, 5)), lo90=float(np.percentile(m, 5)), hi90=float(np.percentile(m, 95)))
 
 
-def holm(pvals: dict[str, float], alpha: float = ALPHA) -> dict[str, float]:
-    """Holm step-down adjusted p-values (monotone)."""
+def holm(pvals: dict, alpha: float = ALPHA, expected_family: int = None) -> dict:
+    if expected_family is not None and len(pvals) != expected_family:
+        raise ValueError(f"family size {len(pvals)} != declared {expected_family}")
     order = sorted(pvals, key=pvals.get)
     m, out, running = len(order), {}, 0.0
     for i, k in enumerate(order):
@@ -28,15 +44,14 @@ def holm(pvals: dict[str, float], alpha: float = ALPHA) -> dict[str, float]:
     return out
 
 
-def claim(components: dict[str, np.ndarray], effect_key: str) -> dict:
-    """components: name -> per-op paired differences. The claim needs every component to have a positive mean and the
-    effect component to reach SESOI; its p-value is the maximum over components (intersection-union)."""
-    stats = {k: boot_p(v) for k, v in components.items()}
-    p = max(s[1] for s in stats.values())
-    ok_mean = all(s[0] > 0 for s in stats.values()) and stats[effect_key][0] >= SESOI
-    return dict(stats=stats, p=p, effect_ok=ok_mean)
+def intersection_union(components: dict, margin_per_component: dict = None, **kw) -> dict:
+    """Every component must reject its own H0 (mean <= margin); the joint p is the maximum."""
+    margin_per_component = margin_per_component or {}
+    stats = {k: boot(v, margin=margin_per_component.get(k, 0.0), **kw) for k, v in components.items()}
+    return dict(stats=stats, p=max(s["p"] for s in stats.values()), all_positive=all(s["mean"] > 0 for s in stats.values()))
 
 
-def verdicts(claims: dict[str, dict]) -> dict[str, dict]:
-    padj = holm({k: c["p"] for k, c in claims.items()})
-    return {k: dict(padj=padj[k], supported=bool(c["effect_ok"] and padj[k] < ALPHA), **c) for k, c in claims.items()}
+def tost_negligible(diff, bound: float = NEGLIGIBLE, **kw) -> dict:
+    """Equivalence: 90% two-sided interval inside (-bound, +bound)."""
+    s = boot(diff, **kw)
+    return dict(mean=s["mean"], lo90=s["lo90"], hi90=s["hi90"], negligible=bool(s["lo90"] > -bound and s["hi90"] < bound))

@@ -58,3 +58,13 @@ misspecification_sweep:   # registered 2026-09-24 ~05:00 before coding (suggeste
   design: I8 (exact differentiable Bayesian layer, 17 learnable parameters) built on an ASSUMED wiring with round(rho*17) wrong edges (rho in {0, 0.1, 0.2, 0.3}, 3 corruption seeds via fdna.wiring.corrupt, unit->generator assignment snapped to the nearest control level), trained on the same (obs, c) draws and scored with the same exact-value-table metrics as the inference screen; compared against the wiring-agnostic generic modules (I1, I2, I3) already run on identical draws. Cells P1, P2; N in {1000, 5000}; primary metric rprec (expected-shed scoring) with rprec_sev secondary.
   hypothesis (exploratory, no confirm slot): structured inference degrades gracefully; there is a corruption level rho* above which the best generic module overtakes I8 at N=1000. Reported as a curve; no threshold claim.
   caveat: assumed structure differs from truth only in gateway->generator parents and unit->generator assignment; common-cause groups and failure priors remain correct (learned).
+value_ladder:   # registered 2026-09-24 ~05:05 before coding (suggested by the power-systems review). EXPLORATORY screen on block 200-279.
+  question: is the dominant error (value-function learning, exact-control GBM 0.84/0.87 at n=25/100) a feature artifact? Training rows have at most one outage bit set in the 41-bit multi-hot; N-2 test rows have two, so trees extrapolate arbitrarily.
+  setting: exact control vector known (no inference), trained on N-1 (+N-0) outages of n in {25,100} training operating points, tested on unseen N-2 pairs (same rows/keys as the other screens); state draws from the v2 prior; R-precision at severity thresholds {0.5%, 1%, 2%, 5%}.
+  rungs:
+    R0: current features (demand, dispatch, multi-hot outage, n_out, post-outage DC flow/overload block) + exact control vector
+    R1: order-invariant outage encoding - drop the multi-hot, add symmetric aggregates (sum/max/min over removed branches of nominal flow ratio, rating, reactance) + n_out; everything else as R0
+    R2: R1 + island/headroom features from exact control (per-island deficit and surplus, effective up-/down-headroom min(range*c, Pmax-p0), closed-form shed lower bound)
+  metric: R-precision; gap closed at a rung = (R - R0) / (1 - R0), ceiling 1.0 (exact control determines the label exactly).
+  kill_rule: if R1 or R2 closes >= 50% of the gap at n=25 in both cells' state draws, the value-learning gap was largely a feature artifact and there is no method contribution in the value learner; if not, the gap is genuine and the dominant open problem stays value learning.
+  no_confirm_slot: exploratory only.
