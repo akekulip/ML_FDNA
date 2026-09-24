@@ -92,3 +92,7 @@ variants_v2:   # pre-registered before any run; chosen on physical grounds (disa
     q: [0.1, 0.3]
     s: [0.0, 0.2]
     flags: only the 3 gateway heartbeats plus 3 fixed unit poll flags (units 0, 4, 8) are ever observed; other units are never observed
+  E1b_inference_headroom_v2:
+    status: failed_gate (max headroom +0.0273 [0.0221,0.0325] at q=0.3,s=0.2 < 0.03; other cells -0.0142, +0.0073, -0.0017)
+    diagnosis: observations pin down the control state (oracle R-precision 0.96-0.995); partial observation at these levels costs tuned trees almost nothing. Exact-c GBM 0.861 vs best obs tree 0.834-0.875 (tuning noise ~0.015).
+    next: pre-registered variants v2b and v2c (registered before running) evaluated on the same gate; v2 stays frozen.
