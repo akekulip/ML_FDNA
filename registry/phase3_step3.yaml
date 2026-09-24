@@ -29,3 +29,13 @@ step2_noise_floor_caveat: >
   its own pre-registered expected effect (<=~0.01). No Step 2 number may be reported as tier-1/tier-2; it may only
   support a representability statement (can the repaired layer fit the motif / does NLL move in the predicted
   direction), never an R-precision claim.
+
+# --- electrical feature mechanism for arm T, added after independent verification (power-systems + PI agents, both reproduced by main session) ---
+T_electrical_features_mechanism:
+  source: src/fdna/lodf.py (Det(a,b) compensation determinant, one Laplacian factorisation, no LP solve)
+  verified_facts:
+    - "Det(a,b)=0 (machine precision) exactly recovers the 26 new topological 2-cuts (neither member alone islands); tests/test_lodf.py"
+    - "1/|Det(a,b)| vs measured flow-addition error, 10 test ops / 677 connected pairs: Spearman rho=0.945 (independently reproduced, scripts/p3_step1_lodf_corr.py); top-decile flag captures 82% of the p95-error tail"
+    - "struct_mw (fdna.lp.ScenarioLP, no linprog call) gives an exact discrete shed floor for pairs whose gen-less island only forms jointly (~20/820 pairs, median 3.85% of demand) -- explains part of the 34.9% superadditive rate in gen-less-only pairs"
+  rule: "connected pairs with 1/|Det| above the top-decile (screen) threshold route to exact generalized-LODF/direct recompute; below threshold, cheap single-outage-addition features are used (median error there was 1.7-1.8%)"
+  jensen_mechanism: "y(c) convex in c (LP duality, c enters only via variable bounds) => E_post[y(c)] >= y(E_post[c]); exact check on test table (scripts/p3_step1_jensen.py, no training) found the gap positive in 100% of 66 sampled rows and larger in P1 (wider posterior, 0.0042) than P2 (tighter, 0.0027), matching the pre-stated prediction. This is the candidate mechanism for why D_I2 beats A8/A9 by composing E_post[y(c)] properly rather than collapsing to first-moment features."

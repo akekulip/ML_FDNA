@@ -1,0 +1,14 @@
+{
+ "P1_v2b": {
+  "n_rows": 33,
+  "mean_jensen_gap": 0.00420047635810368,
+  "frac_positive": 1.0
+ },
+ "P2_v2c": {
+  "n_rows": 33,
+  "mean_jensen_gap": 0.0027254579632067116,
+  "frac_positive": 1.0
+ },
+ "prediction": "P1 gap > P2 gap (wider posterior spread at q=.7,s=.3 than q=.3,s=.2)",
+ "observed_direction_matches_prediction": true
+}

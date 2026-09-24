@@ -1,0 +1,8 @@
+{
+ "spearman_rho": 0.9453442223902067,
+ "p_value": 0.0,
+ "n": 6770,
+ "recall_p95_tail_at_top10pct_flag": 0.8200589970501475,
+ "median_err_flagged": 29.77586727477769,
+ "median_err_unflagged": 1.6980541349480662
+}
