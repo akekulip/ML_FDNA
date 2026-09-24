@@ -70,3 +70,25 @@ outcomes:   # appended after runs; never edited retroactively
     result: at rho=0.2 (3 corruption seeds, 2 reps, novel N-2 cell) A5 (learned service graph + monotone head) is 0.096-0.159 BELOW A1 (tuned GBM on raw flags); GBM with true wiring (A2t) is not better than GBM on raw flags (0.796 vs 0.806 at n=25), so wiring knowledge gives trees nothing.
     side_finding: A5 beats the generic MLP on raw flags (A3) by +0.014/+0.047/+0.092 at n=10/25/100 (novel cell) despite 20% wrong edges; learning edges beats freezing them by ~0.02 at n=100; unit->generator assignment recovery degrades with data (0.83 -> 0.48) i.e. edges are weakly identifiable from shed outcomes.
     diagnosis: trees already learn the dependency rule from raw flags (v1 Q1), so structure has nothing to add for trees; structure helps neural networks only.
+  E1_headroom:
+    status: passed_as_registered_but_INVALID_as_inference_headroom_measure
+    result: oracle - best(A1,A2) = +0.120..+0.157 R-precision in all 8 (cell, n) combinations (exploratory test 200-279); oracle R-precision 0.96-0.995
+    flaw: the oracle receives the exact LP value table V for the test scenarios, so the gap mixes value-function learning with inference. Evidence: A2b (GBM given the EXACT posterior control marginals) is no better than trees on raw observations (+0.00..+0.015). E1 therefore does not show that partial observation creates headroom for structure.
+    consequence: FDNA arms are NOT run on the strength of E1. Corrected gate E1b registered below before it is run.
+E1b_inference_headroom:   # corrected gate, registered before running
+  tier: screen
+  claim: partial observation costs a tuned learner measurable accuracy relative to the SAME learner given the exact control vector (isolates inference loss from value-function learning)
+  metric: R-precision, same data/cells/n as E1
+  arms: GBM on [electrical/physics features + exact control vector] (full information, reference) vs best tuned tree on observations (max of A1, A2)
+  inference_headroom: R(exact-c GBM) - R(best obs tree)
+  proceed_if: inference_headroom >= 0.03 in at least one cell at n=100 (then the v2 setting is worth testing FDNA arms)
+  if_fail: diagnose (observation model too informative: the oracle is near-perfect), then at most two pre-registered harsher variants v2b, v2c below
+variants_v2:   # pre-registered before any run; chosen on physical grounds (disaster-time telemetry loss, sparse SCADA coverage); selected/kept using only oracle and tuned tree baselines
+  v2b_harsh_telemetry:
+    q: [0.5, 0.7]
+    s: [0.0, 0.3]
+    flags: same 13 flags
+  v2c_sparse_coverage:
+    q: [0.1, 0.3]
+    s: [0.0, 0.2]
+    flags: only the 3 gateway heartbeats plus 3 fixed unit poll flags (units 0, 4, 8) are ever observed; other units are never observed
