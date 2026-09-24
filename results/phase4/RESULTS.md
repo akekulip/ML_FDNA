@@ -149,8 +149,13 @@ representation (J_plain_CC alone already gets to KL 0.60, and L_CC with NO FDNA 
 **FDNA's specific strength/criticality parametrisation adds nothing measurable beyond ordinary dependency logic,
 even after every representational defect flagged by the external review was fixed.** This directly and cleanly
 answers the brief's question 4 ("does FDNA add anything beyond recurrence, dependency logic and physical
-features?") for the inference-quality endpoint: no. Cell P2 (v2c) running; if it agrees, this is a stable,
-well-powered negative finding, consistent with every FDNA result in Phase 1-3.
+features?") for the inference-quality endpoint: no.
+
+**Cell P2 (v2c, q=0.3 s=0.2) replicates this exactly.** J_OR_hard_CC: NLL 3.211+-0.010, KL 0.169+-0.010, vs
+L_CC 0.087+-0.012, L_indep 0.097+-0.010, I1_mlp 0.092+-0.002, I8_bayes (ceiling) 0.0005+-0.0001. Same ordering,
+same conclusion, in both cells: the repaired FDNA arm ties the generic MLP and is clearly worse than plain
+logic with an identical head. This is now a stable, well-powered, twice-replicated negative finding, consistent
+with every FDNA result across Phase 1-4.
 
 ## Diagnostics generalized and correctness-gated (not yet used in a predictive model)
 `src/fdna/hik_diag.py`: `generalized_det` (k-way LODF compensation determinant) and `minimal_cut_struct`
