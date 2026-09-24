@@ -85,3 +85,33 @@ fewshot_n2:   # registered ~06:02 before coding/running. EXPLORATORY (no confirm
 outcomes_fewshot_n2:   # recorded ~06:20, exploratory, exact control known, 25 training operating points, 3 replicates
   result: unseen-N-2 R-precision at 1% / 2% thresholds: k=0 pairs per operating point 0.845 / 0.786; k=10 0.884 / 0.872 (gap closed 25% / 40%); k=30 0.890 / 0.896 (29% / 51%); k=100 0.905 / 0.919 (39% / 62%).
   reading: the dominant remaining error (unseen N-2 generalisation) is largely label-coverage limited under the train-on-N-1 protocol; a small number of labelled N-2 pairs per operating point recovers a substantial part of it. Unrelated to dependency modelling.
+corrections_after_final_review:   # recorded 2026-09-24 ~06:35 after the closing QA + code review; earlier entries above are left as written and are superseded where stated
+  B1v2_numbers_corrected:
+    error: scripts/b1_report.py globbed the archived pre-fix files (b1_test_*_preSoftminFix.parquet) together with the rerun files, so the 'B1v2' numbers quoted in outcomes_B1v2_softmin_fix averaged old and new results. Fixed by archiving the old files (data_v2/archive_pre_softmin/).
+    correct_result_file_only:   # mean over 80 operating points, reps averaged; per-op max of A1-A4 as comparator
+      P1_n25: {A5_minus_best: -0.121, A5_minus_A2: -0.119, A5_minus_A6_shuffled: -0.006, A5_minus_A7_unconstrained: -0.027}
+      P1_n100: {A5_minus_best: -0.091, A5_minus_A2: -0.081, A5_minus_A6_shuffled: +0.027, A5_minus_A7_unconstrained: +0.005}
+      P2_n25: {A5_minus_best: -0.090, A5_minus_A2: -0.082, A5_minus_A6_shuffled: +0.104, A5_minus_A7_unconstrained: -0.010}
+      P2_n100: {A5_minus_best: -0.110, A5_minus_A2: -0.101, A5_minus_A6_shuffled: +0.018, A5_minus_A7_unconstrained: -0.038}
+    conclusion: unchanged and slightly stronger - after the softmin fix A5 is 0.09-0.12 below the best arm, is at or below the unconstrained control in 3 of 4 settings, and beats the shuffled control only in P2.
+  ceiling_wording:
+    problem: 'structure is a ceiling' holds only under the secondary P(severe) scoring. Under the registered expected-shed scoring the exact-posterior oracle (0.865 P1, 0.912 P2) is BELOW several learned arms (I2 GBM product 0.872-0.892 P1, 0.915-0.926 P2), because the posterior mean of shed is not the ranking-optimal statistic; I8 (near-exact posterior) loses to the best generic module by up to 0.027 under that scoring.
+    correct_statement: with P(severe) scoring, an exact posterior equals the ranking-optimal oracle (0.916/0.943) and generic modules with enough data come within ~0.01 of it; under expected-shed scoring exact inference has no advantage at all. Either way better inference is worth at most ~0.01-0.03 R-precision here.
+  misspecification_caveats:
+    - the fragility is partly built in: BayesStructure's emission uses a zero-leak likelihood (an observed 0 where the assumed flag is 1 costs e^-30) and only a 0->1 stale rate is learnable; a robust variant with a learnable 1->0 leak was NOT tested, so 'structure is a liability' is a statement about this emission model, not about structured inference in general
+    - single corruption family (gateway->generator parents, unit->generator assignment), 3 corruption seeds, 1 replicate; CIs resample operating points only and ignore corruption-seed variance
+    - value snapping to the level set (ties toward the lower level) adds misspecification unrelated to wiring
+  decomposition_confound:   # confirm block, n=100, mean difference to A8 over operating points and replicates
+    D_I1_mlp: {P1: +0.0157, P2: +0.0144}
+    D_I2_gbm_product: {P1: +0.0357, P2: +0.0249}
+    D_I5_fdna: {P1: +0.0443, P2: +0.0293}
+    D_I7_unconstrained: {P1: +0.0413, P2: +0.0296}
+    D_I6_shuffled: {P1: +0.0259, P2: +0.0083}
+    D_exact: {P1: +0.0153, P2: +0.0147}
+    reading: about half of the confirmed tier-2 gap (D_I2 vs A8) is due to the choice of inference module (per-generator GBM/mean-field factorisation vs MLP) rather than to privileged-information decomposition itself (D_I1 - A8 is +0.014..+0.016). D_I5 is descriptively the top arm on the confirm block but is within +0.004..+0.009 of D_I2 and +0.000..+0.003 of the unconstrained control D_I7; the FDNA-specific claims (DS) were never opened.
+  few_shot_reading:
+    - the test pairs are the same 820-pair set as the 787 distinct few-shot training pairs; the outage encoding includes two-hot branch identities, so the GBM can learn pair-specific effects; 'unseen' means unseen operating points, not unseen pairs
+    - validation (early stopping and tuning) uses N-2 labels in all runs (disclosed protocol), so 'train on N-1' is not clean at the model-selection stage
+  value_ladder_notes: one (q,s) setting was run (q=0.5, s=0; irrelevant when the control vector is known); test rows include N-1 and N-2 with different prevalence, so the N-1 vs N-2 comparison mixes prevalence; 'same rows/keys as other screens' is inaccurate (dte built without only_n2 - the N-2 subset draws differ)
+  'registered before coding':   # replaced by what git supports
+    statement: the registrations were COMMITTED BEFORE THE RUNS started (git timestamps), in several cases in the same commit as, or minutes before, the script; hand-written '~HH:MM' stamps in this file are approximate and sometimes later than the commit that contains them. Where this file says 'before coding', read 'committed before running'.
