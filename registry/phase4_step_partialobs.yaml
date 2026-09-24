@@ -1,0 +1,23 @@
+# Phase 4: partial-observation validation of the Mobius/interaction-truncation N-3 result. Committed before
+# generating the new (full-control-grid) y_pair labels this test needs. EXPLORATORY (reuses the already-frozen
+# k=3 manifest data_hik/manifest_k3_screen.json, seed 42, 60 triples x 20 ops; no new outage-set sampling).
+hypothesis: >
+  The g2 (order-2 Mobius/interaction truncation) composition, when combined with the EXACT communication-state
+  posterior p(c|obs) already used throughout Phase 2/3, still predicts realised N-3 shed under partial/stale
+  communication observation better than (a) the same posterior composed with the naive singleton-sum g1, and
+  (b) an oracle upper bound using the TRUE full N-3 value table (already on disk, data_hik/k3_screen.npz V field)
+  composed with the same posterior -- i.e. how much of the exact-control g2 advantage survives once realistic
+  observation noise on the CONTROL side is reintroduced (the outage set itself remains exactly known throughout,
+  matching brief 6.3's staged design: electrical/outage-generalisation and communication-uncertainty are
+  reintroduced one at a time, not conflated).
+cells: reuse P1 (v2b: q=0.7, s=0.3) and P2 (v2c: q=0.3, s=0.2) exactly as defined in src/fdna/v2.py, no changes.
+new_data_needed: y_pair across ALL 1024 control vectors (not just one fixed CV_IDX as in the exact-control
+  screen) for the 156 sub-pairs x 20 ops already used by the k=3 manifest. y_single is FREE (already in
+  data_v2/vtable_train.npz's dense N-1 rows for these same 20 ops, no new solves needed).
+metric: per-triple squared error and MAE against the TRUE realised shed (drawn from the true hidden comm state,
+  not the posterior mean), pooled over 20 K=200 observation draws per triple per cell (matches v2data.build's
+  draw-per-row convention). Comparators: g2-composed, g1-composed, oracle-full-table-composed (upper bound),
+  and a naive "assume full control" (c=1) baseline (zero-inference-cost reference).
+caveats_disclosed_in_advance: single frozen 60-triple manifest (same one used for the exact-control screen, not
+  independent); 20 training/eval ops (same known limitation as the exact-control staged comparator result); no
+  cluster bootstrap computed here either (reported per-row, flagged); this is exploratory, not confirmatory.
