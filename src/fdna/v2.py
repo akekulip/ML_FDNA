@@ -78,13 +78,21 @@ def sample_states(w: World, rng: np.random.Generator, n: int) -> np.ndarray:
     return rng.choice(len(w.X), size=n, p=np.exp(w.logprior))
 
 
-def emit(w: World, states: np.ndarray, q: float, s: float, rng: np.random.Generator) -> np.ndarray:
+COVERAGE_FULL = np.ones(N_FLAG, bool)
+# v2c (sparse coverage): only the 3 gateway heartbeats and unit poll flags of units 0, 4, 8 are ever observed
+COVERAGE_SPARSE = np.zeros(N_FLAG, bool)
+COVERAGE_SPARSE[[0, 4, 8, N_UNIT, N_UNIT + 1, N_UNIT + 2]] = True
+
+
+def emit(w: World, states: np.ndarray, q: float, s: float, rng: np.random.Generator, coverage: np.ndarray = None) -> np.ndarray:
     """Observations (n, 13) int8: -1 missing, 0 down, 1 up."""
     t = w.T[states]
     obs = t.astype(np.int8)
     stale = (~t) & (rng.random(t.shape) < s)
     obs[stale] = 1
     obs[rng.random(t.shape) < q] = -1
+    if coverage is not None:
+        obs[:, ~coverage] = -1
     return obs
 
 

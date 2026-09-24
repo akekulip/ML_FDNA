@@ -73,7 +73,7 @@ def oracle_features(w: v2.World, obs: np.ndarray, s: float, chunk: int = 2000):
     return pc, np.hstack([marg, p_zero]).astype(np.float32)
 
 
-def build(vt: dict, feats: np.ndarray, w: v2.World, q: float, s: float, k: int, seed: int, only_n2: bool = False):
+def build(vt: dict, feats: np.ndarray, w: v2.World, q: float, s: float, k: int, seed: int, only_n2: bool = False, coverage=None):
     """Draw k hidden states + observations per (op, outage); labels from the value table."""
     rng = np.random.default_rng(seed)
     n_op, n_cont = vt["conts"].shape[:2]
@@ -84,7 +84,7 @@ def build(vt: dict, feats: np.ndarray, w: v2.World, q: float, s: float, k: int, 
                 continue
             rows_op.append(np.full(k, i)); rows_cont.append(np.full(k, j)); states.append(v2.sample_states(w, rng, k))
     io, jc, st = np.concatenate(rows_op), np.concatenate(rows_cont), np.concatenate(states)
-    obs = v2.emit(w, st, q, s, rng)
+    obs = v2.emit(w, st, q, s, rng, coverage)
     y = vt["V"][io, jc, w.cidx[st]]
     draw = np.tile(np.arange(k), len(io) // k)
     key = scenario_uniform(vt["op_ids"][io], vt["conts"][io, jc, 0], vt["conts"][io, jc, 1] + 100 * draw, draw + 7, salt=3)
