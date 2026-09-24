@@ -61,3 +61,7 @@ variants:   # pre-registered variants after a diagnosed failure (each committed 
     reason: Branch 3 neural arms scored 0.34-0.58 vs trees 0.70-0.93; diagnosis (scripts/nn_diagnose.py, validation data only) found target scale starved gradients
     change: NN targets multiplied by 100 (fit/predict handle it); nothing else changes; same kill rule (monotone within 0.02 of monotone GBM at n<=25)
   B3_original_status: invalid_training_recipe (not a test of monotonicity); reported as such
+outcomes:   # appended after runs; never edited retroactively
+  B3v2_monotone_rescaled:
+    status: killed_as_hypothesis
+    result: nn_monotone is 0.06-0.13 below monotone GBM at n<=25 (novel cell); monotone GBM is ~0.025 below free GBM; monotone prior gives no advantage. Exploratory test block 200-279, 3 reps.
