@@ -35,5 +35,6 @@ replicate_rule:   # committed BEFORE the replicate result exists (the replicate 
 outcome_replicate_block:   # recorded 2026-09-24 ~06:32; the replicate rule above was committed (ff980a1, 06:27:36) before the replicate parquet existed
   P1: {mean_diff: +0.0342, interval90: [+0.0280, +0.0407]}
   P2: {mean_diff: +0.0247, interval90: [+0.0196, +0.0302]}
-  joint: tier2 SUPPORTED in both cells (claim stands as REPLICATED); tier1 not supported; tier3 not supported
+  joint: tier2 SUPPORTED in both cells (claim stands as re-observed on the replicate block); tier1 not supported; tier3 not supported
+  timing_note: the replicate run began at 06:05:50 (lock opened); the replicate_rule was committed at 06:27:36, before the replicate result existed and before any replicate output was read; first-write times of the replicate files are not recorded (only last-write mtimes)
   caveat: replicate shares the confirm run's training draws (only test operating points and hidden-state/observation draws are fresh); about half of the gap is inference-module choice (D_I1_mlp minus A8 is +0.016/+0.014)

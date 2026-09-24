@@ -18,7 +18,7 @@ The exploratory block was inspected in Phase 1 and reused by every Phase-2 scree
 | 11 | Value ladder (feature artifact?) | committed before running | not a feature artifact | - |
 | 12 | Extra composition cells (v2b/v2c other cells) | exploratory | started and STOPPED early to free the GPU; no results, cells beyond P1/P2 were not evaluated | - |
 | 12b | Few-shot N-2 label efficiency | committed before running | 25%/29%/39% of the gap closed at k=10/30/100 | - |
-| 13 | H5 amended confirmatory claim: decomposition D_I2 vs A8, n=100, cells P1 and P2 | amendment committed before the confirm block was opened; **decided after seeing screen effects** | confirm: +0.0357 (P1), +0.0249 (P2), tier 2 supported, tier 1 not; replicate pending (rule committed first) | - |
+| 13 | H5 amended confirmatory claim: decomposition D_I2 vs A8, n=100, cells P1 and P2 | amendment committed before the confirm block was opened; **decided after seeing screen effects** | confirm: +0.0357 (P1), +0.0249 (P2), tier 2 supported, tier 1 not; replicate: +0.0342, +0.0247, tier 2 again (rule committed at 06:27:36, AFTER the replicate run had started at 06:05:50 but before its result existed; no replicate output was read before the rule commit) | - |
 | post hoc | raw_edge (capacity dependence of the raw-flag edge), oracle_check (P(severe) oracle), P(severe) secondary scoring, mean-field/KL analyses | no | exploratory | some |
 
 Facts for readers: about 15 gate or kill decisions, at least 6 reruns of the same 80 operating points on the same hidden-state draws; primary sizes
