@@ -8,38 +8,18 @@ import numpy as np
 import pandas as pd
 
 from fdna import baseline_data
-from fdna.evalutil import check_spec_hash, op_metrics
+from fdna.baseline_data import evaluate, strata
+from fdna.evalutil import check_spec_hash
 
 DATA = sys.argv[1] if len(sys.argv) > 1 else "data"
 N_SEEDS = int(sys.argv[2]) if len(sys.argv) > 2 else 5
 
 
-def strata(d):
-    cell = d.lab.cell.values
-    s = {c: cell == c for c in ("n1_seen", "n1_unseen", "n2_seen", "n2_unseen")}
-    u = s["n2_unseen"]
-    s["n2_unseen|familiar"], s["n2_unseen|novel"] = u & ~d.novel, u & d.novel
-    for k in (2, 3, 4):
-        s[f"n2_unseen|size{k}"] = u & (d.fs_size == k)
-    for k in (2, 3, 4):
-        s[f"n2_unseen|size{k}|novel"] = u & (d.fs_size == k) & d.novel
-        s[f"n2_unseen|size{k}|familiar"] = u & (d.fs_size == k) & ~d.novel
-    return {k: m & d.te for k, m in s.items()}
-
-
-def evaluate(d, name, pred, seed, S):
-    rows = []
-    op = d.lab.op.values
-    for sname, m in S.items():
-        for o in np.unique(op[m]):
-            mm = m & (op == o)
-            rows.append(dict(model=name, seed=seed, stratum=sname, op=int(o), **op_metrics(d.y[mm], pred[mm], d.key[mm])))
-    return rows
-
-
 if __name__ == "__main__":
     check_spec_hash(DATA)
     info = json.load(open(f"{DATA}/baseline_info.json"))
+    from fdna import spec
+    assert info["spec"] == spec.spec_hash(), "tuned parameters were produced under a different spec"
     bag = info["bagging"]
     d = baseline_data.load(DATA)
     S = strata(d)
@@ -57,6 +37,8 @@ if __name__ == "__main__":
     # baselines without training
     z = np.zeros(len(d.y))
     rows += evaluate(d, "zero", z, 0, S)
-    pd.DataFrame(rows).to_parquet(f"{DATA}/multiseed_results.parquet")
+    res = pd.DataFrame(rows)
+    res["spec"] = spec.spec_hash()
+    res.to_parquet(f"{DATA}/multiseed_results.parquet")
     np.savez_compressed(f"{DATA}/preds_seeds.npz", **preds)
     print("done", info["spec"])

@@ -51,3 +51,11 @@ def test_gen_less_island_is_structural_shed(a):
     lp = ScenarioLP(g, op, (1,), Params(0.3, 40.0))
     assert lp.struct_mw == pytest.approx(80.0)
     assert lp.y(np.array([a])) == pytest.approx(0.80, abs=1e-7)
+
+
+def test_trip_rule_validation_and_free_mode():
+    with pytest.raises(ValueError):
+        Params(0.3, 5.0, "shed_plus_suplus")
+    # local range 5 MW: frozen rule forces 15 MW shed; free tripping removes the shed (upper-bound relief)
+    assert y(G2, op2(40.0), (), 1.0, Params(0.3, 5.0, "free")) == pytest.approx(0.0, abs=1e-7)
+    assert y(G2, op2(40.0), (), 1.0, Params(0.3, 5.0)) == pytest.approx(0.15, abs=1e-7)

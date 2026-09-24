@@ -6,9 +6,6 @@ import numpy as np
 from . import comm, spec
 from .grid import BASE_MVA, Grid
 
-N_OUT = 41
-
-
 def post_outage_flows(g: Grid, demand: np.ndarray, p0: np.ndarray, removed: tuple[int, ...], rating: np.ndarray):
     """Cheap DC flow after outages (no LP). Island imbalance is spread over that island's generators.
     Returns (flow/rating per branch (0 if removed), structural MW of gen-less islands)."""

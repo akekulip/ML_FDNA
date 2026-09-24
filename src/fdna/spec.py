@@ -24,9 +24,16 @@ TAU = SPEC["sens_tau"]
 FAILURE_SETS = comm.failure_sets(SPEC["failure_sets"]["max_size"])
 
 
+LABEL_CODE = ("src/fdna/lp.py", "src/fdna/comm.py", "src/fdna/grid.py", "src/fdna/opgen.py")
+
+
 def spec_hash() -> str:
-    """Hash of the label-defining parameters (configs/spec.json). Prose edits to SPEC.md do not change labels."""
-    return hashlib.sha256((ROOT / "configs/spec.json").read_bytes()).hexdigest()[:16]
+    """Hash of everything that defines labels and control features: configs/spec.json plus the LP, communication,
+    grid and operating-point code (trip default, wiring, generator limits live there). SPEC.md prose is excluded."""
+    h = hashlib.sha256()
+    for f in ("configs/spec.json", *LABEL_CODE):
+        h.update((ROOT / f).read_bytes())
+    return h.hexdigest()[:16]
 
 
 def doc_hash() -> str:

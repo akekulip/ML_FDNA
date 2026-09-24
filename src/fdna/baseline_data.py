@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from . import comm, spec
-from .evalutil import check_spec_hash, in_subsample, tiebreak_key
+from .evalutil import check_spec_hash, in_subsample, op_metrics, tiebreak_key
 from .features import control_features, post_outage_flows, raw_comm_states
 from .grid import load_case30
 from .opgen import nominal_rating
@@ -32,7 +32,10 @@ def _phys_chunk(args):
 
 def physics_table(data_dir: Path, lab: pd.DataFrame, ops) -> pd.DataFrame:
     """Post-outage DC-flow features per unique (op, b1, b2); cached next to the data."""
-    cache = data_dir / "phys_cache.parquet"
+    import hashlib
+
+    ops_sha = hashlib.sha1((data_dir / "ops.npz").read_bytes()).hexdigest()[:8]
+    cache = data_dir / f"phys_cache_{spec.spec_hash()}_{ops_sha}.parquet"
     if cache.exists():
         return pd.read_parquet(cache)
     keys = lab[["op", "b1", "b2"]].drop_duplicates().reset_index(drop=True)
@@ -95,3 +98,28 @@ def load(data_dir="data", test_frac=0.25) -> Data:
     sp = lab.split.values
     return Data(lab=lab, F=F, y=lab.y.values, key=tiebreak_key(lab), tr=sp == "train", va=sp == "val", te=sp == "test",
                 novel=~np.isin(keyv[fs], list(train_keys)), fs_size=sizes[fs], loss=fsC[fs].sum(1) == 0)
+
+
+def strata(d):
+    cell = d.lab.cell.values
+    s = {c: cell == c for c in ("n1_seen", "n1_unseen", "n2_seen", "n2_unseen")}
+    u = s["n2_unseen"]
+    s["n2_unseen|familiar"], s["n2_unseen|novel"] = u & ~d.novel, u & d.novel
+    for k in (2, 3, 4):
+        s[f"n2_unseen|size{k}"] = u & (d.fs_size == k)
+    for k in (2, 3, 4):
+        s[f"n2_unseen|size{k}|novel"] = u & (d.fs_size == k) & d.novel
+        s[f"n2_unseen|size{k}|familiar"] = u & (d.fs_size == k) & ~d.novel
+    return {k: m & d.te for k, m in s.items()}
+
+
+def evaluate(d, name, pred, seed, S):
+    rows = []
+    op = d.lab.op.values
+    for sname, m in S.items():
+        for o in np.unique(op[m]):
+            mm = m & (op == o)
+            rows.append(dict(model=name, seed=seed, stratum=sname, op=int(o), **op_metrics(d.y[mm], pred[mm], d.key[mm])))
+    return rows
+
+

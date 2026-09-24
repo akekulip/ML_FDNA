@@ -47,7 +47,8 @@ def load_case30() -> Grid:
         to=br[:, 1].real.astype(int),
         x=br[:, 3].real.astype(float),
         gen_bus=gen[:, 0].real.astype(int),
-        # MATPOWER case30 limits; the slack row in pandapower is 1e9, use MATPOWER's 360.2
+        # generator limits of the case30 data (pandapower case_ieee30 keeps 360.2 on the ext_grid via max_p_mw; the ppc
+        # slack row carries a 1e9 placeholder, so the limit is set explicitly here)
         gen_pmax=np.array([360.2, 140.0, 100.0, 100.0, 100.0, 100.0]),
         load=bus[:, 2].real.astype(float),
     )

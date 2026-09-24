@@ -40,7 +40,7 @@ def report(name, col):
 
 lab["islanding"] = np.where(lab.y_struct > 0, "structural shed", "no structural shed")
 lab["control"] = pd.cut(lab.ctrl_total, [-1, 1e-9, 1.5, 3.5, 4.99, 5.01], labels=["none", "<=1.5", "1.5-3.5", "3.5-5", "full"])
-lab["overload"] = pd.cut(lab.max_overload, [0, 1, 1.25, 1.5, 2, 1e9], labels=["<=1", "1-1.25", "1.25-1.5", "1.5-2", ">2"])
+lab["overload"] = pd.cut(lab.max_overload, [-1e-9, 1, 1.25, 1.5, 2, 1e9], labels=["<=1", "1-1.25", "1.25-1.5", "1.5-2", ">2"])
 lab["dist_thr"] = pd.cut(lab.dist, [-1, 0.002, 0.005, 0.01, 0.03, 1], labels=["<0.2pt", "0.2-0.5pt", "0.5-1pt", "1-3pt", ">3pt"])
 lab["size"] = d.fs_size[m]
 lab["novel"] = np.where(d.novel[m], "novel control vector", "familiar")

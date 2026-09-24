@@ -12,6 +12,7 @@ if __name__ == "__main__":
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "data")
     n_tr, n_va, n_te = (int(x) for x in sys.argv[2:5]) if len(sys.argv) > 4 else (100, 20, 80)
     te0 = int(sys.argv[5]) if len(sys.argv) > 5 else 200
+    assert n_tr <= 100 and n_va <= 100 and te0 >= 200, "operating-point id ranges must not overlap (train<100, val 100-199, test>=200)"
     out.mkdir(exist_ok=True)
     jobs = [("train", i) for i in range(0, n_tr)] + [("val", i) for i in range(100, 100 + n_va)] \
         + [("test", i) for i in range(te0, te0 + n_te)]

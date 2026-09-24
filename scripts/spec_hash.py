@@ -1,6 +1,2 @@
-import hashlib, pathlib
-root = pathlib.Path(__file__).resolve().parents[1]
-h = hashlib.sha256()
-for f in ("configs/spec.json", "prereg/SPEC.md"):
-    h.update((root / f).read_bytes())
-print(h.hexdigest()[:16])
+from fdna import spec
+print("label spec hash:", spec.spec_hash(), "| prose hash:", spec.doc_hash())

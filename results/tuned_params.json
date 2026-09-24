@@ -1,0 +1,94 @@
+{
+ "info": {
+  "elec": {
+   "val_mse": 0.00025400984137718513,
+   "params": {
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "learning_rate": 0.1,
+    "feature_fraction": 1.0,
+    "reg_lambda": 10.0
+   },
+   "n_trees": 146,
+   "tune_s": 19.19929599761963,
+   "infer_us_per_scenario": 0.26116639352126286,
+   "n_features": 78
+  },
+  "elec+raw_comm": {
+   "val_mse": 0.0002069801774273037,
+   "params": {
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "learning_rate": 0.1,
+    "feature_fraction": 1.0,
+    "reg_lambda": 10.0
+   },
+   "n_trees": 399,
+   "tune_s": 87.81657099723816,
+   "infer_us_per_scenario": 0.6425877351503485,
+   "n_features": 92
+  },
+  "elec+ctrl": {
+   "val_mse": 0.00017845545643052827,
+   "params": {
+    "num_leaves": 15,
+    "min_child_samples": 100,
+    "learning_rate": 0.1,
+    "feature_fraction": 0.5,
+    "reg_lambda": 0.0
+   },
+   "n_trees": 400,
+   "tune_s": 35.18349289894104,
+   "infer_us_per_scenario": 0.5480258379474928,
+   "n_features": 94
+  },
+  "elec+phys": {
+   "val_mse": 0.00019274481657418645,
+   "params": {
+    "num_leaves": 15,
+    "min_child_samples": 200,
+    "learning_rate": 0.1,
+    "feature_fraction": 1.0,
+    "reg_lambda": 1.0
+   },
+   "n_trees": 124,
+   "tune_s": 53.32986783981323,
+   "infer_us_per_scenario": 0.25867110243817426,
+   "n_features": 123
+  },
+  "elec+phys+raw_comm": {
+   "val_mse": 0.00014577608812284498,
+   "params": {
+    "num_leaves": 15,
+    "min_child_samples": 100,
+    "learning_rate": 0.1,
+    "feature_fraction": 0.5,
+    "reg_lambda": 0.0
+   },
+   "n_trees": 399,
+   "tune_s": 51.45317721366882,
+   "infer_us_per_scenario": 0.6774840754288598,
+   "n_features": 137
+  },
+  "elec+phys+ctrl": {
+   "val_mse": 0.00013119000752390717,
+   "params": {
+    "num_leaves": 31,
+    "min_child_samples": 200,
+    "learning_rate": 0.1,
+    "feature_fraction": 0.5,
+    "reg_lambda": 1.0
+   },
+   "n_trees": 400,
+   "tune_s": 100.51240158081055,
+   "infer_us_per_scenario": 0.8771713389871136,
+   "n_features": 139
+  }
+ },
+ "bagging": {
+  "bagging_fraction": 0.8,
+  "bagging_freq": 1
+ },
+ "spec": "6c116d69f3becb53",
+ "doc": "dca44b3c88fd8383"
+}

@@ -72,3 +72,18 @@ These do not change any label; `spec_hash()` now covers `configs/spec.json` only
   feasible action) and 0.368 (free tripping, an upper bound on control-independent relief). The value of control is therefore
   not created by the trip rule.
 - **DC, static snapshot, corrective interval as ranges**: results say nothing about voltage, reactive power or dynamics.
+
+### Further disclosures after independent code review (2026-09-23)
+8. **Label-spec hash scope.** `spec_hash()` now also covers `lp.py`, `comm.py`, `grid.py`, `opgen.py` (trip default, wiring,
+   generator limits, ratings) because they define labels and control features; the physics-feature cache is keyed by the spec
+   hash and a hash of `ops.npz`. Labels were verified identical to the stored data before re-hashing (operating points 0, 100,
+   200 and 300 regenerated exactly).
+9. **Validation set is small**: failure-set split is 53/10/28 of the 91 pairs (nominal 50/15/35); tuning and early stopping
+   use 10 validation failure sets, 9 of whose control vectors are absent from train. "Novel control vector" is defined relative
+   to train only, so some novel test vectors also occur in validation (they were seen during tuning, not during training).
+10. **Endpoint amendment v1.1 used test-label information**: the 30-36% severe prevalence that motivated the R-precision
+    endpoint was read from the test labels (Gate 0 report); no model result was involved.
+11. **Not implemented**: per-bin MAE (only overall MAE), and transformer tap ratios (ignored in DC susceptance, identical in
+    labels and features). `trip` values other than the frozen rule are used only in `scripts/trip_pilot.py`.
+12. **Learning-curve subset seed**: implemented as `1000*n + replicate` (the hypothesis file says "seed = replicate index");
+    the LightGBM seed is the replicate index. No effect on the hypothesis, cell, pair or thresholds.

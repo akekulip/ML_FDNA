@@ -37,5 +37,7 @@ for name, X in d.F.items():
     preds[name] = p_
     print(name, info[name], flush=True)
 np.savez_compressed(f"{DATA}/preds_tuned.npz", **preds)
-json.dump(dict(info=info, bagging=BAG, spec=spec.spec_hash(), doc=spec.doc_hash()), open(f"{DATA}/baseline_info.json", "w"), indent=1)
+out = dict(info=info, bagging=BAG, spec=spec.spec_hash(), doc=spec.doc_hash())
+for path in (f"{DATA}/baseline_info.json", "results/tuned_params.json"):
+    json.dump(out, open(path, "w"), indent=1)
 print("done")

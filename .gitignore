@@ -2,6 +2,6 @@
 __pycache__/
 *.pyc
 data/
-results/
+data_fresh/
 .pytest_cache/
 .claude/

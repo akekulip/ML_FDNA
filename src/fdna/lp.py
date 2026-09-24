@@ -25,6 +25,10 @@ class Params:
     # protection-trip rule: 'shed_plus_surplus' (frozen spec), 'surplus_only', or 'free' (sensitivity pilot only)
     trip: str = "shed_plus_surplus"
 
+    def __post_init__(self):
+        if self.trip not in ("shed_plus_surplus", "surplus_only", "free"):
+            raise ValueError(f"unknown trip rule {self.trip!r}")
+
 
 @dataclass
 class OperatingPoint:
