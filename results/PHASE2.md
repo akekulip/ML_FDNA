@@ -1,17 +1,29 @@
 # Phase 2 — overnight programme log and results (living document)
-Started 2026-09-23 23:00:52; hard wall-clock cap 10 h. Registry: `registry/registry.yaml` (locked before any experiment).
-Nothing below has used the confirm (400-479) or replicate (500-579) seed blocks; screens use the inspected exploratory block 200-279.
+Started 2026-09-23 23:00:52; hard wall-clock cap 10 h. Registry: `registry/registry.yaml` + `registry/addendum_H4.yaml` (locked before
+the experiments they govern). Screens use the inspected exploratory block 200-279. **The confirm (400-479) and replicate (500-579) blocks
+have not been opened** (no `registry/locks/` entries; only their label tables exist). Independent QA/code review at the H4 gate found
+real problems (below); everything affected is being re-run.
 
-## Screens completed
-| Branch | Question | Result | Status |
-|---|---|---|---|
-| B3 (monotone value model) | does a hard monotone-in-control prior beat monotone-constrained trees at n<=25? | No: monotone NN is 0.06-0.13 R-precision below monotone GBM (novel cell); the monotone constraint itself costs trees ~0.025 | killed as hypothesis |
-| B2 (corrupted wiring) | can a learned dependency layer beat tuned trees on raw flags when 20% of assumed edges are wrong? | No: 0.096-0.159 below trees. But it beats a generic MLP on the same raw flags by +0.014/+0.047/+0.092 (n=10/25/100) | killed as hypothesis; side finding recorded |
+## Chronology of the programme (each pivot was forced by a diagnosed result)
+| Time | Step | Outcome |
+|---|---|---|
+| 23:25-23:38 | Branch 3 (monotone value model) | first run invalid (neural targets ~1e-2 starved gradients; diagnosed on validation data, fixed); rerun: monotone NN 0.06-0.13 below monotone GBM. Killed. |
+| 23:38-23:56 | Branch 2 (learned dependency layer, 20% wrong wiring) | 0.10-0.16 below tuned trees; but +0.014/+0.047/+0.092 over a generic MLP. Killed vs trees; side finding. |
+| 00:00-01:00 | E1 (oracle headroom on v2 partial observation) | passed as registered (+0.12..+0.16) but INVALID: the oracle receives the exact LP value table; trees given exact posterior marginals gain nothing. |
+| 00:59-01:27 | E1b (exact-control GBM minus best observation tree) | mild telemetry: max +0.027 (fail); pre-registered harsher variants v2b/v2c pass (+0.03..+0.10). Later found to measure irreducible information loss, not reducible headroom. |
+| 01:27 | v2 family frozen (tag `v2-freeze`), primary cells P1 (v2b q=0.7,s=0.3) and P2 (v2c q=0.3,s=0.2) | |
+| 01:40-02:50 | B1 end-to-end arms A1-A7 | A5 (FDNA belief net) 0.04-0.08 below the best arm (A2, logic-feature GBM) in both cells; beats shuffled/unconstrained controls only in P2. Killed (subject to re-run after the softmin fix). |
+| 02:16- | Inference-only branch; decomposed-composition branch | registered before coding; first runs invalidated by the softmin bug; re-running. |
 
-## Diagnoses that changed the programme
-1. **Neural baselines were mis-trained (scale of the target).** First Branch 3 run had neural arms at 0.34-0.58 vs trees 0.70-0.93. Cause: shed fractions ~1e-2 give MSE ~1e-4 and starve gradients; multiplying the target by 100 lifts a plain MLP from 0.38 to 0.80 (n=25) and 0.64 to 0.86 (n=100) on validation. Protocol lesson: an under-trained neural baseline makes any structured model look good, so every neural arm needs a target-scale/recipe sanity check against trees before comparison. Recorded as an invalid run, not as a test of monotonicity.
-2. **Trees do not need dependency structure when observations are complete** (v1 finding Q1 and B2): the label is a function of the control vector, and a tree on 14 raw flags learns it; tree + correct wiring is no better than tree + raw flags (0.796 vs 0.806 at n=25).
-3. **Structure does help neural networks relative to generic neural networks** (B2 side finding), which reframes the open question: where can a structured NN beat *trees*? Only where information is missing (v2, gate E1) or the problem is too large for tree/enumeration approaches.
+## Key diagnoses
+1. Neural baselines must be sanity-checked against trees first (target scale x100 fixed a 0.3 R-precision gap).
+2. With complete observation, trees do not need dependency structure; structure helps neural nets relative to generic MLPs only.
+3. **Headroom decomposition (main methodological result so far):** the gap between a learner given the exact control vector and one given observations mixes irreducible information loss with reducible inference headroom. The reducible part (GBM given exact posterior marginals minus best observation tree) is only +0.007..+0.021 in P1/P2, so better inference cannot help a tree value model by more than ~0.02. Two of my own registered gates (E1, E1b) measured the wrong quantity and were corrected by inspecting reference arms.
+4. The posterior-mean-of-shed predictor is not R-precision-optimal: exact P(severe|obs) scores 0.916 (P1) / 0.943 (P2) versus 0.865 / 0.912.
+5. **Reduced-effort control needed:** `raw_edge` (exploratory): the ~0.02 raw-flag edge over explicit control features on novel control vectors depends on tree capacity (+0.02 for small trees, ~0 for 63 leaves) and reverses sign on familiar vectors; not a claim.
 
-## Pending
-E1 (oracle headroom under partial/stale observation; four parallel cells), then, only if E1 passes and v2 is frozen, B1 arms A1-A7.
+## H4 independent review (QA verifier + code reviewer) — findings and actions
+Blockers/majors found and fixed before any confirm run: confirm block reused the exploratory block's hidden states (same seed); fresh-block lock was advisory; FDNA softmin capped operability at ~0.945 (invalidates FDNA arms in all screens, hence the re-runs); shuffled control used one mask; I2 trained on different observations; decision rules existed only on paper (now code: `src/fdna/rules.py`); tuning protocol differed from the registry text (now disclosed; screen vs confirm tuning levels declared); registry deltas quoted with an unstated aggregation (both aggregations now reported). Details: `registry/addendum_H4.yaml`.
+
+## Pending (in progress)
+Re-runs with the fixed FDNA layer: inference-only screen (P1, P2), decomposed composition (P1, P2), B1v2_softmin_fix (P1, P2). Then comparators fixed from those screens, and only claims with a positive screen go to the confirm block.
