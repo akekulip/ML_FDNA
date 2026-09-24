@@ -1,0 +1,18 @@
+# H5 AMENDMENT, committed BEFORE the confirm block is opened. Origin: statistician audit of the forking-paths ledger.
+status_of_D_claims: D_P1/D_P2 (registered superiority at n=25, comparator best-of-e2e, effect >= 0.05) were NOT sent to the confirm block because the screen effect was below the SESOI. This amendment REPLACES them with ONE pre-named, size-changed claim; it is a post-screen decision and is disclosed as such (the screen effects at n=100 were +0.036/+0.031 for the named arms; n=100 was chosen because n=25 effects were smaller).
+what_it_tests: training with simulator-side privileged information (value model g learned on full-information rows; inference learned on cheap (obs, c) pairs; composed over the top-64 posterior vectors) versus the strongest end-to-end baseline that ALSO receives the cheap pairs (A8). It is NOT an FDNA claim.
+claim:
+  treatment: D_I2_gbm_product
+  comparator: A8_hybrid_generic_marginals
+  size: n=100 training operating points (N_INF = 25000 cheap pairs)
+  cells: [P1 (v2b q=0.7 s=0.3), P2 (v2c q=0.3 s=0.2)]
+  block: confirm 400-479, opened once per cell via slots D_P1 / D_P2
+  replicates: 5, tuning level: confirm (40 GBM trials, 9-point NN grid), identical for every arm
+  family: ONE intersection-union claim (both cells must reject); alpha 0.05, no further adjustment (one composite claim)
+tiers:
+  tier1_meaningful: mean paired difference >= 0.05 AND margin-test p < 0.05 (H0: mean <= 0.05), in both cells
+  tier2_reliable_but_small: margin-test p < 0.05 for H0: mean <= 0, in both cells
+  tier3_negligible: 90% two-sided interval inside (-0.02, +0.02) in both cells
+statistics: src/fdna/rules.py (two-way bootstrap over test operating points AND training replicates, p floor (1+count)/(B+1), NaNs refused); dry-run on the exploratory block before opening.
+what_will_be_said_regardless_of_outcome: results are reported in these tiers; a tier-1 failure is expected from the screen and will be stated as such; the SESOI is not revisited.
+dead_claims_not_to_be_opened: INF_P1, INF_P2, DS_P1, DS_P2, INF8_P1, INF8_P2 (null screens). Replicate block 500-579 and reserve 600-699 stay unopened.

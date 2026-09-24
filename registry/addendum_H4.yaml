@@ -68,3 +68,6 @@ value_ladder:   # registered 2026-09-24 ~05:05 before coding (suggested by the p
   metric: R-precision; gap closed at a rung = (R - R0) / (1 - R0), ceiling 1.0 (exact control determines the label exactly).
   kill_rule: if R1 or R2 closes >= 50% of the gap at n=25 in both cells' state draws, the value-learning gap was largely a feature artifact and there is no method contribution in the value learner; if not, the gap is genuine and the dominant open problem stays value learning.
   no_confirm_slot: exploratory only.
+outcomes_value_ladder:   # recorded ~05:00, exploratory block, 3 reps
+  result: exact-control GBM R-precision on in-distribution N-1 rows is 0.93-0.97, on unseen N-2 pairs 0.79-0.89 (thr 0.5%-5%). R1 (order-invariant outage encoding) and R2 (island/headroom features) do NOT close the gap (gap closed between -0.28 and +0.13; mostly slightly negative).
+  decision: kill rule triggered in the other direction - the value-learning gap is NOT a simple feature artifact; it is genuine N-1 -> N-2 extrapolation error under the train-on-N-1 protocol. Rung 4 (N-1 LP features with N-2 few-shot labels) not tested.
