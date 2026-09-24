@@ -1,0 +1,7 @@
+{
+ "spec_hash": "6c116d69f3becb53",
+ "n_rows": 1200,
+ "n_rows_with_any_infeasible_control": 0,
+ "wall_s": 135.30814218521118,
+ "manifest": "manifest_k3_screen.json"
+}

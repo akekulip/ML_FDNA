@@ -1,0 +1,27 @@
+{
+ "n_rows": 1200,
+ "cv_idx": 1023,
+ "cv_row": [
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0
+ ],
+ "extra_lp_solves_for_ingredients": 3880,
+ "g1_singleton_sum_only": {
+  "mae": 0.008000072610358523,
+  "rmse": 0.019228735858669268,
+  "spearman_vs_true": 0.6792693782556155
+ },
+ "g2_mobius_pairwise_truncation": {
+  "mae": 0.0008678879912733763,
+  "rmse": 0.004489009839973864,
+  "spearman_vs_true": 0.9592528396067364
+ },
+ "g2_beats_g1_mae": true,
+ "g2_beats_g1_rmse": true,
+ "mean_y_true": 0.015463774802631936,
+ "frac_y_true_severe": 0.325,
+ "note": "single fixed full-control state (isolates electrical/topological generalisation, no comm-inference layer, per brief 6.3); equal-information GBM comparator not yet run (flagged, not done)."
+}
