@@ -19,3 +19,4 @@ Plan: ~/.claude/plans/using-brainstorming-research-ideas-and-d-witty-stonebraker
 - 23:38 B3v2 result: monotone NN 0.06-0.13 below monotone GBM at n<=25; monotone GBM ~0.025 below free GBM -> B3 killed as hypothesis (registry outcomes).
 - 23:38 Branch 2 (corrupted wiring, rho=0.2) running: /tmp/b2.log -> data/b2_results.parquet.
 Next: E1 when data_v2/vtable_test.npz exists; B2 result; then decide freeze of v2 (only after E1 passes).
+- 00:18 Branch 2 outcome recorded (killed; structure helps NN vs generic MLP, trees dominate). E1 running (slow under contention). raw_edge exploratory job stopped to free cores (rerun later). Confirm-block value table (400-479) pre-generating in data_v2_confirm (labels only; block NOT opened: no model has seen it).
