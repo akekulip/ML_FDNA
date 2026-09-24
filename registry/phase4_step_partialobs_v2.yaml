@@ -1,0 +1,45 @@
+# Phase 4: CORRECTED registration for the partial-observation validation, after an external review found the
+# original registry/phase4_step_partialobs.yaml was invalid YAML (a stray colon broke the parser) and several
+# execution deviations were undisclosed. This file supersedes it; the original is kept for the record, not
+# deleted, per this project's "add explicit amendment/correction notes, do not silently rewrite" rule.
+hypothesis: >
+  The g2 (order-2 Mobius/interaction truncation) composition, combined with the exact communication-state
+  posterior p(c|obs), predicts realised N-3 shed under partial/stale communication observation better than
+  (a) the same posterior composed with the naive singleton-sum g1, and (b) a "no observation, average over the
+  communication PRIOR" baseline (corrected: the original used "assume full control", a weaker reference than
+  averaging over the actual prior).
+corrections_from_original_registration:
+  - "draws: registered text said 200 (garbled to 'K=200' inside a broken YAML block, never validly parsed);
+     EXECUTED with K_DRAWS=100. Disclosed here as a deviation, not silently changed. This rerun uses 100,
+     stated explicitly, not claimed as 200."
+  - "metric: registered squared error AND MAE; EXECUTED reported MAE only. This rerun reports both."
+  - "oracle reference: the original 'oracle_full_table_composed' is the POSTERIOR-MEAN composition of the true
+     table, which is optimal under SQUARED error, not MAE (the MAE-optimal point estimate is the posterior
+     MEDIAN). Calling the MAE gap to that mean-composed reference 'the achievable gap' was overstated. This
+     rerun reports: squared error against the mean-composed oracle (where it IS optimal) and MAE against BOTH
+     the mean-composed reference (relabelled honestly) and a posterior-median-composed reference."
+  - "cost framing: 'practically unaffordable' was wrong for the tested 60-triple scale specifically -- direct
+     labelling of the 60 triples (1,228,800 solves, 135s) was CHEAPER than generating the full-grid pair table
+     needed for composition (3,194,880 solves, 350s), because only 156 distinct pairs were needed for 60
+     triples (little reuse: ~1.15x). The real amortisation argument is combinatorial reuse: C(38,2)=703 pairs
+     among the 38 touched branches could in principle predict all C(38,3)=8,436 triples among them (a ~36x
+     reuse ratio) -- NOT YET MEASURED at that scale until this rerun's bounded reuse test."
+  - "unfair comparator: the neural/tree comparators in scripts/p4_setmodels.py did not receive pairwise
+     interaction information (only static electrical descriptors, or +singleton value); g2 receives BOTH
+     singleton and pairwise information. This rerun adds a plain LINEAR regression on the identical 6 numbers
+     g2 uses (fair, equal-information, and directly tests whether g2's fixed coefficients-of-1 composition
+     beats a FITTED linear combination), and a pairwise-aware DeepSets/GRU variant (given the 3 sub-pair
+     interaction values as additional features, matching g2's information)."
+  - "reproducibility bug: scripts writing multiprocessing (Pool.imap_unordered) results to .npz save rows in
+     completion order, which is not guaranteed stable across regenerations; a downstream script iterating that
+     order with a SINGLE shared, sequentially-advancing RNG (as the original p4_mobius_partialobs.py did) makes
+     the specific observation draws depend on that nondeterministic order, despite a fixed top-level seed. Fixed
+     by (a) sorting every loaded array by a canonical key (op_id, outage tuple) immediately after loading, and
+     (b) deriving each row's RNG seed deterministically from that canonical key (not a shared advancing state)."
+metric: per-triple squared error (primary, where the mean-composed reference is provably optimal) AND MAE
+  (secondary, against both the mean-composed and posterior-median-composed references), K_DRAWS=100 explicitly
+  (not 200), R-precision / severe-recall of the composed prediction also reported (screening-relevant endpoint,
+  not just point-prediction error).
+cells: P1 (v2b q=.7 s=.3), P2 (v2c q=.3 s=.2), unchanged from src/fdna/v2.py.
+caveats_unchanged: same 60-triple/20-op manifest as every earlier Stage-3 test (not independent data); no
+  cluster bootstrap; no confirmatory block; exploratory only.
