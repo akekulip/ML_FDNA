@@ -65,3 +65,5 @@ out = {"n_rows": len(rows), "cv_idx": CV_IDX, "total_lp_solves": total_solves,
        "mean_y_true": float(y_true.mean())}
 print(json.dumps(out, indent=1))
 json.dump(out, open("results/phase4/mobius_k4_test.json", "w"), indent=1)
+np.savez("data_hik/k4_screen.npz", op_ids=np.array([r[0] for r in rows]),
+         outages=np.array([list(r[1]) for r in rows]), y=np.array([r[2] for r in rows], np.float32), CV=CV)

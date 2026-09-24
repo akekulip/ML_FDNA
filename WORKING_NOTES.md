@@ -9,10 +9,14 @@ two blocks share training draws so not an independent replication). Phase 4 (ext
 Stage 0/1 (state audit + 4 corrections) done. Stage 2 (literature verification + 2 independent blind brainstorming agents) done -- results/phase4/IDEA_CARDS.md.
 Stage 3 headline finding: a zero-training k=2-additive Mobius/interaction truncation (built from N-1/N-2 values only) beats a naive singleton-sum baseline AND
 an equal-information GBM at predicting EXACT N-3 labels, at 4/4 tested control states (results/phase4/RESULTS.md, results/phase4/mobius_k3_robust.json).
-Exploratory screen only: N-4 untested, partial observation not reintroduced, no cluster bootstrap, no confirmatory block. Repaired-FDNA inference-only screen
-(NLL/KL, single GPU process) running in background at /tmp/infonly_v2b.log, cell P1 in progress.
+Extended to N-4: order-2 truncation still beats naive baseline (2.8x); adding order-3 information improves further (3.1x). Staged comparator set (tuned tree,
+DeepSets, GRU), trained on 20 ops only, all underperform even the naive baseline -- a data-scale limitation, not evidence against recurrence in principle.
+Repaired-FDNA inference-only screen COMPLETE both cells: combined repair (OR-aware+hard-min+joint+CC-prior) ties the generic MLP and is worse than plain
+dependency logic in both P1 and P2 -- a stable, twice-replicated negative finding (registry/phase3_step2.yaml's attribution rule fails). Everything above is
+EXPLORATORY: no cluster bootstrap, no confirmatory block, second topology not attempted, partial observation not reintroduced into the higher-k schema. See
+results/phase4/{RESULTS,CLAIM_LEDGER,IDEA_CARDS,STATUS_AUDIT,REPRODUCE}.md for full detail.
 Confirmatory looks so far: four block openings, all for the single H5 claim (confirm 400-479, replicate 500-579, cells P1/P2); reserve 600-699 and all other slots
-unopened (registry/slots.yaml has no Phase-3/4 entry yet -- add one before opening any new block). Tests: 58 pass.
+unopened (registry/slots.yaml has no Phase-3/4 entry yet -- add one before opening any new block). Tests: 70 pass.
 
 ## Data (git-ignored; regenerate with scripts/value_table.py, gen_dataset.py)
 data/ (v1 labels + ops), data_fresh/, data_v2/ (value tables, screens, results parquet), data_v2_confirm/ (label tables for blocks 400-479, 500-579), data_v2_fs/.
