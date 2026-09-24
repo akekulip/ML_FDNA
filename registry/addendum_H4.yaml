@@ -37,3 +37,14 @@ outcomes_after_reruns:   # recorded 2026-09-24 ~04:25 (exploratory block 200-279
     fdna_specific: D_I5 minus best generic inference (I1,I2,I3) = -0.002/+0.001/-0.002/-0.003 (no advantage); D_I5 minus shuffled D_I6 = +0.013..+0.019; minus unconstrained D_I7 = +0.003..+0.008
     decision: D_P1, D_P2, DS_P1, DS_P2 NOT sent to the confirm block (screen effect below SESOI / null); recorded as exploratory results. No confirmatory look consumed.
     note: learned inference modules score slightly above composition with the EXACT posterior (D_exact) - the exact posterior mean is not the ranking-optimal decision rule (see oracle_note).
+outcomes_inference_screen_rerun:   # recorded 2026-09-24 ~04:35, softmin-fixed, exploratory block, 3 reps
+  INF_screen:
+    result: at the primary size N=5000, I5 minus best generic = -0.006 (P1), -0.021 (P2); minus shuffled I6 = +0.038/+0.043; minus unconstrained I7 = +0.006/+0.018. KL to the exact posterior: generic MLP/GNN reach 0.03-0.06 at N=125k, I5 stays at 1.0-1.3 (mean-field ignores common-cause correlations).
+    decision: INF_P1, INF_P2 NOT sent to the confirm block (null screen). Confirmatory looks consumed so far: 0.
+new_exploratory_arm_registered_before_coding:   # 2026-09-24 ~04:36
+  arm: I8_bayes_structure
+  idea: FDNA's min/mean operability is a lossy mean-field approximation of belief propagation on the dependency graph. Replace it by an exact differentiable Bayesian layer over the KNOWN structure (14 components, wiring, the two common-cause groups) with LEARNABLE parameters only: per-component failure logits (14), common-cause group logits (2), stale logit (1), initialised at 0.10/0.10/0.10 (deliberately not the true 0.15/0.08/cell-dependent s). Posterior over the 16384 states = softmax(log prior + emission log-likelihood), aggregated to the 1024 control vectors; trained by cross-entropy on the true control vector like the other inference arms.
+  hypothesis: with the structure known, only ~17 parameters must be learned, so at N=1000 samples I8 beats the best generic inference module (I1, I2, I3) by >= 0.05 R-precision (expected-shed scoring) in P1 or P2 and approaches the exact posterior; at large N generic modules catch up.
+  screen: P1 and P2, N in {1000, 5000, 25000}, 3 reps, arms I1, I2, I3, I5, I8 (+ oracle); primary size N=1000.
+  confirm_slots_reserved: INF8_P1, INF8_P2 (of the 2 remaining family slots) - opened only if the screen effect >= 0.05 at N=1000
+  scale_caveat: exact enumeration over 2^14 states does not scale to large graphs; the claim is about sample complexity given known structure, not about scale.

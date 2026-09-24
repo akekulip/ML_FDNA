@@ -4,3 +4,5 @@ INF_P2: {branch: inf, variant: v2c, cell: 3}
 D_P1:   {branch: d,   variant: v2b, cell: 3}
 D_P2:   {branch: d,   variant: v2c, cell: 3}
 # DS_P1 / DS_P2 (FDNA-vs-generic inside the composition) are evaluated from the D_P1 / D_P2 runs' outputs; they do not open blocks.
+INF8_P1: {branch: inf8, variant: v2b, cell: 3}
+INF8_P2: {branch: inf8, variant: v2c, cell: 3}
