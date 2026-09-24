@@ -32,3 +32,8 @@ replicate_rule:   # committed BEFORE the replicate result exists (the replicate 
   caveat_training_not_independent: the replicate run reuses the confirm run's training draws (they depend only on replicate index and n, not on the block); only the test operating points and the hidden-state/observation draws are fresh, so a successful replicate does not speak to training variability
   caveat_inference_module_confound: the comparator A8 receives marginals from the MLP inference network while the treatment uses the per-generator GBM inference posterior; part of the gap is inference-module choice, not privileged-information decomposition (descriptive contrasts D_I1_mlp vs A8 are reported alongside)
   correction_of_earlier_text: the earlier line 'Replicate block ... stay unopened' was written before the confirm outcome; the replicate block was opened on 2026-09-24 06:05:50 after the tier-2 confirmation, as the outcome_confirm_block entry says
+outcome_replicate_block:   # recorded 2026-09-24 ~06:32; the replicate rule above was committed (ff980a1, 06:27:36) before the replicate parquet existed
+  P1: {mean_diff: +0.0342, interval90: [+0.0280, +0.0407]}
+  P2: {mean_diff: +0.0247, interval90: [+0.0196, +0.0302]}
+  joint: tier2 SUPPORTED in both cells (claim stands as REPLICATED); tier1 not supported; tier3 not supported
+  caveat: replicate shares the confirm run's training draws (only test operating points and hidden-state/observation draws are fresh); about half of the gap is inference-module choice (D_I1_mlp minus A8 is +0.016/+0.014)

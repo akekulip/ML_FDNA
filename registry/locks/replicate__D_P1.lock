@@ -1,1 +1,1 @@
-{"block": "replicate", "slot": "D_P1", "commit": "5c4887316d63324bcf8abce6b2c032a14a0b2fe2", "time": "2026-09-24T06:05:50"}
+{"block": "replicate", "slot": "D_P1", "commit": "5c4887316d63324bcf8abce6b2c032a14a0b2fe2", "time": "2026-09-24T06:05:50", "output": "data_v2/d_replicate_v2b_3.parquet", "output_sha256": "313fc57242f6bd659fd61b888945231868e1b7b6c18204f05e508b4b5a631966"}
