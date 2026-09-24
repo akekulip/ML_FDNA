@@ -1,14 +1,27 @@
 {
  "P1_v2b": {
-  "n_rows": 33,
-  "mean_jensen_gap": 0.00420047635810368,
-  "frac_positive": 1.0
+  "n_rows": 4000,
+  "n_solver_failed": 0,
+  "mean_jensen_gap": 0.0046176023189752865,
+  "median": 0.0013979078032690497,
+  "p10": 7.694099974691404e-06,
+  "p90": 0.013311259430300698,
+  "frac_nonnegative": 0.98175,
+  "min": -2.55495622764057e-06,
+  "max": 0.06105681160910809
  },
  "P2_v2c": {
-  "n_rows": 33,
-  "mean_jensen_gap": 0.0027254579632067116,
-  "frac_positive": 1.0
+  "n_rows": 3400,
+  "n_solver_failed": 0,
+  "mean_jensen_gap": 0.003252069656957389,
+  "median": 0.0005204376304402655,
+  "p10": 8.11195414347766e-09,
+  "p90": 0.009946555937847362,
+  "frac_nonnegative": 0.9341176470588235,
+  "min": -2.131957948764418e-06,
+  "max": 0.05850825811143379
  },
- "prediction": "P1 gap > P2 gap (wider posterior spread at q=.7,s=.3 than q=.3,s=.2)",
+ "method_note": "y(E[c]) evaluated by direct continuous LP solve (ScenarioLP.y), not nearest-discrete-CV-row lookup",
+ "prediction": "P1 (wider posterior spread, q=.7 s=.3) mean gap > P2 (tighter, q=.3 s=.2)",
  "observed_direction_matches_prediction": true
 }

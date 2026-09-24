@@ -24,10 +24,10 @@ def or_input_mask() -> np.ndarray:
 
 
 class ReprInf(nn.Module):
-    def __init__(self, world: v2.World, level_idx: np.ndarray, head: str = "meanfield", or_aware: bool = False, tau: float = 0.05, prior: str = "indep"):
+    def __init__(self, world: v2.World, level_idx: np.ndarray, head: str = "meanfield", or_aware: bool = False, tau: float = 0.05, prior: str = "indep", or_combine: str = "max"):
         super().__init__()
-        assert head in ("meanfield", "joint", "logic") and prior in ("indep", "cc")
-        self.head, self.or_aware, self.tau, self.prior_kind = head, or_aware, tau, prior
+        assert head in ("meanfield", "joint", "logic") and prior in ("indep", "cc") and or_combine in ("max", "noisy_or")
+        self.head, self.or_aware, self.tau, self.prior_kind, self.or_combine = head, or_aware, tau, prior, or_combine
         self.register_buffer("mf", torch.tensor(flag_ancestor_mask()))
         self.prior = nn.Parameter(torch.full((N_C,), 1.5))
         self.w1 = nn.Parameter(torch.randn(N_F, N_C) * 0.5 + 1.0)
@@ -45,13 +45,17 @@ class ReprInf(nn.Module):
             self.n_cv = len(world.CV)
 
     def unit_operability(self, o_comp: torch.Tensor) -> torch.Tensor:
+        """or_combine: 'max' (operability/logic OR, used for every or_aware arm so the tau ablation changes ONLY the
+        softmin temperature downstream, per Phase 4 correction 4.3 -- previously this silently switched to noisy-OR
+        for tau>0, conflating OR semantics with temperature) | 'noisy_or' (independence-interpretable probability OR;
+        only meaningful when o_comp are genuinely probabilities, kept as an explicit opt-in, never the default)."""
         if not self.or_aware:
             return self.fdna(o_comp)
         gws = torch.stack([o_comp[:, comm.gw(g)] for g in range(comm.N_GW)], 1)
         grp = []
         for g in range(comm.N_REMOTE_GEN):
             par = gws[:, list(comm.PARENT_GW[g])]
-            grp.append(par.max(1).values if self.tau <= 0 else 1 - torch.prod(1 - par, 1))
+            grp.append(1 - torch.prod(1 - par, 1) if self.or_combine == "noisy_or" else par.max(1).values)
         return self.fdna(torch.cat([o_comp, torch.stack(grp, 1)], 1))
 
     def evidence(self, e: torch.Tensor) -> torch.Tensor:

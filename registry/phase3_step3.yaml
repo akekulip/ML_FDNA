@@ -2,16 +2,27 @@
 # Fixes the forking-paths risk the reviewer flagged: the treatment arm is chosen by Step 1's theoretical diagnosis
 # (island representability + OR-motif failure), NOT by whichever Step 2 arm wins its noisy 3-rep screen.
 hypothesis: >
-  An explicit island-decomposition value/screening mechanism (forced full-shed on generator-less islands;
-  exact LODF recompute, not flow addition, on the connected remainder) improves R-precision on the
-  ISLANDING-SEVERE row subset over an equal-information control that receives the same topology-class
-  signal but no hard island bookkeeping.
+  An explicit island-decomposition value/screening MECHANISM (forced full-shed on generator-less islands;
+  exact LODF recompute, not flow addition, on the connected remainder) improves screening on islanding-heavy
+  outage pairs over an equal-INFORMATION control that receives the identical derived numbers but no hard
+  island bookkeeping or forced-shed rule.
 arms:
   T_island_decomp: "D_I2-style decomposition pipeline + explicit island partition; forced shed=island demand on gen-less islands; exact recompute (not addition) on the connected remainder; same value model g"
-  C_topology_flat: "identical pipeline/feature budget/tuning as T, topology exposed ONLY as a flat categorical feature (connected/gen_less_only/all_gen/mixed) to the same generic value model; no forced-shed rule, no LODF recompute step"
+  C_equal_info: "CORRECTED (brief 4.2, was C_topology_flat): identical pipeline/feature budget/tuning as T; receives the SAME derived numerical descriptors as T -- topology-class one-hot, exact struct_mw value (not just a category), LODF risk score 1/|Det(a,b)| -- fed to the same generic value model with NO forced-shed rule and NO LODF-triggered recompute routing. This isolates the MECHANISM (hard rules) from the INFORMATION (the numbers themselves), which a flat category alone did not."
   B_anchor_descriptive: "D_I2 as already tier-2-confirmed, no topology information (reported descriptively only, not part of the confirmatory contrast)"
-independent_variable: presence/absence of the explicit island mechanism (T vs C); topology-CLASS information held equal
-dependent_variable: R-precision on islanding-severe rows (primary); all-row R-precision (secondary, catches harm to the 70.5% of severe rows outside this subset)
+independent_variable: presence/absence of the explicit island MECHANISM (forced-shed rule + LODF-triggered recompute routing) in T vs C; ALL derived information held equal
+dependent_variable: >
+  CORRECTED (brief 4.2): "R-precision on islanding-severe rows" was DEGENERATE -- restricting the ranked
+  set to already-severe rows makes rprec()'s top-k selection trivially return the whole group (k = group size),
+  so the metric is 1 by construction regardless of the model. Replaced with:
+  PRIMARY: R-precision over ALL islanding rows (severe and non-severe), i.e. the group is "islanding pairs",
+  not "islanding pairs that are already severe" -- non-degenerate, uses evalutil.rprec unchanged.
+  SECONDARY: subgroup severe recall within the islanding rows at a common GLOBAL screening budget (same
+  top-X% cutoff applied to the whole test set, then recall measured within the islanding subgroup) --
+  reflects the actual operational question (a fixed inspection budget across all contingencies).
+  TERTIARY: all-row R-precision (catches harm to the 70.5% of severe rows outside islanding pairs).
+  Zero-positive groups (an op with no severe islanding rows) are excluded from that op's contribution and
+  the exclusion count is reported, not silently dropped from the denominator.
 statistic: T-C two-way cluster bootstrap over test operating points and training replicates (src/fdna/rules.py), intersection-union across cells P1 and P2
 sesoi: {tier1: ">=0.08 within-subset R-precision", tier2: "mean diff >0, margin test as H5", tier3: "90% CI inside +-0.03"}
 design_requirements:
@@ -35,7 +46,16 @@ T_electrical_features_mechanism:
   source: src/fdna/lodf.py (Det(a,b) compensation determinant, one Laplacian factorisation, no LP solve)
   verified_facts:
     - "Det(a,b)=0 (machine precision) exactly recovers the 26 new topological 2-cuts (neither member alone islands); tests/test_lodf.py"
-    - "1/|Det(a,b)| vs measured flow-addition error, 10 test ops / 677 connected pairs: Spearman rho=0.945 (independently reproduced, scripts/p3_step1_lodf_corr.py); top-decile flag captures 82% of the p95-error tail"
-    - "struct_mw (fdna.lp.ScenarioLP, no linprog call) gives an exact discrete shed floor for pairs whose gen-less island only forms jointly (~20/820 pairs, median 3.85% of demand) -- explains part of the 34.9% superadditive rate in gen-less-only pairs"
+    - "1/|Det(a,b)| vs measured flow-addition error, 10 test ops / 677 connected pairs: Spearman rho=0.945 (independently reproduced, scripts/p3_step1_lodf_corr.py); top-decile flag (CORRECTED: ~10.1% of non-2-cut pairs, was misreported as 8.4%) captures 82% of the p95-error tail. Scope limit (brief 4.4): this Det(a,b)=0<=>2-cut correspondence and the risk score are defined on the base connected topology and do NOT apply to the 117 pairs where one member is already a single-line bridge (tests/test_lodf.py checks this split explicitly)."
+    - "struct_mw (fdna.lp.ScenarioLP, no linprog call) gives an exact discrete shed floor for pairs whose gen-less island only forms jointly (~20/820 pairs, median 3.85% of demand) -- explains part of the 34.9% superadditive rate in gen-less-only pairs (agent estimate, not independently re-verified this session)"
   rule: "connected pairs with 1/|Det| above the top-decile (screen) threshold route to exact generalized-LODF/direct recompute; below threshold, cheap single-outage-addition features are used (median error there was 1.7-1.8%)"
-  jensen_mechanism: "y(c) convex in c (LP duality, c enters only via variable bounds) => E_post[y(c)] >= y(E_post[c]); exact check on test table (scripts/p3_step1_jensen.py, no training) found the gap positive in 100% of 66 sampled rows and larger in P1 (wider posterior, 0.0042) than P2 (tighter, 0.0027), matching the pre-stated prediction. This is the candidate mechanism for why D_I2 beats A8/A9 by composing E_post[y(c)] properly rather than collapsing to first-moment features."
+  jensen_mechanism: >
+    CORRECTED (brief 4.1): y(c) convex in c (LP duality, c enters only via variable bounds, each expressed as its
+    own affine cap in ScenarioLP._bounds) => E_post[y(c)] >= y(E_post[c]). The exact check (scripts/p3_step1_jensen.py,
+    now evaluating ScenarioLP.y(c_bar) directly at the continuous posterior mean, not the nearest discrete CV row)
+    gives P1 mean gap 0.00462 (98.2% of 4,000 rows non-negative, small negatives at HiGHS solver-tolerance scale)
+    vs P2 mean gap 0.00325 (93.4% of 3,400 rows non-negative), matching the pre-stated direction. CAUSAL CAVEAT
+    (brief 4.1): this is a CANDIDATE mechanism for the D_I2-vs-A8/A9 effect, not a proven one -- A9's generic
+    regressor is not structurally capped at y(E[c]) just because the true posterior expectation exceeds it. The
+    discriminating test (explicit plug-in exact-composition predictor vs a learned-summary predictor on identical
+    posterior features) is planned, not yet run.

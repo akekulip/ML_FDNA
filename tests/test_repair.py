@@ -28,6 +28,20 @@ def test_or_aware_layer_represents_redundant_gateway_exactly_at_tau0():
         assert torch.allclose(o[:, u], want, atol=1e-3)
 
 
+def test_or_combine_default_max_independent_of_tau_on_fractional_inputs():
+    """Phase 4 correction 4.3: binary inputs can't distinguish max from noisy-OR (both give 0/1 on {0,1} gateways).
+    On FRACTIONAL inputs they differ (max(.3,.3)=.3, noisy-OR(.3,.3)=.51): the default or_combine='max' must give the
+    SAME gateway-group value at tau=0 and tau=0.05, i.e. the ablation changes only softmin temperature, not OR semantics."""
+    x = torch.full((1, 14), 0.7); x[0, comm.gw(1)] = 0.3; x[0, comm.gw(2)] = 0.3   # both parent gateways of gens 2,3 at 0.3
+    for tau in (0.0, 0.05):
+        m = repair.ReprInf(W, LV, head="meanfield", or_aware=True, tau=tau)        # default or_combine="max"
+        gws = torch.stack([x[:, comm.gw(g)] for g in range(comm.N_GW)], 1)
+        grp2 = gws[:, list(comm.PARENT_GW[2])].max(1).values                       # generator 2's gateway group, expected 0.3
+        assert torch.allclose(grp2, torch.tensor([0.3]), atol=1e-6)
+    m_noisy = repair.ReprInf(W, LV, head="meanfield", or_aware=True, tau=0.0, or_combine="noisy_or")
+    assert m_noisy.or_combine == "noisy_or" and m_noisy.fdna.tau == 0.0            # opt-in only, never the ablation default
+
+
 def test_flat_layer_cannot_represent_redundant_gateway():
     m = repair.ReprInf(W, LV, head="meanfield", or_aware=False, tau=0.0); _pin(m.fdna)
     x = torch.ones(1, 14); x[0, comm.gw(1)] = 0                     # one redundant gateway down, other up: truth says unit 4 is up
