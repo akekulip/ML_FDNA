@@ -35,3 +35,21 @@ def test_inference_models_forward_and_backward():
         assert lp.shape == (32, 1024)
         np.testing.assert_allclose(torch.logsumexp(lp, dim=1).detach().numpy(), 0.0, atol=1e-3)
         lp[:, 3].sum().backward()
+
+
+def test_bayes_structure_matches_exact_posterior_at_true_parameters():
+    from fdna.nn.bayes import BayesStructure
+    w = v2.build_world()
+    net = BayesStructure(w)
+    logit = lambda p: float(np.log(p / (1 - p)))
+    net.fail.data.fill_(logit(v2.P_FAIL)); net.group.data.fill_(logit(v2.P_GROUP)); net.stale.data.fill_(logit(0.2))
+    rng = np.random.default_rng(0)
+    st = v2.sample_states(w, rng, 12)
+    obs = v2.emit(w, st, 0.3, 0.2, rng)
+    lp = net(torch.tensor(belief.obs_tensor(obs))).detach().numpy()
+    exact = v2.posterior_over_controls(w, v2.posterior(w, obs, 0.2))
+    np.testing.assert_allclose(np.exp(lp), exact, atol=2e-4)
+    assert net.fail.numel() + net.group.numel() + 1 == 17
+    lp2 = net(torch.tensor(belief.obs_tensor(obs)))
+    lp2[:, 5].sum().backward()
+    assert net.fail.grad.abs().sum() > 0 and net.stale.grad.abs() > 0
