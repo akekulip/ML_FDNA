@@ -1,0 +1,56 @@
+# Locked hypothesis registry for Phase 2 (committed BEFORE any Phase-2 experiment ran).
+# Changes after a run starts must go to registry/exploratory.yaml and can never feed a confirmatory claim.
+version: 1
+seed_blocks:
+  train: [0, 99]
+  validation: [100, 119]
+  inspected_exploratory: [[200, 279], [300, 379]]   # already seen in Phase 1; screening only
+  confirm: [400, 479]        # opened once per hypothesis via src/fdna/blocks.py
+  replicate: [500, 579]
+  reserve: [600, 699]
+integrity:
+  max_confirmatory_hypotheses: 8
+  multiplicity: Holm across declared family; structure claims need intersection-union over controls
+  sesoi_rprec: 0.05          # where the best baseline is below 0.85; or 2x sample efficiency; wiring transfer 0.10
+  equivalence_bound: 0.02    # TOST
+  tuning: nested per (arm, training size), 40 TPE trials, same search-space width; report tuned vs shared spread
+  fdna_evaluated_before_v2_freeze: false
+v2_observation_model:   # frozen a priori (see prereg/SPEC_V2.md); parameters chosen on physical grounds, not by FDNA results
+  p_fail: 0.15
+  common_cause_groups: [[GW0, RTU0, RTU1, RTU2, RTU3], [GW1, GW2]]
+  p_group: 0.08
+  observed_flags: 13        # 10 unit poll-response flags + 3 gateway heartbeats
+  missing_prob_q: [0.1, 0.3]
+  stale_prob_s: [0.0, 0.2]   # a failed component is reported 'up' with prob s; never the reverse
+  report_all_cells: true
+hypotheses:
+  E1_headroom:            # SCREEN, no FDNA involved
+    tier: screen
+    claim: exact Bayes posterior-mean predictor beats the best tuned tree (A1 obs, A2 logic-features) on identical observations
+    metric: severe (y>0.01) R-precision per test operating point, N-2 outages, mean over operating points
+    data: train ops 0-99 (n in {25,100}), val 100-119, test 200-279 (exploratory)
+    proceed_if: oracle - best_tree >= 0.03 in at least one cell with q>=0.1 at n=100
+    diagnose_if: oracle - best_tree < 0.01 in every cell
+  B2_wiring_corruption:   # SCREEN, existing v1 benchmark
+    tier: screen
+    claim: with 10/20/30% wrong assumed wiring edges, a dependency layer that learns edges from outcomes beats tuned trees on raw flags
+    win: A5 - A1 >= 0.05 R-precision at 20% corruption (novel-control-vector N-2 cell), plus edge-recovery F1 reported
+    kill: A1 within 0.02 of A5 at every corruption level
+  B3_monotone:            # SCREEN
+    claim: a monotone-in-control value model beats a monotone-constrained GBM at n<=25 on novel control vectors
+    kill: within 0.02
+  B1_A5_confirm:          # CONFIRMATORY slot 1 (only if E1 passes and v2 is frozen)
+    tier: confirm
+    claim: FDNA/belief model A5 beats best of A1-A4 by >= 0.05 R-precision (or 2x fewer samples) and beats A6, A7
+    data: confirm block 400-479, all four (q,s) cells reported
+  # slots 2-8 reserved for hypotheses promoted from screens; each must be appended here BEFORE its confirm run.
+arms:
+  A1: tuned GBM on raw observations (missing = NaN) + electrical/physics features
+  A2: tuned GBM on deterministic structure-derived features from the observations (lower/upper bounds on commandable fraction per generator)
+  A2b: tuned GBM on exact posterior control-fraction marginals (ORACLE-INFORMATION reference, not a competitor)
+  A3: MLP on the same inputs as A1
+  A4: GNN with min/max aggregation on the dependency graph
+  A5: FDNA/belief layer (learnable strengths and criticalities, soft min, learned emission) + value head
+  A6: A5 with shuffled dependency edges
+  A7: unconstrained layer of identical size
+  oracle: exact posterior mean of the value table (Bayes-optimal given the generative model)
