@@ -1,0 +1,31 @@
+# Phase 3 / Step 2 — bounded FDNA repair comparison. Committed BEFORE any Step-2 arm is trained.
+# Status: EXPLORATORY screen on inspected block (test table ops 200-279, cells P1=v2b q=.7 s=.3 and P2=v2c q=.3 s=.2, REPS=3, N_INF=25000).
+# Any claim needs Step 5 (fresh block, new training draws). Nothing here may be reported as confirmatory.
+motivation_evidence: results/phase3/STEP1.md items 6-7 (current layer cannot represent CC & RTU & (GW1|GW2) at any tau; hard-min never tested)
+modules:   # all map obs -> log p(c | obs) over the 1024 control vectors; same encoder (prior, w1, w0, ancestor mask) as BeliefFDNA
+  I5_ref:          existing InfFDNA (flat mask, tau 0.05, mean-field head)              [reference]
+  I5_tau0.01:      ablation ii   (only tau changed)
+  I5_tau0:         ablation ii   (hard min)
+  I5_OR:           ablation i    (only change: gateway parents of each generator combined by noisy-OR of operabilities 1-prod(1-o) before the unit node; unit inputs = CC, RTU, gateway-group)
+  J_plain:         ablation iii  (only change: joint head. state posterior over the 16384 states = prior(x) * exp(sum_i x_i t_i(obs)); FDNA applied to each binary state, level probs by the same independent-unit product per state, p(c|obs)=sum_x post(x) M(x). prior = independent Bernoulli)
+  J_plain_CC:      ablation iii  (as J_plain but prior = common-cause mixture over v2.GROUPS with learnable group probs, i.e. shared CC/gateway/RTU-site failures)
+  I5_OR_hard:      combined mean-field repair (OR + tau 0)
+  J_OR_hard_CC:    COMBINED REPAIRED ARM (OR + hard min + joint head + common-cause prior)
+comparators:
+  L_indep:         ordinary dependency logic (ServiceGraph truth, one-hot p(c|x)), same state posterior as J_plain          -> separates FDNA algebra from generic dependency logic
+  L_CC:            ordinary dependency logic with the common-cause prior                                                   -> same, with shared causes
+  I2:              per-generator GBM product (generic, best earlier generic inference)
+  I1:              MLP
+  I8:              exact differentiable Bayes layer (known structure, learnable priors/stale)
+  exact:           true posterior (reference ceiling for inference)
+value_model: identical for every arm = D-style g(op,outage,c) trained on full-information rows, composed over top-64 posterior vectors (scripts/d_compose.py semantics)
+metrics:
+  inference:  mean NLL of the true control vector (per test row); KL(exact posterior || arm) averaged over rows
+  screening:  per-op R-precision on unseen N-2 rows, cluster bootstrap over operating points (evalutil.op_metrics)
+predictions_stated_in_advance:
+  - I5_OR improves NLL on units 4-7 dominated cases vs I5_ref (the representability failure is real). Expected R-precision movement <= ~0.01 (expectation, NOT a stopping rule).
+  - tau 0 vs 0.05 changes NLL slightly; gradients only reach the argmin under hard min, so failed optimisation is possible and will be reported, not tuned away.
+  - J_plain_CC and L_CC should beat J_plain / L_indep on NLL because the world has common-cause groups; if not, the joint head is not the bottleneck.
+  - J_OR_hard_CC is expected to be ~= L_CC (with alpha=1,beta=0,u=1 a hard-min OR-aware FDNA IS ordinary logic); a gap in favour of J_OR_hard_CC would be evidence that learned strength/criticality parameters carry something logic does not; a gap against would be a parametrisation cost. Either is reported.
+attribution_rule: any gain is attributed to FDNA's strength/criticality form only if J_OR_hard_CC (or another FDNA-parametrised arm) beats BOTH L_CC and I2/I8 on the matched metric; gains that L_CC also reaches are attributed to ordinary dependency logic.
+hyperparameters: NN grid same as d_compose screen (lr,wd in 4 combos), tuned per arm on validation NLL; g tuned per n as before; 3 reps.
