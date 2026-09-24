@@ -63,3 +63,15 @@ def test_assumed_world_equals_true_world_at_true_wiring_and_differs_when_corrupt
     p, u = wiring.corrupt(0.3, 5)
     bad = v2.build_world_assumed(p, u)
     assert (bad.cidx != w.cidx).mean() > 0.05
+
+
+def test_bayes_structure_robust_variant_has_one_extra_parameter_and_runs():
+    from fdna.nn.bayes import BayesStructure
+    w = v2.build_world()
+    a, b = BayesStructure(w), BayesStructure(w, robust=True)
+    assert sum(p.numel() for p in b.parameters()) == sum(p.numel() for p in a.parameters()) + 1
+    obs = np.random.default_rng(0).integers(-1, 2, size=(6, 13)).astype(np.int8)
+    lp = b(torch.tensor(belief.obs_tensor(obs)))
+    np.testing.assert_allclose(torch.logsumexp(lp, dim=1).detach().numpy(), 0.0, atol=1e-3)
+    lp[:, 2].sum().backward()
+    assert b.leak.grad.abs() > 0

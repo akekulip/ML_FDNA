@@ -15,6 +15,7 @@ from fdna.nn.bayes import BayesStructure
 D = "data_v2"
 VARIANT = os.environ.get("VARIANT", "v2b"); CELL_IDX = int(os.environ["CELL_IDX"]); TEST = os.environ.get("TEST", "test")
 NS = [int(x) for x in os.environ.get("N_LIST", "1000,5000").split(",")]; REPS = int(os.environ.get("REPS", 1))
+ROBUST = bool(int(os.environ.get("ROBUST", "0")))
 TUNE = os.environ.get("TUNE", "confirm" if TEST != "test" else "screen"); NJ = int(os.environ.get("N_JOBS", 6))
 GRID = {"v2": [(q, s) for q in (0.1, 0.3) for s in (0.0, 0.2)], "v2b": [(q, s) for q in (0.5, 0.7) for s in (0.0, 0.3)],
         "v2c": [(q, s) for q in (0.1, 0.3) for s in (0.0, 0.2)]}
@@ -72,8 +73,8 @@ for N in NS:
             for cs in (range(3) if rho > 0 else range(1)):
                 par, ug = wiring.corrupt(rho, 100 + cs)
                 wa = v2.build_world_assumed(par, ug)
-                mk = lambda wa=wa: BayesStructure(wa)
-                name = "I8_misspec"
+                mk = lambda wa=wa: BayesStructure(wa, robust=ROBUST)
+                name = "I8_misspec_robust" if ROBUST else "I8_misspec"
                 if (N, rho, cs) not in tuned:
                     best = None
                     for lr, wd in NN_GRID:
@@ -85,7 +86,7 @@ for N in NS:
                 net, _ = inference.fit_ce(mk, Etr, ytr, Eva, yva, lr=lr, wd=wd, seed=rep, epochs=60, patience=8)
                 evaluate(name, inference.predict_logp(net, Ete), N, rep, rows, mis_rho=rho, cseed=cs)
                 print(f"{VARIANT} N={N} rho={rho} cs={cs} {time.time()-t0:.0f}s", flush=True)
-out = f"{D}/inf8mis_{TEST}_{VARIANT}_{CELL_IDX}.parquet"
+out = f"{D}/inf8mis{'rob' if ROBUST else ''}_{TEST}_{VARIANT}_{CELL_IDX}.parquet"
 pd.DataFrame(rows).to_parquet(out)
 if TEST != "test":
     print("output sha256", close_block(TEST, slot, out))

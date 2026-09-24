@@ -13,7 +13,7 @@ NEG = -30.0
 
 
 class BayesStructure(nn.Module):
-    def __init__(self, world: v2.World, init_fail: float = 0.10, init_group: float = 0.10, init_stale: float = 0.10):
+    def __init__(self, world: v2.World, init_fail: float = 0.10, init_group: float = 0.10, init_stale: float = 0.10, robust: bool = False):
         super().__init__()
         n = v2.N_COMP
         down = torch.tensor(~world.X, dtype=torch.float32)                    # (S, 14)
@@ -33,6 +33,9 @@ class BayesStructure(nn.Module):
         self.fail = nn.Parameter(torch.full((n,), logit(init_fail)))
         self.group = nn.Parameter(torch.full((len(v2.GROUPS),), logit(init_group)))
         self.stale = nn.Parameter(torch.tensor(logit(init_stale)))
+        self.robust = robust
+        if robust:                                   # ONE extra learnable parameter: P(report 'down' | truth 'up')
+            self.leak = nn.Parameter(torch.tensor(logit(0.05)))
         self.n_cv = len(world.CV)
 
     def log_prior(self) -> torch.Tensor:
@@ -48,7 +51,8 @@ class BayesStructure(nn.Module):
     def forward(self, e: torch.Tensor) -> torch.Tensor:
         s = torch.sigmoid(self.stale).clamp(1e-6, 1 - 1e-6)
         A = torch.where(self.T > 0, torch.zeros_like(self.T), torch.log(s).expand_as(self.T))            # log e(1 | truth)
-        B = torch.where(self.T > 0, torch.full_like(self.T, NEG), torch.log1p(-s).expand_as(self.T))     # log e(0 | truth)
+        up_down = torch.log(torch.sigmoid(self.leak).clamp(1e-6, 1 - 1e-6)) if self.robust else NEG
+        B = torch.where(self.T > 0, torch.full_like(self.T, 1.0) * up_down, torch.log1p(-s).expand_as(self.T))   # log e(0 | truth)
         ll = e[:, :, 0] @ A.T + e[:, :, 1] @ B.T
         post = torch.softmax(self.log_prior()[None] + ll, dim=1)
         pc = torch.zeros(len(e), self.n_cv, device=e.device).index_add_(1, self.cidx, post)
