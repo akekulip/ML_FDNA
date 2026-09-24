@@ -121,3 +121,20 @@ inference_only_branch:   # registered 2026-09-24 ~02:10, before any inference-on
     INF_P1: {cell: P1, block: confirm 400-479, claim: I5 beats best(I1,I2,I3) by >= 0.05 R-precision at some N <= 5000 (or matches them with 5x fewer samples) AND beats I6 and I7}
     INF_P2: {cell: P2, block: confirm 400-479, claim: same}
   family: confirmatory hypotheses declared so far = B1_P1, B1_P2, INF_P1, INF_P2 (4 of max 8); Holm over these four.
+  B1_end_to_end_screen:   # recorded 2026-09-24 ~02:58, exploratory block 200-279, 3 reps, n in {25,100}
+    status: killed_as_hypothesis; confirmatory slots B1_P1 and B1_P2 WITHDRAWN and never opened (no look consumed)
+    result: A5 minus best(A1-A4) = -0.084/-0.057 (P1, n=25/100) and -0.038/-0.039 (P2); A5 beats shuffled A6 and unconstrained A7 only in P2 (+0.074/+0.052 and +0.062/+0.028); in P1 A5 is not better than A6/A7. Best learnable arm everywhere: A2 (deterministic logic-feature GBM).
+    reference_arms: exact-control GBM 0.840/0.871; exact-posterior-marginal-feature GBM 0.757/0.772 (P1), 0.785/0.806 (P2); Bayes oracle 0.865 (P1), 0.912 (P2).
+  E1b_definition_flaw:
+    finding: E1b (exact-control GBM minus best observation tree) includes irreducible information loss; the reducible inference headroom is R(GBM given exact posterior features) - R(best observation tree) = +0.021/+0.015 (P1, n=25/100) and +0.009/+0.007 (P2), i.e. below 0.03. Better inference cannot help a tree value model by more than ~0.02 on this benchmark.
+    consequence: FDNA-as-inference-feature-extractor for trees is bounded at ~+0.02 (hybrid variant not run, bound recorded).
+decomposed_branch:   # registered before any decomposed-composition code was written or run
+  idea: learning with privileged information from simulation. Learn the value model g(op, outage, control vector) on FULL-information rows (true control vector known in simulation), learn inference p(c | observations) separately on cheap (obs, c) pairs, and compose at test time: prediction = sum_c p_hat(c|obs) g(op, outage, c) over the top-16 posterior vectors. Same LP-labelled row budget as the end-to-end arms.
+  arms: D_exact (exact posterior, upper reference, not a competitor); D_I1, D_I2, D_I3, D_I5, D_I6, D_I7 (same g, different learned inference modules trained on N=25,000 (obs,c) samples); end-to-end baselines A1-A7 from the B1 screen.
+  screen: block 200-279, cells P1 and P2, n in {25,100}, 3 reps.
+  confirmatory_slots:
+    D_P1: {cell: P1, block: confirm 400-479, claim: best of D_I* beats best end-to-end arm (A1-A7) by >= 0.05 R-precision at n=25 or n=100}
+    D_P2: {cell: P2, same}
+    DS_P1: {cell: P1, claim: D_I5 beats best(D_I1, D_I2, D_I3) by >= 0.05 and beats D_I6 and D_I7 (the FDNA-specific claim)}
+    DS_P2: {cell: P2, same}
+  family_now: INF_P1, INF_P2, D_P1, D_P2, DS_P1, DS_P2 (6 of max 8; B1_P1/B1_P2 withdrawn unopened); Holm over the six.
