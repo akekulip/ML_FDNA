@@ -96,3 +96,19 @@ variants_v2:   # pre-registered before any run; chosen on physical grounds (disa
     status: failed_gate (max headroom +0.0273 [0.0221,0.0325] at q=0.3,s=0.2 < 0.03; other cells -0.0142, +0.0073, -0.0017)
     diagnosis: observations pin down the control state (oracle R-precision 0.96-0.995); partial observation at these levels costs tuned trees almost nothing. Exact-c GBM 0.861 vs best obs tree 0.834-0.875 (tuning noise ~0.015).
     next: pre-registered variants v2b and v2c (registered before running) evaluated on the same gate; v2 stays frozen.
+
+  E1b_variants:
+    status: v2b and v2c pass; v2 fails (see prereg/SPEC_V2.md addendum)
+    v2b: [+0.0178, +0.0638, +0.0540, +0.1020]   # q=0.5/s=0, q=0.5/s=0.3, q=0.7/s=0, q=0.7/s=0.3
+    v2c: [+0.0093, +0.0363, +0.0237, +0.0640]   # q=0.1/s=0, q=0.1/s=0.2, q=0.3/s=0, q=0.3/s=0.2
+confirmatory_slots:
+  B1_P1_A5_vs_baselines:
+    tier: confirm
+    cell: v2b q=0.7 s=0.3
+    claim: A5 (FDNA belief network) beats the best of A1-A4 by >= 0.05 R-precision (or matches them with 2x fewer training operating points) AND beats A6 and A7
+    data: confirm block 400-479, n=25 and n=100 training operating points, 5 replicates, nested-tuned neural arms
+    decision: intersection-union; Holm across the declared family
+  B1_P2_A5_vs_baselines:
+    tier: confirm
+    cell: v2c q=0.3 s=0.2
+    claim: same as P1
