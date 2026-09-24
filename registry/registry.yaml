@@ -65,3 +65,8 @@ outcomes:   # appended after runs; never edited retroactively
   B3v2_monotone_rescaled:
     status: killed_as_hypothesis
     result: nn_monotone is 0.06-0.13 below monotone GBM at n<=25 (novel cell); monotone GBM is ~0.025 below free GBM; monotone prior gives no advantage. Exploratory test block 200-279, 3 reps.
+  B2_wiring_corruption:
+    status: killed_as_hypothesis
+    result: at rho=0.2 (3 corruption seeds, 2 reps, novel N-2 cell) A5 (learned service graph + monotone head) is 0.096-0.159 BELOW A1 (tuned GBM on raw flags); GBM with true wiring (A2t) is not better than GBM on raw flags (0.796 vs 0.806 at n=25), so wiring knowledge gives trees nothing.
+    side_finding: A5 beats the generic MLP on raw flags (A3) by +0.014/+0.047/+0.092 at n=10/25/100 (novel cell) despite 20% wrong edges; learning edges beats freezing them by ~0.02 at n=100; unit->generator assignment recovery degrades with data (0.83 -> 0.48) i.e. edges are weakly identifiable from shed outcomes.
+    diagnosis: trees already learn the dependency rule from raw flags (v1 Q1), so structure has nothing to add for trees; structure helps neural networks only.
