@@ -78,3 +78,7 @@ outcomes_misspecification_sweep:   # recorded ~05:58, exploratory block, I8 with
 outcomes_B1v2_softmin_fix:   # recorded ~06:00, exploratory block, 3 reps, normalised softmin
   result: A5 minus best(A1-A4) = -0.102/-0.074 (P1, n=25/100), -0.062/-0.074 (P2); A5 minus shuffled A6 = +0.004/+0.010 (P1), +0.089/+0.035 (P2); A5 minus unconstrained A7 = -0.011/-0.008 (P1), +0.026/-0.005 (P2). Best learnable arm remains A2 (logic-feature GBM).
   decision: the B1 kill stands after the layer fix; the softmin bug was not hiding an FDNA advantage. B1_P1/B1_P2 stay withdrawn and unopened.
+fewshot_n2:   # registered ~06:02 before coding/running. EXPLORATORY (no confirm slot).
+  question: if the dominant error is N-1 -> N-2 extrapolation, how many labelled N-2 pairs per training operating point recover the exact-control GBM?
+  design: exact control vector known; 25 training operating points (ops 0-24); N-0/N-1 rows as before plus k N-2 pairs per operating point (k in {0,10,30,100}; pairs from a separate value table generated with the same rule as the test pairs but different operating points) with K=20 state draws each; tested on the unseen N-2 pairs of block 200-279 (same rows/keys as the value ladder); R-precision at 1%; GBM tuned per k (12 trials), 3 replicates (random choice of the k pairs).
+  reading: gap closed = (R_k - R_0) / (1 - R_0). No threshold rule; reported as a label-efficiency curve.
