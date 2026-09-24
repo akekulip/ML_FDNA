@@ -11,8 +11,8 @@
 2. **Structure cannot buy much on inference.** An exact differentiable Bayesian layer over the known graph (17 parameters) gets within KL 0.02 of the exact
    posterior from 1,000 samples, yet is worth at most ~0.01 R-precision over a per-generator GBM (secondary scoring) and nothing under the registered
    scoring. FDNA's mean-field operability algebra is dominated by both.
-3. **Structure is fragile.** With 10% of the wiring wrong, the exact-structure model falls 0.07-0.13 below the wiring-agnostic learner (partly a property of its
-   zero-leak emission; a robust variant is reported in PHASE2).
+3. **Structure is fragile.** With 10% of the wiring wrong, the exact-structure model falls 0.07-0.13 below the wiring-agnostic learner; a robust variant with a
+   learnable leak does not fix it, and all corruption seeds stay below the generic learner (one corruption family, exploratory).
 4. **The dominant error is not dependency modelling.** Unseen N-2 generalisation under the train-on-N-1 protocol (0.93-0.97 on N-1 rows vs 0.79-0.89 on N-2 with
    exact control); better features do not fix it; 10 labelled N-2 pairs per operating point close 25-40% of it.
 5. **Method lessons.** Gates that compare against an exact-control model conflate irreducible information loss with reducible inference headroom; neural

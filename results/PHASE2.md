@@ -12,9 +12,9 @@ the confirm block (400-479) and, after it was confirmed, once on the replicate b
 3. **Better inference is worth at most ~0.01-0.03 R-precision here.** An exact differentiable Bayesian layer over the known dependency graph (17 learnable
    parameters) reaches KL 0.02 to the exact posterior at N=1,000 samples. Under the secondary P(severe) scoring (ranking-optimal for exact posteriors) it equals the
    oracle and is within ~0.01 of the best generic module; under the registered expected-shed scoring the exact posterior is not the ranking-optimal statistic and
-   I8 is up to 0.027 *below* the per-generator GBM. With 10% of the wiring wrong (2 of 17 edges) I8 falls 0.07-0.13 below the wiring-agnostic learner; this
-   fragility is partly built into its zero-leak emission model (a robust 1->0 leak variant was not tested), so it is a statement about this model, not about
-   structured inference in general.
+   I8 is up to 0.027 *below* the per-generator GBM. With 10% of the wiring wrong (2 of 17 edges) I8 falls 0.07-0.13 below the wiring-agnostic learner; a robust variant with a
+   learnable 1->0 leak does not fix this (0.766 vs 0.757 at rho=0.1, P1), and every one of the 3 corruption seeds stays below the generic learner, though the seed
+   spread is large (0.59-0.80 at rho=0.2). One corruption family, exploratory.
 4. **The dominant error is elsewhere:** unseen N-2 generalisation under the train-on-N-1 protocol (0.93-0.97 on N-1 rows vs 0.79-0.89 on N-2 pairs
    with the exact control vector known). Better features do not close it; 10 labelled N-2 pairs per operating point close 25-40% of it.
 5. **Methodological lessons that changed conclusions** (each found by inspecting reference arms or by independent review, and fixed): two of my own
@@ -31,7 +31,7 @@ the confirm block (400-479) and, after it was confirmed, once on the replicate b
 | B1 end-to-end (rerun, fixed layer) | FDNA belief net A5 vs best of A1-A4 | -0.121/-0.091 (P1), -0.090/-0.110 (P2) (n=25/100); vs unconstrained A7 -0.027..+0.005 (P1), -0.010/-0.038 (P2); vs shuffled A6 -0.006/+0.027 (P1), +0.104/+0.018 (P2) | killed |
 | Inference-only | FDNA mean-field I5 vs best generic at N=5000 | -0.006 (P1), -0.021 (P2); vs shuffled +0.04; KL to exact 1.0-2.3 (generic 0.03-0.6) | null |
 | I8 exact Bayes structure | structure-known posterior vs best generic at N=1000 | -0.019 (P1), +0.002 (P2); KL 0.01-0.02 | null (ceiling) |
-| Misspecification sweep | I8 with rho of edges wrong vs best generic | rho=0.1: -0.115/-0.073; 0.2: -0.19/-0.20; 0.3: -0.21/-0.18 (N=1000, P1/P2); zero-leak emission, one corruption family, 1 replicate | this structured model is fragile |
+| Misspecification sweep | I8 with rho of edges wrong vs best generic | rho=0.1: -0.115/-0.073; 0.2: -0.19/-0.20; 0.3: -0.21/-0.18 (N=1000, P1/P2); zero-leak emission, one corruption family, 1 replicate | fragile; not fixed by a learnable leak |
 | Decomposed composition | best D arm vs strongest end-to-end (A8) | +0.015..+0.039 (below 0.05) | carried to confirm (H5 amendment) |
 | Value ladder | is the value gap a feature artifact? | R1/R2 close -0.28..+0.13 of the gap | not an artifact |
 | Few-shot N-2 | labelled N-2 pairs per operating point | gap closed 25%/29%/39% (k=10/30/100, 1% threshold); test pairs are the same 820-pair set, so 'unseen' means unseen operating points | label-limited (qualified) |

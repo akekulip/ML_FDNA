@@ -14,7 +14,7 @@ The exploratory block was inspected in Phase 1 and reused by every Phase-2 scree
 | 7 | Inference-only branch, first run (invalid), rerun | registered before coding | null after the fix | yes (-> I8) |
 | 8 | Decomposed composition, first run (invalid), rerun (top-64, +A8) | registered before coding; top-16 -> 64 and A8 added after the first run | +0.015..+0.039 over the strongest end-to-end arm | yes |
 | 9 | I8 exact differentiable Bayesian layer | registered after seeing the inference KL results, before coding | null in R-precision, near-exact posterior | yes |
-| 10 | Wiring-misspecification sweep for I8 | committed before running (same commit as its script) | I8 falls 0.07-0.21 below the generic module with 10-30% wrong edges | - |
+| 10 | Wiring-misspecification sweep for I8, then robust-emission variant (committed before running) | committed before running (same commit as its script) | I8 falls 0.07-0.21 below the generic module with 10-30% wrong edges; a learnable leak does not fix it | - |
 | 11 | Value ladder (feature artifact?) | committed before running | not a feature artifact | - |
 | 12 | Extra composition cells (v2b/v2c other cells) | exploratory | started and STOPPED early to free the GPU; no results, cells beyond P1/P2 were not evaluated | - |
 | 12b | Few-shot N-2 label efficiency | committed before running | 25%/29%/39% of the gap closed at k=10/30/100 | - |
