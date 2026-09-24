@@ -83,7 +83,7 @@ for N in NS:
                     tuned[(N, rho, cs)] = best[1]
                 lr, wd = tuned[(N, rho, cs)]
                 net, _ = inference.fit_ce(mk, Etr, ytr, Eva, yva, lr=lr, wd=wd, seed=rep, epochs=60, patience=8)
-                evaluate(name, inference.predict_logp(net, Ete), N, rep, rows, rho=rho, cseed=cs)
+                evaluate(name, inference.predict_logp(net, Ete), N, rep, rows, mis_rho=rho, cseed=cs)
                 print(f"{VARIANT} N={N} rho={rho} cs={cs} {time.time()-t0:.0f}s", flush=True)
 out = f"{D}/inf8mis_{TEST}_{VARIANT}_{CELL_IDX}.parquet"
 pd.DataFrame(rows).to_parquet(out)
