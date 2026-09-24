@@ -1,0 +1,78 @@
+
+######## evaluation set: fresh (80 operating points) ########
+
+-- stratum n2_unseen|novel: mean R-precision by training operating points n (replicates and OPs averaged) --
+n                     5      10     25     50     100
+model                                                
+elec                0.467  0.511  0.541  0.541  0.544
+elec+ctrl           0.514  0.590  0.693  0.689  0.706
+elec+phys+ctrl      0.621  0.717  0.773  0.789  0.801
+elec+phys+raw_comm  0.688  0.745  0.796  0.809  0.815
+elec+raw_comm       0.561  0.670  0.694  0.697  0.713
+   paired (explicit - raw) PRIMARY pair (physics): n=5: -0.0672 [-0.0797,-0.0549]  n=10: -0.0278 [-0.0357,-0.0198]  n=25: -0.0229 [-0.0303,-0.0154]  n=50: -0.0202 [-0.0295,-0.0111]  n=100: -0.0138 [-0.0239,-0.0041]
+   paired (explicit - raw) secondary pair (no physics): n=5: -0.0469 [-0.0640,-0.0310]  n=10: -0.0797 [-0.1008,-0.0600]  n=25: -0.0004 [-0.0087,+0.0071]  n=50: -0.0074 [-0.0177,+0.0025]  n=100: -0.0065 [-0.0196,+0.0051]
+
+-- stratum n2_unseen|familiar: mean R-precision by training operating points n (replicates and OPs averaged) --
+n                     5      10     25     50     100
+model                                                
+elec                0.686  0.724  0.737  0.743  0.749
+elec+ctrl           0.724  0.791  0.837  0.844  0.853
+elec+phys+ctrl      0.867  0.897  0.919  0.928  0.935
+elec+phys+raw_comm  0.880  0.894  0.915  0.923  0.929
+elec+raw_comm       0.683  0.806  0.841  0.850  0.862
+   paired (explicit - raw) PRIMARY pair (physics): n=5: -0.0124 [-0.0160,-0.0088]  n=10: +0.0038 [+0.0007,+0.0068]  n=25: +0.0048 [+0.0025,+0.0072]  n=50: +0.0044 [+0.0021,+0.0068]  n=100: +0.0062 [+0.0040,+0.0086]
+   paired (explicit - raw) secondary pair (no physics): n=5: +0.0419 [+0.0362,+0.0475]  n=10: -0.0144 [-0.0193,-0.0096]  n=25: -0.0041 [-0.0071,-0.0012]  n=50: -0.0059 [-0.0095,-0.0025]  n=100: -0.0087 [-0.0130,-0.0046]
+
+-- stratum n2_unseen: mean R-precision by training operating points n (replicates and OPs averaged) --
+n                     5      10     25     50     100
+model                                                
+elec                0.551  0.594  0.611  0.621  0.627
+elec+ctrl           0.615  0.692  0.770  0.770  0.784
+elec+phys+ctrl      0.748  0.808  0.848  0.860  0.870
+elec+phys+raw_comm  0.787  0.820  0.854  0.865  0.872
+elec+raw_comm       0.620  0.746  0.773  0.779  0.792
+   paired (explicit - raw) PRIMARY pair (physics): n=5: -0.0381 [-0.0443,-0.0321]  n=10: -0.0125 [-0.0169,-0.0082]  n=25: -0.0067 [-0.0111,-0.0023]  n=50: -0.0051 [-0.0099,-0.0003]  n=100: -0.0018 [-0.0072,+0.0037]
+   paired (explicit - raw) secondary pair (no physics): n=5: -0.0054 [-0.0124,+0.0016]  n=10: -0.0539 [-0.0645,-0.0432]  n=25: -0.0033 [-0.0081,+0.0013]  n=50: -0.0088 [-0.0151,-0.0030]  n=100: -0.0079 [-0.0142,-0.0018]
+
+H1 (all of n=5,10,25 have diff >= +0.05 and CI lower bound > 0): NOT SUPPORTED [False, False, False]
+
+sample-size ratio (smallest n whose mean R-precision on n2_unseen|novel reaches the OTHER set's n=100 value):
+   elec+phys+ctrl reaches elec+phys+raw_comm@100 (0.815) at n = >100
+   elec+phys+raw_comm reaches elec+phys+ctrl@100 (0.801) at n = 50
+   elec+ctrl reaches elec+raw_comm@100 (0.713) at n = >100
+   elec+raw_comm reaches elec+ctrl@100 (0.706) at n = 100
+
+######## evaluation set: exploratory (80 operating points) ########
+
+-- stratum n2_unseen|novel: mean R-precision by training operating points n (replicates and OPs averaged) --
+n                     5      10     25     50     100
+model                                                
+elec                0.479  0.532  0.562  0.561  0.566
+elec+ctrl           0.529  0.595  0.705  0.704  0.715
+elec+phys+ctrl      0.641  0.728  0.780  0.800  0.815
+elec+phys+raw_comm  0.702  0.756  0.806  0.817  0.827
+elec+raw_comm       0.570  0.682  0.706  0.708  0.720
+   paired (explicit - raw) PRIMARY pair (physics): n=5: -0.0604 [-0.0726,-0.0481]  n=10: -0.0280 [-0.0355,-0.0196]  n=25: -0.0254 [-0.0329,-0.0176]  n=50: -0.0167 [-0.0249,-0.0082]  n=100: -0.0126 [-0.0207,-0.0045]
+   paired (explicit - raw) secondary pair (no physics): n=5: -0.0411 [-0.0565,-0.0267]  n=10: -0.0866 [-0.1047,-0.0690]  n=25: -0.0007 [-0.0093,+0.0077]  n=50: -0.0042 [-0.0131,+0.0051]  n=100: -0.0051 [-0.0177,+0.0060]
+
+-- stratum n2_unseen|familiar: mean R-precision by training operating points n (replicates and OPs averaged) --
+n                     5      10     25     50     100
+model                                                
+elec                0.684  0.726  0.742  0.746  0.753
+elec+ctrl           0.724  0.784  0.831  0.838  0.846
+elec+phys+ctrl      0.869  0.895  0.915  0.925  0.934
+elec+phys+raw_comm  0.878  0.887  0.912  0.920  0.925
+elec+raw_comm       0.682  0.799  0.837  0.841  0.851
+   paired (explicit - raw) PRIMARY pair (physics): n=5: -0.0087 [-0.0122,-0.0054]  n=10: +0.0079 [+0.0047,+0.0112]  n=25: +0.0039 [+0.0015,+0.0062]  n=50: +0.0058 [+0.0033,+0.0084]  n=100: +0.0089 [+0.0062,+0.0116]
+   paired (explicit - raw) secondary pair (no physics): n=5: +0.0423 [+0.0368,+0.0480]  n=10: -0.0150 [-0.0189,-0.0110]  n=25: -0.0052 [-0.0093,-0.0011]  n=50: -0.0028 [-0.0063,+0.0008]  n=100: -0.0054 [-0.0095,-0.0014]
+
+-- stratum n2_unseen: mean R-precision by training operating points n (replicates and OPs averaged) --
+n                     5      10     25     50     100
+model                                                
+elec                0.559  0.607  0.625  0.632  0.640
+elec+ctrl           0.617  0.690  0.771  0.772  0.783
+elec+phys+ctrl      0.754  0.811  0.847  0.861  0.873
+elec+phys+raw_comm  0.790  0.820  0.856  0.866  0.874
+elec+raw_comm       0.624  0.746  0.774  0.779  0.789
+   paired (explicit - raw) PRIMARY pair (physics): n=5: -0.0352 [-0.0421,-0.0282]  n=10: -0.0094 [-0.0140,-0.0047]  n=25: -0.0091 [-0.0134,-0.0048]  n=50: -0.0048 [-0.0093,-0.0004]  n=100: -0.0004 [-0.0053,+0.0043]
+   paired (explicit - raw) secondary pair (no physics): n=5: -0.0067 [-0.0155,+0.0018]  n=10: -0.0569 [-0.0668,-0.0470]  n=25: -0.0034 [-0.0089,+0.0019]  n=50: -0.0067 [-0.0134,-0.0001]  n=100: -0.0067 [-0.0151,+0.0004]

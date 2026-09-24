@@ -1,7 +1,9 @@
-# WORKING_NOTES — ML_FDNA Milestone 1
-Task: validated reference generator + strong non-FDNA baselines (plan: ~/.claude/plans/using-brainstorming-research-ideas-and-d-witty-stonebraker.md).
-Status (2026-09-23): spec frozen (prereg/SPEC.md, configs/spec.json); LP + comm layer + tests (5 pass); calibration done
-(kappa 1.6, ramp 0.3, local 40); dataset in data/ (5.3M rows, ~8.5 min on 30 cores); gate0 report run; baselines running.
-Next: read baseline table, write results/MILESTONE1.md, code-review + qa-verify, decide with Philip whether FDNA layers are justified.
-Decisions/deviations: primary endpoint amended to R-precision (prevalence 30-36%, 10% budget caps recall ~0.28); GBT tuned on val N-2.
-Commits: authored by Philip, no attribution lines.
+# WORKING_NOTES — ML_FDNA
+Plan: ~/.claude/plans/using-brainstorming-research-ideas-and-d-witty-stonebraker.md (revision 3, approved).
+Status (2026-09-23): Milestone 1 and 1b done locally. Steps 1-4 complete: reproducibility fixes, physical-assumption pilot, report
+(results/MILESTONE1.md), learning-curve experiment (results/LEARNING_CURVE.md): H1 NOT SUPPORTED (explicit control features worse
+than raw flags at n<=25). Decision rule: stop FDNA architecture claim on this benchmark.
+Reviews: qa-verifier PASS (6/6); code-reviewer found 4 major issues, all fixed (hash scope, cache key, tracked results, report wording).
+Repo: 21 tests pass. Label spec hash: scripts/spec_hash.py. data/ and data_fresh/ are gitignored (regenerate: scripts/gen_dataset.py).
+Local commits ahead of origin (pushed head: 31aff42). Push only when Philip says so. Commits authored by Philip, no attribution lines.
+Open: decide next question with Philip (uncertain/stale dependency info; changed wiring); Roy & Hylviu notes in results/LITERATURE_NOTES.md.
