@@ -46,7 +46,7 @@ def fit(model, inputs_tr, y_tr, inputs_va, y_va, epochs=60, lr=2e-3, bs=2048, pa
     return model, best
 
 
-def predict(model, inputs, bs=200_000):
+def predict(model, inputs, bs=8192):
     model.eval()
     X = to_t(*inputs)
     out = []
