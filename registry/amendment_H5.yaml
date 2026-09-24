@@ -16,3 +16,10 @@ tiers:
 statistics: src/fdna/rules.py (two-way bootstrap over test operating points AND training replicates, p floor (1+count)/(B+1), NaNs refused); dry-run on the exploratory block before opening.
 what_will_be_said_regardless_of_outcome: results are reported in these tiers; a tier-1 failure is expected from the screen and will be stated as such; the SESOI is not revisited.
 dead_claims_not_to_be_opened: INF_P1, INF_P2, DS_P1, DS_P2, INF8_P1, INF8_P2 (null screens). Replicate block 500-579 and reserve 600-699 stay unopened.
+outcome_confirm_block:   # recorded 2026-09-24 ~06:10; evaluated with scripts/confirm_D.py exactly as declared above
+  P1: {mean_diff: +0.0357, interval90: [+0.0294, +0.0424]}
+  P2: {mean_diff: +0.0249, interval90: [+0.0194, +0.0309]}
+  joint: tier1 (>= 0.05) NOT supported; tier2 (reliable but small, both cells) SUPPORTED (max p = 1/20001 floor); tier3 (negligible within +-0.02) NOT supported
+  reading: training with simulator-side privileged information (decomposition) gives a small, reproducible gain of about +0.025..+0.036 R-precision over the strongest end-to-end baseline that also receives the cheap (obs, c) pairs. Below the pre-declared SESOI. Not an FDNA result (the treatment arm is the generic per-generator GBM inference module).
+  locks: registry/locks/confirm__D_P1.lock and confirm__D_P2.lock (commit 3f77a7a; output sha256 recorded)
+  next: one replication on block 500-579 (opens replicate__D_P1 / replicate__D_P2), permitted because the claim was confirmed at tier 2.

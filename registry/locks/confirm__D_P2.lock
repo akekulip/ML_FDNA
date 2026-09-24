@@ -1,1 +1,1 @@
-{"block": "confirm", "slot": "D_P2", "commit": "3f77a7a056bd6cb77038080f12a166d22a299f2b", "time": "2026-09-24T04:57:52"}
+{"block": "confirm", "slot": "D_P2", "commit": "3f77a7a056bd6cb77038080f12a166d22a299f2b", "time": "2026-09-24T04:57:52", "output": "data_v2/d_confirm_v2c_3.parquet", "output_sha256": "addfbff2691d8d3d5b365f30fb8ad7e149e213895a1578845ebd79f5cc29c4ba"}
