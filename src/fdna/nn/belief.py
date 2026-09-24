@@ -88,7 +88,7 @@ class MinMaxGNN(nn.Module):
         self.out = nn.Linear(N_F * hidden, comm.N_REMOTE_GEN)
         self.head = MonotoneValue(d_x, comm.N_REMOTE_GEN)
 
-    def controls(self, e: torch.Tensor) -> torch.Tensor:
+    def states(self, e: torch.Tensor) -> torch.Tensor:
         B = e.shape[0]
         h = self.emb[None].expand(B, -1, -1).clone()
         h[:, N_C:, :] = h[:, N_C:, :] + self.inp(e)
@@ -99,7 +99,10 @@ class MinMaxGNN(nn.Module):
             mn = torch.where(nb, hx, torch.full_like(hx, big)).min(dim=2).values
             mx = torch.where(nb, hx, torch.full_like(hx, -big)).max(dim=2).values
             h = torch.relu(lin(torch.cat([h, mn, mx], dim=2)))
-        return torch.sigmoid(self.out(h[:, N_C:, :].reshape(B, -1)))
+        return h[:, N_C:, :].reshape(B, -1)
+
+    def controls(self, e: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(self.out(self.states(e)))
 
     def forward(self, x: torch.Tensor, e: torch.Tensor) -> torch.Tensor:
         return self.head(x, self.controls(e))
