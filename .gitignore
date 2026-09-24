@@ -7,3 +7,5 @@ data_fresh/
 .claude/
 data_v2/
 data_v2_*/
+data_hik/*.parquet
+data_hik/*.npz
