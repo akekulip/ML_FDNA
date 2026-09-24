@@ -31,3 +31,9 @@ reruns_launched:
   - scripts/inf_screen.py (P1, P2; N in {1e3,5e3,2.5e4,1.25e5}; 3 reps)
   - scripts/d_compose.py (P1, P2; n in {25,100}; 3 reps; top-64)
   - scripts/b1_arms.py as B1v2_softmin_fix (P1, P2; n in {25,100}; 3 reps)
+outcomes_after_reruns:   # recorded 2026-09-24 ~04:25 (exploratory block 200-279, 3 reps, softmin-fixed layer, top-64 composition)
+  D_composition_screen:
+    result: best decomposed arm minus best end-to-end (A8) = +0.028 (P1,n=25), +0.039 (P1,n=100), +0.015 (P2,n=25), +0.031 (P2,n=100), all CIs exclude 0 but below the 0.05 SESOI at the primary size n=25
+    fdna_specific: D_I5 minus best generic inference (I1,I2,I3) = -0.002/+0.001/-0.002/-0.003 (no advantage); D_I5 minus shuffled D_I6 = +0.013..+0.019; minus unconstrained D_I7 = +0.003..+0.008
+    decision: D_P1, D_P2, DS_P1, DS_P2 NOT sent to the confirm block (screen effect below SESOI / null); recorded as exploratory results. No confirmatory look consumed.
+    note: learned inference modules score slightly above composition with the EXACT posterior (D_exact) - the exact posterior mean is not the ranking-optimal decision rule (see oracle_note).
