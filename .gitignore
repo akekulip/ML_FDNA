@@ -5,3 +5,5 @@ data/
 data_fresh/
 .pytest_cache/
 .claude/
+data_v2/
+data_v2_*/
