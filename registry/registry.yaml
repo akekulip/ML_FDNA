@@ -112,3 +112,12 @@ confirmatory_slots:
     tier: confirm
     cell: v2c q=0.3 s=0.2
     claim: same as P1
+inference_only_branch:   # registered 2026-09-24 ~02:10, before any inference-only code was run
+  rationale: end-to-end error is dominated by electrical value-function learning (oracle 0.87-0.99 vs exact-control GBM 0.86); structure can only help the inference part. Isolate it.
+  design: learned inference modules map partial observations -> distribution over the 1024 control vectors, trained by cross-entropy on the TRUE control vector using (obs, c) pairs drawn from the generative model (no LP labels needed, so training sizes N in {1e3, 5e3, 2.5e4, 1.25e5}); evaluated by expected shed sum_c p_hat(c) V(op,outage,c) with the EXACT value table (diagnostic use of V; no learner sees it), reporting per-operating-point R-precision, and KL to the exact posterior.
+  arms: I1 MLP (1024-way softmax); I2 product-of-per-generator GBMs (4-class each); I3 generic min/max GNN with 1024-way head; I5 FDNA belief network with mean-field per-generator distribution (operabilities -> P(c_g) via independent unit Bernoullis); I6 = I5 with shuffled dependency masks; I7 = I5 with all-ones masks; oracle exact posterior (upper bound). Every arm gets the same 6-trial (lr, weight-decay) search on validation data.
+  screen_data: test block 200-279 (exploratory); primary cells P1 (v2b q=0.7 s=0.3), P2 (v2c q=0.3 s=0.2); all 12 cells reported.
+  confirmatory_slots:
+    INF_P1: {cell: P1, block: confirm 400-479, claim: I5 beats best(I1,I2,I3) by >= 0.05 R-precision at some N <= 5000 (or matches them with 5x fewer samples) AND beats I6 and I7}
+    INF_P2: {cell: P2, block: confirm 400-479, claim: same}
+  family: confirmatory hypotheses declared so far = B1_P1, B1_P2, INF_P1, INF_P2 (4 of max 8); Holm over these four.
