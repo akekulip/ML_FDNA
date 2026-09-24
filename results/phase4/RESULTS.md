@@ -81,6 +81,44 @@ to large k on this benchmark — not a hope, a measured property of the LP's val
 **Caveats:** single fixed control state, one topology, small manifest (25-100 sets depending on order), no
 cluster bootstrap, no confirmatory block. This is a strong screen, not a confirmed claim.
 
+## Staged comparator set: does a trained recurrent/set model beat the closed-form composition?
+
+Per the brief's own preferred direction (section 6.1/6.3), `scripts/p4_setmodels.py` trains a tuned tree
+(permutation-invariant sum/max-aggregate electrical descriptors), a DeepSets model, and a GRU — all ONLY on N-1
+(41 branches) + a sampled 300 N-2 pairs (`data_hik/train_n1n2.npz`, seed 100, frozen before generation, disjoint
+from every eval manifest), evaluated ZERO-SHOT on the frozen N-3 and N-4 manifests. Two variants: static
+electrical features only, then an equal-information variant also given the known N-1 singleton value per branch
+(the same first-order information g1/g2/g3 use).
+
+| model (equal-info variant) | N-3 MAE | N-3 rho | N-4 MAE | N-4 rho |
+|---|---|---|---|---|
+| g1 (naive sum, for reference) | 0.00800 | 0.679 | 0.01098 | 0.668 |
+| tuned tree, aggregate descriptors | 0.01479 | 0.364 | 0.01822 | 0.391 |
+| DeepSets | 0.01553 | 0.463 | 0.02326 | 0.563 |
+| GRU (sorted order) | 0.01898 | 0.431 | 0.02483 | 0.609 |
+| g2 / g3 (for reference, from above) | 0.00087 | 0.959 | 0.00126 | 0.982 |
+
+**All three trained models perform WORSE than the trivial g1 naive sum**, and dramatically worse than g2/g3.
+This holds even in the equal-information variant (branch-level known N-1 values as an explicit feature) — the
+models are not merely missing information, they are failing to reliably learn even the additive structure from
+only 20 distinct training operating points. This is best read as a **data-scale limitation of these small
+models at this label budget**, not evidence against recurrence or set-processing in principle (per the brief's
+own gating language, section 6.5: "failure of a generic recurrent model does not logically rule out a
+structured recurrent model"). The clean, decisive finding at THIS budget is that **the zero-training closed-form
+composition (g2/g3) is both cheaper and far more accurate than any trained comparator tested**, at every k
+tested (3 and 4).
+
+**GRU permutation sensitivity** (brief 6.5, required check): mean |prediction difference| between 5 random
+input orderings and the canonical sorted order was 0.0054-0.0093 (small relative to the MAE values above, but
+nonzero — the GRU is not exactly order-invariant, as expected for a plain GRU with no invariance-enforcing
+mechanism). Canonical sorting was NOT treated as proof of invariance, per the brief's explicit warning; this
+sensitivity is reported, not assumed away.
+
+**What would change this conclusion:** more training operating points (the frozen k=3/k=4 manifests reuse the
+same 20 ops as training deliberately, so this budget is small by design — a larger training pool, held
+genuinely disjoint from any eval manifest, is the natural next step before concluding recurrence "does not
+help" more broadly).
+
 ## Repaired-FDNA inference-only screen, cell P1 complete (registry/phase3_step2.yaml correction, brief 4.3)
 Single GPU process (not the earlier contended two-process run that stalled). 3 reps, N_INF=25000, cell P1 (v2b,
 q=0.7 s=0.3). NLL/KL only — no R-precision claim (per the earlier research-scientist power analysis, that

@@ -1,0 +1,40 @@
+{
+ "k3": {
+  "n": 1200,
+  "gbm_agg_features": {
+   "mae": 0.014792669913057015,
+   "rho": 0.3636108475699497
+  },
+  "deepsets": {
+   "mae": 0.015529155731201172,
+   "rho": 0.46273047977748627
+  },
+  "gru_sorted": {
+   "mae": 0.018981926143169403,
+   "rho": 0.4306282519480578
+  },
+  "gru_permutation_sensitivity": {
+   "max_abs_diff_vs_sorted": 0.05572691559791565,
+   "mean_abs_diff_vs_sorted": 0.005378419999033213
+  }
+ },
+ "k4": {
+  "n": 500,
+  "gbm_agg_features": {
+   "mae": 0.01821515368138081,
+   "rho": 0.3909434744292315
+  },
+  "deepsets": {
+   "mae": 0.023264583200216293,
+   "rho": 0.5631162814332856
+  },
+  "gru_sorted": {
+   "mae": 0.024831360206007957,
+   "rho": 0.6093363814777712
+  },
+  "gru_permutation_sensitivity": {
+   "max_abs_diff_vs_sorted": 0.08756302297115326,
+   "mean_abs_diff_vs_sorted": 0.009296827018260956
+  }
+ }
+}
