@@ -1,0 +1,31 @@
+# Phase 3 / Step 3 — confirmatory design, committed per research-scientist review, BEFORE reading Step 2 screen results in detail.
+# Fixes the forking-paths risk the reviewer flagged: the treatment arm is chosen by Step 1's theoretical diagnosis
+# (island representability + OR-motif failure), NOT by whichever Step 2 arm wins its noisy 3-rep screen.
+hypothesis: >
+  An explicit island-decomposition value/screening mechanism (forced full-shed on generator-less islands;
+  exact LODF recompute, not flow addition, on the connected remainder) improves R-precision on the
+  ISLANDING-SEVERE row subset over an equal-information control that receives the same topology-class
+  signal but no hard island bookkeeping.
+arms:
+  T_island_decomp: "D_I2-style decomposition pipeline + explicit island partition; forced shed=island demand on gen-less islands; exact recompute (not addition) on the connected remainder; same value model g"
+  C_topology_flat: "identical pipeline/feature budget/tuning as T, topology exposed ONLY as a flat categorical feature (connected/gen_less_only/all_gen/mixed) to the same generic value model; no forced-shed rule, no LODF recompute step"
+  B_anchor_descriptive: "D_I2 as already tier-2-confirmed, no topology information (reported descriptively only, not part of the confirmatory contrast)"
+independent_variable: presence/absence of the explicit island mechanism (T vs C); topology-CLASS information held equal
+dependent_variable: R-precision on islanding-severe rows (primary); all-row R-precision (secondary, catches harm to the 70.5% of severe rows outside this subset)
+statistic: T-C two-way cluster bootstrap over test operating points and training replicates (src/fdna/rules.py), intersection-union across cells P1 and P2
+sesoi: {tier1: ">=0.08 within-subset R-precision", tier2: "mean diff >0, margin test as H5", tier3: "90% CI inside +-0.03"}
+design_requirements:
+  - training seed AND test/hidden-state draws BOTH varied per replicate (explicit; closes the H5 postmortem gap where replicate reused confirm's training draws)
+  - confirm-level tuning identical across T and C (40 GBM trials / 9-point NN grid or arm-appropriate equivalent)
+  - n=100 training ops, 5 replicates (matches H5's noise floor, not Step 2's 3-rep screen floor)
+  - a genuinely fresh block, not 200-279 (exploratory, exhausted), 400-479/500-579 (H5), or whatever block Step 2's screen consumes
+  - dry-run minimum-N check on the exploratory block first: count islanding-severe rows per op cluster; if too few clusters for a stable bootstrap, state as a power limitation before opening a fresh block
+arm_selection_rule: >
+  T is fixed as "island-decomposition mechanism" by Step 1's diagnosis (measured RR ~3x, flow-addition p95 42%
+  error) independent of Step 2's screen ranking. Step 2's screen (registry/phase3_step2.yaml) is a
+  REPRESENTABILITY CHECK ONLY (see noise-floor note below) and does not select the Step 3 treatment arm.
+step2_noise_floor_caveat: >
+  Step 2 as registered (3 reps, screen-level tuning) has a plausible 90% CI half-width of ~0.01-0.02, wider than
+  its own pre-registered expected effect (<=~0.01). No Step 2 number may be reported as tier-1/tier-2; it may only
+  support a representability statement (can the repaired layer fit the motif / does NLL move in the predicted
+  direction), never an R-precision claim.

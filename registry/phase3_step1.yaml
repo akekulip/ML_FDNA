@@ -21,3 +21,11 @@ hypotheses_tested_not_assumed:
 notes:
   - y_0 (base shed) is checked ~0 from train table N-0 rows before m_ab is used.
   - Counts of islanding pairs (143/820 in the agent note) are re-derived here, not assumed.
+
+# --- G1 re-expressed per research-scientist methodology review (relative risk, not bare share) ---
+G1_revised:
+  statistic: "relative_risk = miss_rate_given_severe(islanding) / miss_rate_given_severe(connected)"
+  observed: "islanding 22.0-26.8% vs connected 7.4% -> RR ~3.0-3.6x (STEP1.md item 2, k=0 screen arm)"
+  gate: "RR >= 2.0, 90% cluster bootstrap CI (over test operating points) excludes 1.0"
+  status: "PASSES directionally on the screen block; CI not yet computed (screen data only, ops 200-279, reused by prior Phase-2 screens per LEDGER.md -> cannot be cited as a fresh confirmatory signal, design guidance only)"
+  mass_share_58.9pct: "retained as a DESCRIPTIVE planning quantity (how much of the miss budget a fix must address), not a gate statistic"
