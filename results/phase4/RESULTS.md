@@ -53,6 +53,34 @@ fitting (g2 has no fitting step at all).
   fresh block, and per this project's own discipline it cannot be reported as more than a strong, reproducible
   screen result until it is.
 
+## N-4 extension: does the truncation order need to grow with k?
+
+Per the brief's own staging rule ("extend to N-4 only if the N-3 screen passes"), and since it passed
+decisively above, a frozen k=4 manifest (25 quadruples x 20 ops, seed 43, `data_hik/manifest_k4_screen.json`,
+committed before any label was generated) was exactly solved (6,040 LP solves: singles, sub-pairs, sub-triples,
+and the true quadruple label, all at one fixed control state). `scripts/p4_mobius_k4_test.py`:
+
+| model | information used | MAE | Spearman rho vs true N-4 |
+|---|---|---|---|
+| g1 (naive singleton sum) | N-1 only | 0.01098 | 0.668 |
+| g2 (order-2 Mobius truncation) | N-1 + N-2 | 0.00391 | 0.935 |
+| g3 (order-3 Mobius truncation) | N-1 + N-2 + N-3 | **0.00126** | **0.982** |
+
+**Reading:** order-2 truncation (the same model that worked for N-3) still beats the naive baseline by 2.8x at
+N-4, so low-order structure has NOT collapsed. But g3 (adding the now-genuinely-available N-3 interaction terms)
+improves further, by another 3.1x, showing the truncation order needs to grow somewhat as k grows — the
+approximation does not stay fixed at order 2 forever. Even so, g3's error is small relative to the mean true
+value (0.0013 vs 0.020, about 6% relative error) using information three orders below the target (N-1/2/3
+predicting N-4), which is a genuinely cheap and informative result: **each additional truncation order costs a
+combinatorially SMALLER label budget than the target order** (100 triples here vs 25 quadruples needed, but the
+triples generalize across many quadruples), and captures most of the signal. This is the clearest evidence so
+far that a "recurrent" model processing an outage set element-by-element, if it can represent something like
+this order-truncated composition internally, has a real physical/mathematical reason to generalize from small
+to large k on this benchmark — not a hope, a measured property of the LP's value function.
+
+**Caveats:** single fixed control state, one topology, small manifest (25-100 sets depending on order), no
+cluster bootstrap, no confirmatory block. This is a strong screen, not a confirmed claim.
+
 ## Repaired-FDNA inference-only screen, cell P1 complete (registry/phase3_step2.yaml correction, brief 4.3)
 Single GPU process (not the earlier contended two-process run that stalled). 3 reps, N_INF=25000, cell P1 (v2b,
 q=0.7 s=0.3). NLL/KL only — no R-precision claim (per the earlier research-scientist power analysis, that

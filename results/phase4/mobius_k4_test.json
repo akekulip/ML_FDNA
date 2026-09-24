@@ -1,0 +1,20 @@
+{
+ "n_rows": 500,
+ "cv_idx": 1023,
+ "total_lp_solves": 6040,
+ "g1_singleton_sum": {
+  "mae": 0.010976020722850406,
+  "rho": 0.6675121633991342
+ },
+ "g2_order2_truncation": {
+  "mae": 0.003906346567546602,
+  "rho": 0.9354006987636069
+ },
+ "g3_order3_truncation": {
+  "mae": 0.0012556979075218563,
+  "rho": 0.9821147617832569
+ },
+ "g3_beats_g2": true,
+ "g2_beats_g1": true,
+ "mean_y_true": 0.0203722013722654
+}
