@@ -6,8 +6,11 @@ Read first: results/SUMMARY.md, results/PHASE2.md, results/LEDGER.md, results/ph
 Phase 1/2 (overnight programme) and Phase 3 (diagnostics: LODF compensation-determinant mechanism, Jensen-gap mechanism, FDNA repair module, A9 equal-information
 audit) complete -- see results/phase3/STEP1.md and STEP1_EXT.md. No registered FDNA claim survived; one small tier-2 non-FDNA decomposition effect (+0.03, not tier 1,
 two blocks share training draws so not an independent replication). Phase 4 (external PI execution brief, `ML_FDNA_Claude_Code_PI_Prompt.md`) now in progress:
-Stage 0 (state audit) and Stage 1 (four corrections -- Jensen exact-continuous fix, Step-3 endpoint degeneracy + equal-info fairness fix, repair.py OR/tau conflation
-fix, LODF 8.4%->10.1% correction) are done; Stage 2 (literature + brainstorming) next; primary direction is recurrent/iterative N-k generalisation (Stage 3).
+Stage 0/1 (state audit + 4 corrections) done. Stage 2 (literature verification + 2 independent blind brainstorming agents) done -- results/phase4/IDEA_CARDS.md.
+Stage 3 headline finding: a zero-training k=2-additive Mobius/interaction truncation (built from N-1/N-2 values only) beats a naive singleton-sum baseline AND
+an equal-information GBM at predicting EXACT N-3 labels, at 4/4 tested control states (results/phase4/RESULTS.md, results/phase4/mobius_k3_robust.json).
+Exploratory screen only: N-4 untested, partial observation not reintroduced, no cluster bootstrap, no confirmatory block. Repaired-FDNA inference-only screen
+(NLL/KL, single GPU process) running in background at /tmp/infonly_v2b.log, cell P1 in progress.
 Confirmatory looks so far: four block openings, all for the single H5 claim (confirm 400-479, replicate 500-579, cells P1/P2); reserve 600-699 and all other slots
 unopened (registry/slots.yaml has no Phase-3/4 entry yet -- add one before opening any new block). Tests: 58 pass.
 
