@@ -33,7 +33,7 @@ def job(args):
         lp = ScenarioLP(G, op, tuple(x for x in (a, b) if x >= 0), spec.PARAMS)
         for k in range(len(CV)):
             V[i, k] = lp.y(CV[k])
-    return op_id, np.array(conts, np.int16), V
+    return op_id, np.array(conts, np.int16), V, op.demand, op.p0
 
 
 if __name__ == "__main__":
@@ -43,10 +43,13 @@ if __name__ == "__main__":
         name, lo, hi, n2 = a.split(":")
         plans.append((name, list(range(int(lo), int(hi))), int(n2), name == "train"))
     t0 = time.time()
-    with Pool(24) as pool:
+    import os
+    with Pool(int(os.environ.get('N_PROC', 24))) as pool:
         for name, ops, n2, n0 in plans:
             res = sorted(pool.imap_unordered(job, [(o, n2, n0) for o in ops]), key=lambda r: r[0])
             np.savez(out / f"vtable_{name}.npz", op_ids=np.array([r[0] for r in res]),
                      conts=np.array([r[1] for r in res]), V=np.array([r[2] for r in res]), CV=CV)
+            np.savez(out / f"ops_{name}.npz", op_id=np.array([r[0] for r in res]), demand=np.array([r[3] for r in res]),
+                     p0=np.array([r[4] for r in res]))
             print(name, len(ops), "ops done", round(time.time() - t0), "s", flush=True)
     (out / "spec_hash.txt").write_text(spec.spec_hash())
