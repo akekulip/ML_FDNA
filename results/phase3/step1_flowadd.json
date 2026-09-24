@@ -1,0 +1,10 @@
+{
+ "n_pairs_x_ops": 6770,
+ "max_branch_err_pct_rating": {
+  "median": 2.191036070772382,
+  "p95": 41.98837334102507,
+  "max": 263.84043173019586
+ },
+ "frac_pairs_where_overload_set_changes": 0.24091580502215657,
+ "frac_pairs_with_any_overload_exact": 0.7062038404726736
+}

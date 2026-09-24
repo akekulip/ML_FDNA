@@ -1,0 +1,43 @@
+{
+ "rprec_pooled_mean_over_ops": 0.8668708612205005,
+ "n_rows": 96000,
+ "n_severe": 26858,
+ "n_missed": 3414,
+ "tuned": {
+  "num_leaves": 15,
+  "min_child_samples": 100,
+  "feature_fraction": 0.5,
+  "reg_lambda": 10.0,
+  "learning_rate": 0.1
+ },
+ "connected": {
+  "row_share": 0.8243333333333334,
+  "severe_share": 0.7031052200461687,
+  "missed_share": 0.4106619800820152,
+  "miss_rate_given_severe": 0.0742427451811057,
+  "mae": 0.003619850954245849
+ },
+ "gen_less_only": {
+  "row_share": 0.06816666666666667,
+  "severe_share": 0.22436517983468612,
+  "missed_share": 0.47334504979496195,
+  "miss_rate_given_severe": 0.2681712578825091,
+  "mae": 0.011293344273105783
+ },
+ "all_gen": {
+  "row_share": 0.105,
+  "severe_share": 0.06418944076252886,
+  "missed_share": 0.11130638547158758,
+  "miss_rate_given_severe": 0.22041763341067286,
+  "mae": 0.005813957072719552
+ },
+ "mixed": {
+  "row_share": 0.0025,
+  "severe_share": 0.008340159356616278,
+  "missed_share": 0.0046865846514352666,
+  "miss_rate_given_severe": 0.07142857142857142,
+  "mae": 0.0009261136874477995
+ },
+ "islanding_missed_share": 0.5893380199179847,
+ "G1_pass_ge_50pct": true
+}
