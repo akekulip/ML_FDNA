@@ -23,3 +23,12 @@ outcome_confirm_block:   # recorded 2026-09-24 ~06:10; evaluated with scripts/co
   reading: training with simulator-side privileged information (decomposition) gives a small, reproducible gain of about +0.025..+0.036 R-precision over the strongest end-to-end baseline that also receives the cheap (obs, c) pairs. Below the pre-declared SESOI. Not an FDNA result (the treatment arm is the generic per-generator GBM inference module).
   locks: registry/locks/confirm__D_P1.lock and confirm__D_P2.lock (commit 3f77a7a; output sha256 recorded)
   next: one replication on block 500-579 (opens replicate__D_P1 / replicate__D_P2), permitted because the claim was confirmed at tier 2.
+replicate_rule:   # committed BEFORE the replicate result exists (the replicate parquet did not exist when this was written); added after the closing code review
+  same_tiers_same_script: scripts/confirm_D.py replicate, identical tiers and statistics, reported whatever the outcome
+  meaning_of_outcomes:
+    replicate_supports_tier2_in_both_cells: the tier-2 claim stands as REPLICATED (with the caveat below)
+    replicate_fails_tier2_in_either_cell: the tier-2 claim is reported as NOT REPLICATED; no pooling of confirm and replicate; the confirm result is kept as reported
+    tier1_or_tier3_on_replicate: reported descriptively; they do not upgrade the claim
+  caveat_training_not_independent: the replicate run reuses the confirm run's training draws (they depend only on replicate index and n, not on the block); only the test operating points and the hidden-state/observation draws are fresh, so a successful replicate does not speak to training variability
+  caveat_inference_module_confound: the comparator A8 receives marginals from the MLP inference network while the treatment uses the per-generator GBM inference posterior; part of the gap is inference-module choice, not privileged-information decomposition (descriptive contrasts D_I1_mlp vs A8 are reported alongside)
+  correction_of_earlier_text: the earlier line 'Replicate block ... stay unopened' was written before the confirm outcome; the replicate block was opened on 2026-09-24 06:05:50 after the tier-2 confirmation, as the outcome_confirm_block entry says
