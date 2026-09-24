@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -21,24 +22,34 @@ def _git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
 
-def open_block(block: str, slot: str, branch: str = None, variant: str = None, cell: int = None, require_clean: bool = True) -> range:
+def open_block(block: str, slot: str, branch: str = None, variant: str = None, cell: int = None, require_clean: bool = True,
+               env: dict = None) -> range:
     if block not in BLOCKS:
         raise KeyError(f"unknown block {block!r}")
     slots = yaml.safe_load(SLOTS_FILE.read_text())
     if slot not in slots:
         raise PermissionError(f"slot {slot!r} is not declared in registry/slots.yaml")
-    want = slots[slot]
+    want = dict(slots[slot])
+    allowed = want.pop("blocks", ["confirm", "replicate"])
+    if block not in allowed:
+        raise PermissionError(f"slot {slot} may only open blocks {allowed}, not {block!r}")
     got = dict(branch=branch, variant=variant, cell=cell)
     if any(got[k] is not None and got[k] != want[k] for k in want):
         raise PermissionError(f"slot {slot} is bound to {want}, caller passed {got}")
-    if require_clean and _git("status", "--porcelain", "--untracked-files=no"):
-        raise RuntimeError("tracked files have uncommitted changes; commit before opening a fresh block")
+    # tracked changes outside registry/locks (lock files and the access log are written by this very function)
+    dirty = [l for l in _git("status", "--porcelain", "--untracked-files=no").splitlines() if "registry/locks/" not in l]
+    if require_clean and dirty:
+        raise RuntimeError("tracked files have uncommitted changes; commit before opening a fresh block: " + "; ".join(dirty[:3]))
     LOCK_DIR.mkdir(parents=True, exist_ok=True)
     lock = LOCK_DIR / f"{block}__{slot}.lock"
-    if lock.exists():
-        raise RuntimeError(f"block {block} already opened for {slot}: {lock.read_text()}")
     commit = _git("rev-parse", "HEAD")
-    lock.write_text(json.dumps(dict(block=block, slot=slot, commit=commit, time=time.strftime("%Y-%m-%dT%H:%M:%S"))))
+    meta = json.dumps(dict(block=block, slot=slot, commit=commit, time=time.strftime("%Y-%m-%dT%H:%M:%S"), env=env or {}))
+    try:
+        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)          # atomic: two concurrent openers cannot both succeed
+    except FileExistsError:
+        raise RuntimeError(f"block {block} already opened for {slot}: {lock.read_text()}")
+    with os.fdopen(fd, "w") as f:
+        f.write(meta)
     with open(LOCK_DIR / "access.log", "a") as f:
         f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} open {block} {slot} {commit}\n")
     lo, hi = BLOCKS[block]

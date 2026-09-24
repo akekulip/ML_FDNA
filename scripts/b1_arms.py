@@ -77,7 +77,8 @@ if TEST != "test":
     open_block(TEST, f"B1_{VARIANT}_cell{CELL_IDX}")
 rows, t0 = [], time.time()
 dva = v2data.build(va, F["val"], w, q, s, K_VA, seed=11, coverage=COV)
-dte = v2data.build(te, F["test"], w, q, s, K_TE, seed=13, only_n2=True, coverage=COV)
+from fdna.blocks import block_seed
+dte = v2data.build(te, F["test"], w, q, s, K_TE, seed=block_seed(TEST), only_n2=True, coverage=COV)
 pc_te, marg_te = v2data.oracle_features(w, dte["obs"], s)
 oracle = (pc_te * te["V"][dte["io"], dte["jc"]]).sum(1)
 A2b = lambda d, mg: np.hstack([d["Xc"], mg])

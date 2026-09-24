@@ -70,7 +70,11 @@ def test_block_lock_rules(tmp_path, monkeypatch):
         b.open_block("confirm", "B1_P1")                                    # withdrawn / undeclared slot
     with pytest.raises(PermissionError):
         b.open_block("confirm", "D_P1", "d", "v2c", 3)                      # slot bound to another cell
-    monkeypatch.setattr(b, "_git", lambda *a: " M file" if a[0] == "status" else "deadbeef")
+    with pytest.raises(PermissionError):
+        b.open_block("reserve", "D_P1", "d", "v2b", 3)                      # the reserve block is never allowed
+    monkeypatch.setattr(b, "_git", lambda *a: " M registry/locks/access.log" if a[0] == "status" else "deadbeef")
+    assert list(b.open_block("replicate", "INF_P2", "inf", "v2c", 3, env={"TUNE": "confirm"}))[0] == 500        # lock-file churn is not 'dirty'
+    monkeypatch.setattr(b, "_git", lambda *a: " M src/fdna/x.py" if a[0] == "status" else "deadbeef")
     with pytest.raises(RuntimeError):
-        b.open_block("replicate", "INF_P2", "inf", "v2c", 3)                # dirty tree refused
+        b.open_block("replicate", "INF8_P1", "inf8", "v2b", 3)              # dirty tree refused
     assert b.block_seed("test") == 13 and b.block_seed("confirm") == 413 and b.block_seed("replicate") == 513

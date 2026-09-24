@@ -23,7 +23,8 @@ q, s = GRID[VARIANT][CELL_IDX]
 K_TR, K_VA, K_TE = 20, 10, 8
 if TEST != "test":
     slot = f"D_P{1 if VARIANT == 'v2b' else 2}"
-    open_block(TEST, slot, "d", VARIANT, CELL_IDX)            # lock BEFORE any block data is loaded
+    open_block(TEST, slot, "d", VARIANT, CELL_IDX,
+               env=dict(N_LIST=NS, REPS=REPS, N_INF=N_INF, TUNE=TUNE, TOPK=TOPK))            # lock BEFORE any block data is loaded
 w = v2.build_world(); lv = inference.level_index(w.CV)
 tdir = D if TEST == "test" else "data_v2_confirm"
 tr, va = (v2data.load_vtable(D, x) for x in ("train", "val")); te = v2data.load_vtable(tdir, TEST)
