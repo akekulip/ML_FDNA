@@ -11,7 +11,7 @@ print("\nwiring-agnostic and FDNA arms on identical draws")
 print(gen.groupby(["variant", "N", "arm"])[["rprec", "rprec_sev", "kl_exact"]].mean().round(3).to_string())
 rng = np.random.default_rng(51)
 print("\nI8(rho) minus best-mean generic (I1,I2,I3) [95% cluster CI]")
-for (v, N), g in m.groupby(["variant", "N"]):
+for (v, N), g in m[m.N > 0].groupby(["variant", "N"]):
     og = old[(old.variant == v) & (old.N == N) & old.arm.isin(["I1_mlp", "I2_gbm_product", "I3_minmax_gnn"])]
     ref_arm = og.groupby("arm").rprec.mean().idxmax()
     ref = og[og.arm == ref_arm].groupby("op").rprec.mean()
