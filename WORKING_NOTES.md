@@ -1,22 +1,18 @@
 # WORKING_NOTES — ML_FDNA
-Plan: ~/.claude/plans/using-brainstorming-research-ideas-and-d-witty-stonebraker.md (revision 3, approved).
-Status (2026-09-23): Milestone 1 and 1b done locally. Steps 1-4 complete: reproducibility fixes, physical-assumption pilot, report
-(results/MILESTONE1.md), learning-curve experiment (results/LEARNING_CURVE.md): H1 NOT SUPPORTED (explicit control features worse
-than raw flags at n<=25). Decision rule: stop FDNA architecture claim on this benchmark.
-Reviews: qa-verifier PASS (6/6); code-reviewer found 4 major issues, all fixed (hash scope, cache key, tracked results, report wording).
-Repo: 21 tests pass. Label spec hash: scripts/spec_hash.py. data/ and data_fresh/ are gitignored (regenerate: scripts/gen_dataset.py).
-Local commits ahead of origin (pushed head: 31aff42). Push only when Philip says so. Commits authored by Philip, no attribution lines.
-Open: decide next question with Philip (uncertain/stale dependency info; changed wiring); Roy & Hylviu notes in results/LITERATURE_NOTES.md.
+Repo: ~/Projects/ML_FDNA (github.com/akekulip/ML_FDNA private; pushed head 31aff42; everything since is LOCAL commits in Philip's name, no push yet).
+Read first: results/SUMMARY.md, results/PHASE2.md, results/LEDGER.md, registry/*.yaml (locked hypotheses, addenda, amendment, slots, locks).
 
+## State (2026-09-24 ~07:00)
+Phase 1 (v1 benchmark) and Phase 2 (overnight programme, ~8 h) complete. Outcome: no registered FDNA claim survived; one small confirmed and replicated non-FDNA
+effect (decomposition, +0.025..+0.036 tier 2); structure is a ceiling/fragile; dominant error is unseen N-2 generalisation (label coverage), not dependency modelling.
+Confirmatory looks: four block openings, all for the single H5 claim (confirm 400-479 and replicate 500-579, cells P1/P2); reserve 600-699 and all other slots unopened.
+Independent reviews (QA + code) at H4 and at close; all findings fixed or disclosed. Tests: 48 pass.
 
-## PHASE 2 (overnight programme) — started 2026-09-23T23:00:52-04:00; hard wall-clock cap 10 h (new experiments stop at H9.5).
-Plan: ~/.claude/plans/using-brainstorming-research-ideas-and-d-witty-stonebraker.md. Local commits only; installs only; no web/literature calls.
+## Data (git-ignored; regenerate with scripts/value_table.py, gen_dataset.py)
+data/ (v1 labels + ops), data_fresh/, data_v2/ (value tables, screens, results parquet), data_v2_confirm/ (label tables for blocks 400-479, 500-579), data_v2_fs/.
 
-### Phase 2 log (times are wall-clock; started 23:00:52)
-- 23:00 torch 2.5.1+cu121 + optuna installed; GPU visible. 23:05 registry + v2 spec frozen and committed (870f487) BEFORE any experiment.
-- 23:04 value-table generation started (train/val done; test split in progress) -> E1 (oracle headroom) runs after.
-- 23:25 Branch 3 first run INVALID (NN targets ~1e-2 starved gradients; diagnosis scripts/nn_diagnose.py, validation only). Fixed trainer (Y_SCALE=100), variant B3v2 registered before rerun.
-- 23:38 B3v2 result: monotone NN 0.06-0.13 below monotone GBM at n<=25; monotone GBM ~0.025 below free GBM -> B3 killed as hypothesis (registry outcomes).
-- 23:38 Branch 2 (corrupted wiring, rho=0.2) running: /tmp/b2.log -> data/b2_results.parquet.
-Next: E1 when data_v2/vtable_test.npz exists; B2 result; then decide freeze of v2 (only after E1 passes).
-- 00:18 Branch 2 outcome recorded (killed; structure helps NN vs generic MLP, trees dominate). E1 running (slow under contention). raw_edge exploratory job stopped to free cores (rerun later). Confirm-block value table (400-479) pre-generating in data_v2_confirm (labels only; block NOT opened: no model has seen it).
+## Open / next (needs Philip)
+1. Push the local commits? (asked before every push)
+2. Direction: (a) benchmark + protocol paper (workshop/IEEE Access tier); (b) pre-registered scale experiment (large dependency graph, approximate-posterior oracle, headroom gate first);
+   (c) N-1->N-2 label-efficiency method; (d) second topology (IEEE-118).
+3. Commits authored by Philip only, no attribution lines.
