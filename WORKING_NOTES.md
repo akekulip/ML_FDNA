@@ -16,3 +16,9 @@ data/ (v1 labels + ops), data_fresh/, data_v2/ (value tables, screens, results p
 2. Direction: (a) benchmark + protocol paper (workshop/IEEE Access tier); (b) pre-registered scale experiment (large dependency graph, approximate-posterior oracle, headroom gate first);
    (c) N-1->N-2 label-efficiency method; (d) second topology (IEEE-118).
 3. Commits authored by Philip only, no attribution lines.
+
+<!-- AUTO-HANDOFF (PreCompact/auto) 2026-09-24T10:57:15Z -->
+### Compaction handoff — 2026-09-24T10:57:15Z
+- Git: branch `main`, 0 uncommitted file(s): 
+- Last verification run recorded: 2026-09-24T10:57:14Z	python3 - <<'EOF' def edit(p, pairs): s=open(p).read() for a,b in pairs: assert a in s, (p, a[:50]) s=s.replace(a,b) ope
+- RESUME: re-read the Task/Status/Next-action sections above; trust this file over recollection.
