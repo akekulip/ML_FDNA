@@ -22,6 +22,8 @@ from .grid import BASE_MVA, Grid
 class Params:
     ramp_frac: float  # corrective range of a remote generator = ramp_frac * Pmax
     local_mw: float  # local balancer range (+-)
+    # protection-trip rule: 'shed_plus_surplus' (frozen spec), 'surplus_only', or 'free' (sensitivity pilot only)
+    trip: str = "shed_plus_surplus"
 
 
 @dataclass
@@ -81,12 +83,16 @@ class ScenarioLP:
         self.surplus = np.maximum(gen_out - dem_isl, 0.0)
         # protection trips: kappa in an island may only rebalance the island's shed plus its initial
         # surplus, so it cannot act as free downward redispatch: sum(kappa) - sum(s) <= surplus
-        rows_s = np.zeros((self.n_isl, 2 * n + 2 * G))
-        for i in range(self.n_isl):
-            rows_s[i, np.flatnonzero(self.isl == i) + n] = -1.0
-            rows_s[i, 2 * n + G + np.flatnonzero(gen_isl == i)] = 1.0
-        blocks = [A_flow, A_g, csr_matrix(rows_s)]
-        rhs = [b_flow, b_g, self.surplus]
+        blocks = [A_flow, A_g]
+        rhs = [b_flow, b_g]
+        if params.trip != "free":
+            rows_s = np.zeros((self.n_isl, 2 * n + 2 * G))
+            for i in range(self.n_isl):
+                if params.trip == "shed_plus_surplus":
+                    rows_s[i, np.flatnonzero(self.isl == i) + n] = -1.0
+                rows_s[i, 2 * n + G + np.flatnonzero(gen_isl == i)] = 1.0
+            blocks.append(csr_matrix(rows_s))
+            rhs.append(self.surplus)
         self.A_ub = vstack(blocks, format="csr")
         self.b_ub = np.concatenate(rhs)
 

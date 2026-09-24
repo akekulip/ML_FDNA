@@ -25,10 +25,12 @@ FAILURE_SETS = comm.failure_sets(SPEC["failure_sets"]["max_size"])
 
 
 def spec_hash() -> str:
-    h = hashlib.sha256()
-    for f in ("configs/spec.json", "prereg/SPEC.md"):
-        h.update((ROOT / f).read_bytes())
-    return h.hexdigest()[:16]
+    """Hash of the label-defining parameters (configs/spec.json). Prose edits to SPEC.md do not change labels."""
+    return hashlib.sha256((ROOT / "configs/spec.json").read_bytes()).hexdigest()[:16]
+
+
+def doc_hash() -> str:
+    return hashlib.sha256((ROOT / "prereg/SPEC.md").read_bytes()).hexdigest()[:16]
 
 
 def fs_split(fs: tuple[int, ...]) -> str:
