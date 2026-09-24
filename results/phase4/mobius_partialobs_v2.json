@@ -1,0 +1,38 @@
+{
+ "P1_v2b": {
+  "n_rows": 120000,
+  "mae": {
+   "g1": 0.015535129779379554,
+   "g2": 0.008771574791639678,
+   "prior_only": 0.015521162943070804,
+   "mean_oracle": 0.007651570573223131,
+   "median_oracle": 0.005951755376967018
+  },
+  "mse": {
+   "g1": 0.0008117018219097885,
+   "g2": 0.00036806788448427973,
+   "mean_oracle": 0.0003349966281362815
+  },
+  "rprec_g2": 0.877731411229135,
+  "rprec_g1": 0.7019347496206373,
+  "note": "mean_oracle is optimal under MSE, not MAE; median_oracle is the MAE-optimal reference. prior_only = no observation, average over the communication prior (stronger than 'assume full control')."
+ },
+ "P2_v2c": {
+  "n_rows": 120000,
+  "mae": {
+   "g1": 0.01438050689384912,
+   "g2": 0.007023322419045522,
+   "prior_only": 0.015582050624299298,
+   "mean_oracle": 0.005779651637105685,
+   "median_oracle": 0.004426258512010873
+  },
+  "mse": {
+   "g1": 0.0007364652783398869,
+   "g2": 0.0002727180088500795,
+   "mean_oracle": 0.0002373695661871736
+  },
+  "rprec_g2": 0.9079287779637802,
+  "rprec_g1": 0.716424440724395,
+  "note": "mean_oracle is optimal under MSE, not MAE; median_oracle is the MAE-optimal reference. prior_only = no observation, average over the communication prior (stronger than 'assume full control')."
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "n_new_unseen_triples": 200,
+ "n_ops": 20,
+ "sub_pairs_needed": 410,
+ "sub_pairs_already_available_sunk_cost": 89,
+ "sub_pairs_genuinely_new_incremental": 321,
+ "incremental_solves_to_extend_coverage_to_these_200_new_triples": 6420,
+ "solves_that_WOULD_be_needed_to_label_these_200_triples_directly": 4000,
+ "g2_prediction_quality_on_these_never-seen-before_triples": {
+  "mae": 0.0008241235859248114,
+  "rho": 0.9757918388648477
+ },
+ "reuse_ratio_claim": "8436 triples constructible from 477 pairs among the 38 touched branches",
+ "note": "This tests genuine reuse: the incremental solves to extend the pair table (small) vs the g2 prediction quality on triples that were NEVER part of the original 60-triple manifest -- the correct test of the amortisation claim the original 'practically unaffordable' framing did not measure."
+}

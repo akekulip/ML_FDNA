@@ -83,36 +83,86 @@ cluster bootstrap, no confirmatory block. This is a strong screen, not a confirm
 
 ## Partial-observation validation: does the Mobius result survive realistic communication uncertainty?
 
-Per the recommendation at the end of the previous report, `registry/phase4_step_partialobs.yaml` (committed
-before any new label was generated) pre-registered this test. New data: `y_pair` regenerated across ALL 1024
-control vectors (not one fixed state) for the 156 needed sub-pairs x 20 ops (3,194,880 LP solves, 350s on 24
-cores, `scripts/hik_gen_ypair_fullgrid.py`); `y_single` reused for free from the existing dense N-1 rows in
-`data_v2/vtable_train.npz`. `scripts/p4_mobius_partialobs.py` then composes g2(op,S,c) and g1(op,S,c) over all
-1024 controls with the EXACT communication-state posterior p(c|obs) already used throughout Phase 2/3
-(`src/fdna/v2.py`, unchanged), for both partial-observation cells (P1: q=0.7 s=0.3; P2: q=0.3 s=0.2), 100
-observation draws per triple, scored against the TRUE realised shed at the TRUE hidden control state (not the
-posterior mean).
+**This section was corrected after an external review found real issues in the first version** (invalid
+registry YAML, an undisclosed draws/metric deviation, an overstated "achievable gap" framing, an unfair neural
+comparator, a cost-savings claim that didn't hold at the tested scale, and a reproducibility bug). Each claim
+was independently verified against the code/data before being accepted; all are recorded, with fixes, in
+`registry/phase4_step_partialobs_v2.yaml`. The original run and files are kept, not deleted. The corrected
+analysis (`scripts/p4_mobius_partialobs_v2.py`) fixes a genuine reproducibility bug along the way: the original
+script advanced one shared RNG across a loop ordered by a `.npz` file that multiprocessing had written in
+completion order (nondeterministic across regenerations) — so the exact per-row observation draws were not
+reproducible even at a fixed top-level seed. Fixed by sorting every loaded array by a canonical `(op_id,
+outage)` key and deriving each row's RNG from that key directly (`np.random.default_rng([op_id, *outage, ...])`),
+not from loop position.
 
-| comparator | P1 (v2b) MAE | P2 (v2c) MAE |
-|---|---|---|
-| g1-composed (naive sum + exact posterior) | 0.01568 | 0.01438 |
-| assume-full-control (ignore observation, use g2 at c=all-ones) | 0.01350 | 0.01342 |
-| **g2-composed (order-2 truncation + exact posterior)** | **0.00888** | **0.00704** |
-| oracle-full-table-composed (upper bound: as if the true N-3 table existed) | 0.00775 | 0.00580 |
+**Setup, unchanged in substance:** `y_pair` across all 1024 control vectors for the 156 needed sub-pairs x 20
+ops (3,194,880 LP solves, 350s on 24 cores); `y_single` free from the existing dense N-1 rows; composed with the
+exact communication-state posterior p(c|obs) (`src/fdna/v2.py`, unchanged), K_DRAWS=100 (stated explicitly —
+the original registration's "200" was inside invalid YAML and was never actually registered).
 
-**g2-composed beats both the naive-sum baseline (1.77x / 2.04x lower MAE) and ignoring the observation entirely
-(1.52x / 1.91x lower MAE), in both cells.** It also closes **85.9% (P1) and 85.7% (P2) of the achievable gap**
-between the naive baseline and the (practically unaffordable) true-N-3-table oracle — using ONLY cheap N-1/N-2
-information, no N-3 label at all. This is the clearest positive result of the whole Phase 3/4 programme: **the
-low-degree structural composition survives reintroducing realistic partial/stale communication observation**,
-not just the exact-control screen it was first found in.
+| comparator | P1 (v2b) MAE | P2 (v2c) MAE | P1 MSE | P2 MSE |
+|---|---|---|---|---|
+| g1-composed (naive sum + exact posterior) | 0.01554 | 0.01438 | 0.000812 | 0.000736 |
+| prior-only (no observation, average over the communication PRIOR — corrected, stronger than "assume full control") | 0.01552 | 0.01558 | — | — |
+| **g2-composed (order-2 truncation + exact posterior)** | **0.00877** | **0.00702** | **0.000368** | **0.000273** |
+| mean-composed reference (true N-3 table; optimal under MSE, not MAE) | 0.00765 | 0.00578 | 0.000335 | 0.000237 |
+| median-composed reference (true N-3 table; the actual MAE-optimal point estimate) | 0.00595 | 0.00443 | — | — |
+
+**Corrected reading.** Under MSE — the metric where the mean-composed reference is genuinely optimal — g2
+closes **93.1% (P1) / 92.8% (P2)** of the gap between naive and oracle, a stronger and now *correctly* scoped
+number than the original's MAE-based 86%. Under MAE, scored against the metric-appropriate (median, not mean)
+reference, g2 closes a smaller but still real **70.6% (P1) / 74.0% (P2)**. The **prior-only baseline is nearly
+as bad as g1** (0.01552/0.01558) — confirming that g2's advantage comes from actually using the observation via
+the posterior, not from the composition formula alone.
+
+**Screening-relevant endpoint, not just point-prediction error (the review's other correct point):**
+R-precision (this project's standard metric, `src/fdna/evalutil.rprec`) on the composed predictions: **g2 0.878
+(P1) / 0.908 (P2) vs g1 0.702 (P1) / 0.716 (P2)** — the first positive result on the actual screening metric,
+under partial observation, anywhere in Phase 1-4.
+
+**Fair comparator addition (the review's point that GRU/DeepSets and g2 had different information budgets).**
+`scripts/p4_linear_baseline.py`: a plain linear regression on the identical 6 numbers g2 uses (5-fold CV,
+exact-control screen). Its FITTED coefficients land at 0.92-1.02 for every ingredient (near the value-1 the
+Möbius identity assigns by construction) — independent evidence the additive/interaction structure is
+approximately correct, not an artifact of hardcoding — but the fitted model still loses to g2's fixed
+coefficients (MAE 0.00164 vs 0.00087 full control; 0.00529 vs 0.00374 no control): with only 60 distinct
+triples, fitting six coefficients adds overfitting variance that the theoretically-derived coefficients (exactly
+1, from the Möbius identity) avoid. This strengthens rather than undermines the finding.
+
+**Amortisation/cost claim, corrected (the review's point that "practically unaffordable" was unmeasured).**
+`scripts/p4_amortization_test.py`, two measured points plus one exact combinatorial count:
+- At the original 60-triple scale: direct labelling (1,228,800 solves, 135s) was CHEAPER than building the
+  156-pair table (3,194,880 solves, 350s) — confirmed, "practically unaffordable" was wrong here.
+- Extending to 200 NEW, never-before-seen triples (frozen sample, `data_hik/manifest_amortization_new200.json`):
+  only 89/410 needed sub-pairs (22%) were already available; the incremental solves to cover them (6,420 at one
+  control state) still exceeded direct labelling of those 200 triples (4,000 solves) — the crossover has NOT
+  been reached at this scale either.
+- The asymptotic argument remains mathematically valid and is now stated as a count, not a claim: the full
+  703-pair table among the 38 touched branches (14,060 solves at one control state) would predict ALL 8,436
+  possible triples among those branches with zero further solves, against 168,720 solves to label them all
+  directly — about 12x cheaper, but only once essentially the whole combinatorial space is queried.
+- **Where g2 was tested on those 200 genuinely new triples, it remained accurate** (MAE 0.00082, rho 0.976 at
+  full control) — the STRUCTURAL finding (does the composition generalise to unseen triples) holds; the
+  SEPARATE cost-savings claim does not hold at any scale measured, and the true crossover point is not yet
+  characterised.
 
 **What remains, honestly:** still the same frozen 60-triple manifest and 20 operating points as every earlier
 test in this stage (not independent data); still no cluster bootstrap; still no confirmatory block; N-4 under
-partial observation not yet tested (would need the same full-grid treatment applied to `k4_screen.npz`, not yet
-done); this is not FDNA in any sense (a generic property of the LP's value function, same caveat as before).
+partial observation not yet tested; this is not FDNA in any sense (a generic property of the LP's value
+function). The cost/amortisation argument for this specific approach is NOT yet established at any tested scale
+and should not be claimed in a paper without measuring the actual crossover curve.
 
 ## Staged comparator set: does a trained recurrent/set model beat the closed-form composition?
+
+**Correction (external review):** the comparison below gives g2/g3 STRICTLY MORE information than any trained
+model tested — g2/g3 receive both singleton (N-1) AND pairwise-interaction (N-2) values; the "equal-information"
+DeepSets/GRU variant received only the singleton value, never the pairwise interaction terms; the aggregate
+tree received neither. This is a real information-budget asymmetry, not just a data-scale one, and the
+conclusion below should be read as "generic learners given LESS structural information underperform," not as a
+clean "recurrence loses to composition" result. A genuinely fair rerun (pairwise-aware DeepSets/GRU, matched
+information) is listed as follow-up work, not yet done. The linear-baseline result above (same information as
+g2, fitted vs fixed coefficients) is the properly matched comparison and is more trustworthy for the "does
+recurrence/learning help" question than the table below.
 
 Per the brief's own preferred direction (section 6.1/6.3), `scripts/p4_setmodels.py` trains a tuned tree
 (permutation-invariant sum/max-aggregate electrical descriptors), a DeepSets model, and a GRU — all ONLY on N-1
