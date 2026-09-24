@@ -1,0 +1,22 @@
+{
+ "P1_v2b": {
+  "n_rows": 120000,
+  "g2_composed": 0.008875717696368189,
+  "g1_composed": 0.01568020212285751,
+  "oracle_full_table_composed": 0.007753241708343679,
+  "assume_full_control_g2": 0.013498886704353674,
+  "g2_beats_g1": true,
+  "g2_beats_assume_full": true,
+  "gap_to_oracle_g2": 0.0011224759880245098
+ },
+ "P2_v2c": {
+  "n_rows": 120000,
+  "g2_composed": 0.007035309469489101,
+  "g1_composed": 0.01437888717701092,
+  "oracle_full_table_composed": 0.005803066100705009,
+  "assume_full_control_g2": 0.013423206126379478,
+  "g2_beats_g1": true,
+  "g2_beats_assume_full": true,
+  "gap_to_oracle_g2": 0.0012322433687840919
+ }
+}

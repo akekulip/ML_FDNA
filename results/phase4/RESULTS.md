@@ -81,6 +81,37 @@ to large k on this benchmark — not a hope, a measured property of the LP's val
 **Caveats:** single fixed control state, one topology, small manifest (25-100 sets depending on order), no
 cluster bootstrap, no confirmatory block. This is a strong screen, not a confirmed claim.
 
+## Partial-observation validation: does the Mobius result survive realistic communication uncertainty?
+
+Per the recommendation at the end of the previous report, `registry/phase4_step_partialobs.yaml` (committed
+before any new label was generated) pre-registered this test. New data: `y_pair` regenerated across ALL 1024
+control vectors (not one fixed state) for the 156 needed sub-pairs x 20 ops (3,194,880 LP solves, 350s on 24
+cores, `scripts/hik_gen_ypair_fullgrid.py`); `y_single` reused for free from the existing dense N-1 rows in
+`data_v2/vtable_train.npz`. `scripts/p4_mobius_partialobs.py` then composes g2(op,S,c) and g1(op,S,c) over all
+1024 controls with the EXACT communication-state posterior p(c|obs) already used throughout Phase 2/3
+(`src/fdna/v2.py`, unchanged), for both partial-observation cells (P1: q=0.7 s=0.3; P2: q=0.3 s=0.2), 100
+observation draws per triple, scored against the TRUE realised shed at the TRUE hidden control state (not the
+posterior mean).
+
+| comparator | P1 (v2b) MAE | P2 (v2c) MAE |
+|---|---|---|
+| g1-composed (naive sum + exact posterior) | 0.01568 | 0.01438 |
+| assume-full-control (ignore observation, use g2 at c=all-ones) | 0.01350 | 0.01342 |
+| **g2-composed (order-2 truncation + exact posterior)** | **0.00888** | **0.00704** |
+| oracle-full-table-composed (upper bound: as if the true N-3 table existed) | 0.00775 | 0.00580 |
+
+**g2-composed beats both the naive-sum baseline (1.77x / 2.04x lower MAE) and ignoring the observation entirely
+(1.52x / 1.91x lower MAE), in both cells.** It also closes **85.9% (P1) and 85.7% (P2) of the achievable gap**
+between the naive baseline and the (practically unaffordable) true-N-3-table oracle — using ONLY cheap N-1/N-2
+information, no N-3 label at all. This is the clearest positive result of the whole Phase 3/4 programme: **the
+low-degree structural composition survives reintroducing realistic partial/stale communication observation**,
+not just the exact-control screen it was first found in.
+
+**What remains, honestly:** still the same frozen 60-triple manifest and 20 operating points as every earlier
+test in this stage (not independent data); still no cluster bootstrap; still no confirmatory block; N-4 under
+partial observation not yet tested (would need the same full-grid treatment applied to `k4_screen.npz`, not yet
+done); this is not FDNA in any sense (a generic property of the LP's value function, same caveat as before).
+
 ## Staged comparator set: does a trained recurrent/set model beat the closed-form composition?
 
 Per the brief's own preferred direction (section 6.1/6.3), `scripts/p4_setmodels.py` trains a tuned tree
