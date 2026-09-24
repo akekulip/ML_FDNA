@@ -48,3 +48,8 @@ new_exploratory_arm_registered_before_coding:   # 2026-09-24 ~04:36
   screen: P1 and P2, N in {1000, 5000, 25000}, 3 reps, arms I1, I2, I3, I5, I8 (+ oracle); primary size N=1000.
   confirm_slots_reserved: INF8_P1, INF8_P2 (of the 2 remaining family slots) - opened only if the screen effect >= 0.05 at N=1000
   scale_caveat: exact enumeration over 2^14 states does not scale to large graphs; the claim is about sample complexity given known structure, not about scale.
+outcomes_I8:   # recorded 2026-09-24 ~04:50, exploratory block, 3 reps
+  I8_bayes_structure_screen:
+    result: KL to the exact posterior 0.021/0.001/0.000 (P1, N=1000/5000/25000) and 0.010/0.002/0.000 (P2) versus generic 0.06-1.8 and FDNA mean-field 1.0-2.8. R-precision (registered expected-shed scoring) I8 minus best generic (I2): -0.019/-0.024/-0.027 (P1), +0.002/-0.015/-0.014 (P2); with P(severe) scoring I8 is within +0.005..+0.011 of the best generic at N=1000 and equals the exact-posterior oracle (0.914-0.916 P1, 0.942-0.943 P2).
+    decision: registered hypothesis (I8 beats best generic by >= 0.05 at N=1000) NOT supported; INF8_P1/INF8_P2 not opened. Confirmatory looks consumed: 0.
+    interpretation: a near-exact structured posterior (17 learnable parameters) barely changes ranking accuracy relative to a strong per-generator GBM baseline. Since exact inference is the ceiling for ANY structured inference model, the downstream benefit of structure in this benchmark family is at most ~0.01-0.02 R-precision. Value-function learning (learned g versus exact V: 0.09-0.11) dominates the error.

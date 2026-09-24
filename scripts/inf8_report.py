@@ -4,7 +4,7 @@ import pandas as pd
 D = "data_v2"; TEST = sys.argv[1] if len(sys.argv) > 1 else "test"
 i8 = pd.concat([pd.read_parquet(f"{D}/inf8_{TEST}_{v}_3.parquet") for v in ("v2b", "v2c")])
 old = pd.concat([pd.read_parquet(f"{D}/inf_{TEST}_{v}_3.parquet") for v in ("v2b", "v2c")])
-r = pd.concat([i8[i8.arm != "oracle_exact_posterior"], old[old.N.isin(i8.N.unique())]])
+r = pd.concat([i8[i8.arm != "oracle_exact_posterior"], old[old.N.isin(i8[i8.N > 0].N.unique())]])
 rng = np.random.default_rng(41)
 print("mean per-op R-precision (expected-shed scoring / P(severe) scoring) and KL to exact")
 for col in ("rprec", "rprec_sev", "kl_exact"):
