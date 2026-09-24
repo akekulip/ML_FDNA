@@ -35,7 +35,7 @@ def test_fdna_layer_soft_min_gradients_flow_and_bounded():
 
 def test_softmin_approaches_min():
     x = torch.tensor([[0.3, 0.7, 0.5]])
-    assert abs(softmin(x, 1, 0.001).item() - 0.3) < 1e-3 and abs(softmin(x, 1, 0.0).item() - 0.3) < 1e-6
+    assert abs(softmin(x, 1, 0.0001).item() - 0.3) < 1e-3 and abs(softmin(x, 1, 0.0).item() - 0.3) < 1e-6
 
 
 def test_monotone_value_is_nonincreasing_in_control():
@@ -46,3 +46,13 @@ def test_monotone_value_is_nonincreasing_in_control():
     for k in range(5):
         c2 = c.clone(); c2[:, k] = c[:, k] + torch.rand(64) * 0.5
         assert (net(x, c2) <= net(x, c) + 1e-6).all()
+
+
+def test_fdna_layer_reaches_one_when_everything_is_healthy():
+    m = torch.tensor([[1, 1, 0, 1], [0, 1, 1, 1]])
+    L = FDNALayer(m, tau=0.05)
+    L.u.data.fill_(20.0); L.alpha.data.fill_(-20.0); L.beta.data.fill_(20.0)
+    assert (L(torch.ones(4, 4)) > 0.999).all()          # un-normalised softmin capped this at ~0.95
+    L.alpha.data.fill_(20.0); L.beta.data.fill_(-20.0)   # fully strict, critical dependencies
+    o = torch.ones(1, 4); o[0, 1] = 0.0                  # a shared critical parent is down
+    assert (L(o) < 0.2).all()

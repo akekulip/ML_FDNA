@@ -69,9 +69,11 @@ class InfFDNA(nn.Module):
         return torch.log_softmax(self.mf(o_unit), dim=1)
 
 
-def fit_ce(model, E_tr, y_tr, E_va, y_va, epochs=40, lr=2e-3, wd=0.0, bs=2048, patience=6, seed=0, dev="cuda"):
+def fit_ce(mk, E_tr, y_tr, E_va, y_va, epochs=40, lr=2e-3, wd=0.0, bs=2048, patience=6, seed=0, dev="cuda"):
+    """mk: zero-argument model constructor (seeded here so initialisation is reproducible)."""
     import copy
     torch.manual_seed(seed)
+    model = mk()
     model.to(dev)
     Xtr = torch.as_tensor(E_tr, dtype=torch.float32, device=dev); ytr = torch.as_tensor(y_tr, dtype=torch.long, device=dev)
     Xva = torch.as_tensor(E_va, dtype=torch.float32, device=dev); yva = torch.as_tensor(y_va, dtype=torch.long, device=dev)
@@ -93,6 +95,8 @@ def fit_ce(model, E_tr, y_tr, E_va, y_va, epochs=40, lr=2e-3, wd=0.0, bs=2048, p
             bad += 1
             if bad >= patience:
                 break
+    if state is None:
+        raise FloatingPointError('no finite validation loss')
     model.load_state_dict(state)
     return model, best
 

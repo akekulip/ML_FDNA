@@ -58,10 +58,19 @@ def test_control_vector_posterior_marginals(w):
     assert m.shape == (10, 5) and (m >= -1e-6).all() and (m <= 1 + 1e-6).all()
 
 
-def test_block_lock_refuses_reuse(tmp_path, monkeypatch):
+def test_block_lock_rules(tmp_path, monkeypatch):
+    import pytest
     import fdna.blocks as b
     monkeypatch.setattr(b, "LOCK_DIR", tmp_path)
-    assert list(open_block("confirm", "H_test")) == list(range(400, 480))
+    monkeypatch.setattr(b, "_git", lambda *a: "" if a[0] == "status" else "deadbeef")
+    assert list(b.open_block("confirm", "INF_P1", "inf", "v2b", 3)) == list(range(400, 480))
     with pytest.raises(RuntimeError):
-        open_block("confirm", "H_test")
-    assert list(open_block("replicate", "H_test"))[0] == 500
+        b.open_block("confirm", "INF_P1", "inf", "v2b", 3)                  # reuse refused
+    with pytest.raises(PermissionError):
+        b.open_block("confirm", "B1_P1")                                    # withdrawn / undeclared slot
+    with pytest.raises(PermissionError):
+        b.open_block("confirm", "D_P1", "d", "v2c", 3)                      # slot bound to another cell
+    monkeypatch.setattr(b, "_git", lambda *a: " M file" if a[0] == "status" else "deadbeef")
+    with pytest.raises(RuntimeError):
+        b.open_block("replicate", "INF_P2", "inf", "v2c", 3)                # dirty tree refused
+    assert b.block_seed("test") == 13 and b.block_seed("confirm") == 413 and b.block_seed("replicate") == 513

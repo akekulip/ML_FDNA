@@ -6,15 +6,23 @@ FDNA node operability:  s_j = 1 - mean_i alpha_ij (1 - o_i)   (strength, cumulat
 with alpha, beta, u learnable in [0,1] (sigmoid) and min replaced by a temperature-controlled softmin."""
 from __future__ import annotations
 
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-def softmin(x: torch.Tensor, dim: int, tau: float) -> torch.Tensor:
+def softmin(x: torch.Tensor, dim: int, tau: float, mask: torch.Tensor = None) -> torch.Tensor:
+    """Normalised soft minimum: -tau*(logsumexp(-x/tau) - log k) over the k active entries, so k equal inputs x give exactly x
+    (the un-normalised form is biased low by tau*log k, capping FDNA operability at ~0.945 for tau=0.05, n=10)."""
     if tau <= 0:
-        return x.min(dim=dim).values
-    return -tau * torch.logsumexp(-x / tau, dim=dim)
+        return (x if mask is None else x.masked_fill(mask <= 0, 1e9)).min(dim=dim).values
+    if mask is None:
+        return -tau * (torch.logsumexp(-x / tau, dim=dim) - math.log(x.shape[dim]))
+    z = (-x / tau).masked_fill(mask <= 0, float("-inf"))
+    k = mask.sum(dim=dim).clamp(min=1)
+    return -tau * (torch.logsumexp(z, dim=dim) - torch.log(k))
 
 
 class FDNALayer(nn.Module):
@@ -35,8 +43,7 @@ class FDNALayer(nn.Module):
         m = self.mask
         deg = m.sum(1).clamp(min=1)
         s = 1 - ((m * a)[None] * (1 - o)[:, None, :]).sum(2) / deg
-        big = (1 - m)[None] * 10.0
-        bt = softmin(o[:, None, :] + b[None] + big, dim=2, tau=self.tau)
+        bt = softmin(o[:, None, :] + b[None], dim=2, tau=self.tau, mask=m[None].expand(o.shape[0], -1, -1))
         bt = softmin(torch.stack([torch.ones_like(bt), bt], 0), dim=0, tau=self.tau)
         us = u[None].expand_as(s)
         return softmin(torch.stack([us, s, bt], 0), dim=0, tau=self.tau).clamp(0, 1)

@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 D = "data_v2"; TEST = sys.argv[1] if len(sys.argv) > 1 else "test"
 d = pd.concat([pd.read_parquet(f) for f in sorted(glob.glob(f"{D}/d_{TEST}_*_*.parquet"))])
-b = pd.concat([pd.read_parquet(f) for f in sorted(glob.glob(f"{D}/b1_{TEST}_*_*.parquet"))]) if glob.glob(f"{D}/b1_{TEST}_*_*.parquet") else None
+b = None
 rng = np.random.default_rng(31)
 allr = pd.concat([d, b]) if b is not None else d
 print(f"Decomposed composition vs end-to-end, block '{TEST}': mean per-op R-precision")
 print(allr.groupby(["variant", "q", "s", "n", "arm"]).rprec.mean().unstack("arm").round(3).T.to_string())
 print("\ntop-16 posterior mass covered (mean):", d.groupby("arm").top16_mass.mean().round(3).to_dict())
 print("\npaired (per-op, reps averaged) with 95% cluster CI")
-e2e = ["A1_gbm_obs", "A2_gbm_logic", "A3_mlp", "A4_minmax_gnn", "A5_fdna_belief", "A6_shuffled", "A7_unconstrained"]
+e2e = ["A1_gbm_obs", "A2_gbm_logic", "A8_hybrid_generic_marginals"]
 dl_ = ["D_I1_mlp", "D_I2_gbm_product", "D_I3_minmax_gnn", "D_I5_fdna", "D_I6_shuffled", "D_I7_unconstrained"]
 for (var, q, s, n), g in allr.groupby(["variant", "q", "s", "n"]):
     pv = g.groupby(["op", "arm"]).rprec.mean().unstack("arm")

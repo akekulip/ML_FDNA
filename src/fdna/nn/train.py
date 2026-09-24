@@ -35,7 +35,10 @@ def fit(model, inputs_tr, y_tr, inputs_va, y_va, epochs=60, lr=2e-3, bs=2048, pa
             opt.zero_grad(); loss.backward(); opt.step()
         model.eval()
         with torch.no_grad():
-            v = float(torch.nn.functional.mse_loss(model(*Xva), yva))
+            v = float(sum(torch.nn.functional.mse_loss(model(*[x[a:a + 8192] for x in Xva]), yva[a:a + 8192], reduction="sum").item()
+                          for a in range(0, len(yva), 8192)) / len(yva))
+        if not np.isfinite(v):
+            raise FloatingPointError("non-finite validation loss")
         if v < best - 1e-9:
             best, best_state, bad = v, copy.deepcopy(model.state_dict()), 0
         else:

@@ -1,0 +1,33 @@
+# Registered 2026-09-24 ~03:45, BEFORE any of the re-runs below. Origin: independent QA verifier + code reviewer at the H4 gate review.
+findings_and_actions:
+  fdna_layer_softmin_bias:
+    problem: un-normalised softmin capped FDNA operability at ~0.945 (tau=0.05), so I5/I6/I7 (and A5-A7 less severely) could put at most ~0.57 probability on the all-reachable control vector
+    action: normalised, mask-aware softmin (exact 1 for all-ones input); unit test added
+    consequence: ALL results for A5-A7 (B1 screen), I5-I7 (inference screen) and D_I5-D_I7 (composition) computed before this fix are INVALID for those arms and are re-run; B1 is re-run as variant B1v2_softmin_fix with the SAME kill rule; the B1 kill decision stands only if it survives the re-run
+  shuffled_control_single_mask: {action: shuffled masks now seeded by replicate (seed=rep)}
+  inference_I2_different_observations: {action: I2 trained on the same observations as the neural arms; capacity chosen by validation log-loss}
+  init_not_reproducible: {action: model constructors are called after torch.manual_seed(seed)}
+  fresh_block_states_reused: {problem: the confirm block reused the exploratory block's hidden states and observations (same seed 13), action: seed = 13 + block start (400 -> 413, 500 -> 513) via blocks.block_seed}
+  fresh_block_lock_advisory: {action: lock taken before any block data is loaded; slot must be declared in registry/slots.yaml and bound to (branch, variant, cell); tracked tree must be clean; commit hash recorded; output sha256 recorded; operator commits lock + result}
+  composition_topk: {problem: top-16 covers only 55-75% of posterior mass in P1, action: top-64}
+  end_to_end_baseline_unfair_to_decomposition: {action: added A8 (GBM on observations plus marginals from a generic inference network trained on the same cheap (obs, c) pairs) and A1/A2 inside the composition script, so comparators are self-contained and also receive the cheap pairs}
+tuning_levels:   # applied identically to every arm within a run
+  screen: {gbm_trials: 12, nn_grid: "4 (lr, weight-decay) points", i2: "capacity in {7,15,31} by validation log-loss"}
+  confirm: {gbm_trials: 40, nn_grid: "9 points (3 lr x 3 wd)", i2: "capacity in {4,7,15,31,63}"}
+  note: the original registry text demanded nested 40-trial TPE per (arm, size); this was NOT implemented in the screens (disclosed). Confirm runs use the larger equal budgets above, tuned once per (cell, size) on validation data.
+oracle_note: the posterior-mean-of-V predictor is not R-precision-optimal. Exact P(severe|obs) scores 0.9159 (P1) and 0.9425 (P2) against 0.8647 and 0.9120 (posterior mean). Both are reported; the inference screen adds P(severe)-based scoring as a secondary metric. Learned arms scoring above the posterior-mean oracle (I5 0.885 at N=1000) are therefore not anomalous.
+aggregation_disclosures:
+  E1b: reproduces only with the best tree chosen per operating point (mean of per-op max). Using the max of the two arm means, v2 cell (q=0.3,s=0.2) would be +0.032 and pass the 0.03 gate. E1b was in any case found to measure information loss rather than reducible headroom.
+  B1_screen_deltas: vs per-operating-point best of A1-A4: -0.084/-0.057 (P1 n=25/100), -0.038/-0.039 (P2). vs the best single arm (A2): about -0.083/-0.047 (P1), -0.034/-0.030 (P2). All negative under both aggregations.
+decision_rules_for_confirmatory_runs:   # declared now; comparators are fixed from the re-run SCREEN and written to registry/comparators.yaml before any confirm run
+  effect: point estimate >= 0.05 R-precision AND Holm-adjusted one-sided bootstrap p < 0.05 over the declared family (INF_P1, INF_P2, D_P1, D_P2, DS_P1, DS_P2)
+  primary_sizes: {INF: N=5000 samples, D: n=25 operating points, DS: n=25 operating points}
+  comparator: a single arm per claim, chosen as the highest-mean arm of the re-run screen at the primary size (never chosen on confirm data)
+  structure_claims: intersection-union - the FDNA arm must beat the shuffled (I6) AND the unconstrained (I7) control with adjusted p < 0.05 and a positive point estimate, in addition to the effect rule against the comparator
+  no_disjunctions: no 'or at some N', no 'or 5x fewer samples'
+  privileged_information_caveat: D-branch inference modules are trained on samples from the true generative model (q and s known) and value models see the true control vector during training; comparisons to end-to-end arms therefore test 'training with simulator-side privileged information', not the decomposition alone. A8 partly addresses this.
+  inference_only_caveat: INF claims are diagnostics of inference quality scored through the exact value table; no deployable predictor is implied.
+reruns_launched:
+  - scripts/inf_screen.py (P1, P2; N in {1e3,5e3,2.5e4,1.25e5}; 3 reps)
+  - scripts/d_compose.py (P1, P2; n in {25,100}; 3 reps; top-64)
+  - scripts/b1_arms.py as B1v2_softmin_fix (P1, P2; n in {25,100}; 3 reps)

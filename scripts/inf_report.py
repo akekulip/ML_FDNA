@@ -6,6 +6,8 @@ r = pd.concat([pd.read_parquet(f) for f in sorted(glob.glob(f"{D}/inf_{TEST}_*_*
 rng = np.random.default_rng(21)
 print(f"Inference-only, test block '{TEST}': mean per-op R-precision using the exact value table")
 print(r.groupby(["variant", "q", "s", "N", "arm"]).rprec.mean().unstack("arm").round(3).to_string())
+print("\nsecondary score: R-precision of P(severe) from the posterior (Bayes-optimal for the metric with the exact posterior)")
+print(r.groupby(["variant", "q", "s", "N", "arm"]).rprec_sev.mean().unstack("arm").round(3).to_string())
 print("\nmean KL(exact posterior || model) (lower is better)")
 print(r.groupby(["variant", "q", "s", "N", "arm"]).kl_exact.mean().unstack("arm").round(3).to_string())
 print("\npaired I5 minus X, 95% cluster CI")
