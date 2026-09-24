@@ -121,3 +121,24 @@ def posterior_over_controls(w: World, post: np.ndarray) -> np.ndarray:
 def control_marginals(w: World, pc: np.ndarray) -> np.ndarray:
     """(B, n_cv) -> (B, 5) posterior mean commandable fraction per generator."""
     return pc @ w.CV.astype(np.float32)
+
+
+def build_world_assumed(parents: dict, unit_gen: np.ndarray) -> World:
+    """World whose flag/control structure follows an ASSUMED wiring (parents per generator, unit->generator assignment).
+    Control fractions that leave the level set {0,.4,.6,1} are clipped to [0,1] and snapped to the nearest level."""
+    w = build_world()
+    up = w.X
+    reach = np.zeros((len(up), N_UNIT), bool)
+    for u in range(N_UNIT):
+        g = int(unit_gen[u])
+        reach[:, u] = up[:, comm.CC] & up[:, comm.rtu(u)] & np.any([up[:, comm.gw(p)] for p in parents[g]], axis=0)
+    C = np.zeros((len(up), comm.N_REMOTE_GEN))
+    for u in range(N_UNIT):
+        C[:, int(unit_gen[u])] += reach[:, u] * comm.SHARES[u % comm.UNITS_PER_GEN]
+    levels = np.array([0.0, 0.4, 0.6, 1.0])
+    C = levels[np.abs(np.clip(C, 0, 1)[:, :, None] - levels[None, None, :]).argmin(2)]
+    lookup = {tuple(np.round(r, 6)): i for i, r in enumerate(w.CV)}
+    cidx = np.array([lookup[tuple(np.round(r, 6))] for r in C], np.int32)
+    T = w.T.copy()
+    T[:, :N_UNIT] = reach
+    return World(w.X, T, w.logprior, cidx, w.CV, None, None).with_s(0.0)

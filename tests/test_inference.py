@@ -53,3 +53,13 @@ def test_bayes_structure_matches_exact_posterior_at_true_parameters():
     lp2 = net(torch.tensor(belief.obs_tensor(obs)))
     lp2[:, 5].sum().backward()
     assert net.fail.grad.abs().sum() > 0 and net.stale.grad.abs() > 0
+
+
+def test_assumed_world_equals_true_world_at_true_wiring_and_differs_when_corrupted():
+    from fdna import wiring
+    w = v2.build_world()
+    same = v2.build_world_assumed(wiring.TRUE_PARENTS, wiring.TRUE_UNIT_GEN)
+    assert (same.cidx == w.cidx).all() and (same.T == w.T).all()
+    p, u = wiring.corrupt(0.3, 5)
+    bad = v2.build_world_assumed(p, u)
+    assert (bad.cidx != w.cidx).mean() > 0.05
