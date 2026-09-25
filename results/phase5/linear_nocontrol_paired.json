@@ -2,12 +2,19 @@
  "g2_mse": 7.690919697370546e-05,
  "l1_mse": 7.330709151862334e-05,
  "relative_gap_pct": 4.683582194095265,
- "paired_bootstrap_over_triples_g2_minus_l1_sq_error": {
+ "paired_bootstrap_over_70_triples_CORRECT": {
+  "mean": 3.602105455082126e-06,
+  "p": 0.36368181590920456,
+  "lo95_one_sided": -5.8224342112712285e-06,
+  "lo90": -5.8224342112712285e-06,
+  "hi90": 1.7376858290020667e-05
+ },
+ "paired_bootstrap_over_4200_rows_MISLABELED_original": {
   "mean": 3.6021054550821264e-06,
   "p": 0.0010499475026248687,
   "lo95_one_sided": 1.61591236282638e-06,
   "lo90": 1.61591236282638e-06,
   "hi90": 5.648918299507493e-06
  },
- "note": "boot() here clusters over the 70 TRIPLES (not operating points) since this is the exact-control, per-triple comparison; interpret lo90>0 as g2 reliably worse, not just a point estimate."
+ "note": "the original committed version passed all 4200 (op,triple) rows to boot() and called it a 70-triple bootstrap; that was wrong (external review finding 9). The CORRECT field aggregates to 70 triple-level means first, matching the claimed unit; interpret lo90>0 there as g2 reliably worse."
 }

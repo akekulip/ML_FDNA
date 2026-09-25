@@ -1,61 +1,71 @@
 # Phase 5 Stage 4 — matched recurrent/learned-correction experiment
 
-## Identifiability check (stated first, per the brief)
-g2 is exact for any set of size <=2 by construction: the "residual" V-g2 on any N-1/N-2 row is trivially zero
-(verified directly, a tautology of the truncation, not a measured fact). The residual-correction arm is
-therefore trained ONLY on charged N-3 labels, never on N-1/N-2 rows -- the empty-supervision trap the brief
-warns against was avoided by design, not discovered after a failed run.
+**This document was corrected after an external evidence review found four real bugs.** Every one was
+independently reproduced against this repo's own committed code before being accepted, then fixed in
+`scripts/p5_matched_recurrent_experiment_v2.py` / `p5_matched_recurrent_eval_v2.py`. The original (buggy)
+scripts and their output are kept, not deleted.
 
-## Design
-`registry/phase5_matched_recurrent.yaml` (committed before training). 70 confirmatory triples split 45
-train / 25 held-out test, by whole outage set, fixed seed, verified disjoint. Every trained arm gets IDENTICAL
-features: 3 singleton values, 3 pairwise interaction values, island floor, 3 sub-pair LODF risk scores, and the
-control vector itself (15-dim total) -- trained on 345,600 rows (45 triples x 60 ops x 128 sampled controls),
-0 new LP solves (all from cached tables). Six arms: `g2_fixed` (no training), `g2_clipped` (Stage 2 physical
-repair, no training), `ridge` (symmetric linear), `gbm` (tuned LightGBM), `deepsets` (a COMMUTATIVE
-pair-aware set model, sum-pooled over the 3 elements -- chosen deliberately over a GRU to sidestep outage-order
-sensitivity entirely, per the brief's own stated preference), `residual` (retains g2 exactly, learns only the
-correction, trained exclusively on N-3 labels per the identifiability check).
+## Identifiability check (unchanged, still respected)
+g2 is exact for any set of size <=2 by construction, so the residual-correction arm is trained ONLY on charged
+N-3 labels, never on N-1/N-2 rows where the residual is trivially zero.
 
-**Pre-rejection checklist, all pass:** target variation nonzero (train std 0.038, val std 0.050); ridge beats
-predict-the-mean; both neural losses decreased monotonically over training; train/test triple split verified
-disjoint by direct set intersection.
+## The four bugs, each confirmed by reproduction before being fixed
 
-Every arm composed with the SAME P1/P2 partial-observation posterior (unchanged `src/fdna/v2.py` machinery),
-scored on the SAME R-precision endpoint, per-operating-point cluster bootstrap, on the 25 held-out test
-triples only (never seen during training).
+1. **Validation target misalignment (critical, external review finding 1).** The original script sampled
+   `Xva`/`yva` with one RNG draw, then advanced the SAME RNG to sample `g2va` at DIFFERENT control indices, so
+   `rva=yva-g2va` compared mismatched states. Reproduced exactly: 4,796/4,800 mismatched indices; the reported
+   `7.474e-4` residual validation MSE was not a meaningful model-quality number. Fixed: `(key, X, y, g2)` are
+   now built together in one pass for both training and validation; `r+g2==y` is asserted by construction.
+2. **Validation overlapped training (external review finding 2).** Validation reused the first 10 TRAINING
+   outages and the first 15 (of 60) TRAINING operating points. Reproduced: 612/4,800 validation rows also
+   present in training; the remainder still shared both axes with training (interpolation, not held-out
+   generalisation). Fixed: outages AND operating points are now split into three genuinely DISJOINT groups
+   (35 train / 10 val outages; 45 train / 8 val ops), verified disjoint by direct set intersection. The final
+   test still uses all 60 ops against 25 held-out outages -- explicitly labelled as the known-operating-point /
+   new-outage-combination axis, per the review's own guidance that this is a legitimate experiment if stated
+   precisely.
+3. **The "commutative" model was not actually permutation-invariant (external review finding 3).** The original
+   tokens `(ya,Iab),(yb,Iac),(yc,Ibc)` paired a singleton with the WRONG interaction term under relabeling.
+   Reproduced exactly: relabeling a<->b changed the forward output from 0.10 to 0.11 with a valid weight
+   assignment executed against the committed `forward` method. Fixed (`src/fdna/nn/pairset.py`): each of the 3
+   EDGES `{a,b},{a,c},{b,c}` is now encoded as `(min(y_i,y_j), max(y_i,y_j), I_ij)` -- symmetric in its own two
+   endpoints -- pooled by sum over the 3 edges, which are the same 3 edges regardless of relabeling. Verified
+   genuinely invariant on the ACTUAL TRAINED model across all 6 relabelings (not just architecturally), both in
+   a dedicated pytest (`tests/test_deepsets_invariance.py`) and inline in the training script.
+4. **Unscaled feature.** The reciprocal-determinant (LODF risk) feature was capped at 10,000 next to features
+   roughly in [0,1]. Fixed: log1p-transformed, then standardised using TRAINING-set statistics only.
 
-## Result: g2_fixed wins, decisively and in both cells
+## Corrected result: g2_fixed still wins, but by a much smaller and more honest margin
 
 | arm | P1 R-precision | P1 vs g2_fixed (90% CI) | P2 R-precision | P2 vs g2_fixed (90% CI) |
 |---|---|---|---|---|
 | **g2_fixed** | **0.892** | -- | **0.922** | -- |
 | g2_clipped | 0.892 | 0.000 (exact tie) | 0.922 | 0.000 (exact tie) |
-| gbm (tuned) | 0.890 | -0.003 [-0.005, -0.0003] | 0.917 | -0.005 [-0.007, -0.003] |
-| ridge | 0.862 | -0.030 [-0.036, -0.025] | 0.905 | -0.017 [-0.020, -0.014] |
-| residual (g2 + learned correction) | 0.834 | -0.058 [-0.062, -0.054] | 0.862 | -0.060 [-0.064, -0.055] |
-| deepsets (commutative set-state) | 0.780 | -0.113 [-0.122, -0.103] | 0.800 | -0.122 [-0.130, -0.113] |
+| gbm (tuned) | 0.890 | -0.003 [-0.005, -0.001] | 0.919 | -0.004 [-0.006, -0.001] |
+| **deepsets (now genuinely invariant)** | **0.881** | **-0.011 [-0.014, -0.009]** | **0.915** | **-0.007 [-0.008, -0.006]** |
+| ridge | 0.866 | -0.026 [-0.031, -0.021] | 0.906 | -0.016 [-0.019, -0.013] |
+| residual (g2 + learned correction) | 0.838 | -0.054 [-0.059, -0.050] | 0.870 | -0.052 [-0.057, -0.047] |
 
-**No learned arm beats g2_fixed in either cell.** Every 90% CI on the (learned − g2_fixed) difference lies
-entirely below zero. GBM comes closest (a small, still-negative, bootstrap-excludes-zero gap in both cells).
-The commutative set-state model -- the arm structurally closest to what the brief calls a "recurrent structured
-correction" -- performs WORST of all five learned arms, in both cells, by a wide and consistent margin. The
-residual-correction network (which explicitly retains the exact g2 term and only learns the missing piece)
-still loses to plain g2_fixed by a clear, bootstrap-supported margin in both cells -- the extra learned
-correction actively hurts more than it helps, on this held-out triple set.
+**Corrected reading.** g2_fixed still beats every trained arm in both cells, and every 90% CI on
+(learned-g2_fixed) still lies below zero -- **that headline conclusion is unchanged.** What changed
+substantially: the properly-invariant DeepSets model's gap to g2_fixed shrank from -0.113/-0.122 (the
+non-invariant, buggy version) to **-0.011/-0.007** -- now the SECOND-closest arm to g2_fixed, essentially on par
+with GBM, not "worst of all five learned arms by a wide margin" as the original (bugged) report claimed. The
+original finding that the commutative structured model performed worst was substantially an artifact of the
+architecture bug, not a genuine property of set-based/commutative corrections. The residual-correction network
+remains the clear loser in both versions.
 
-**Per the pre-registered decision rule** ("retain a learned/recurrent arm as lead only if it beats g2_fixed by
-a material, bootstrap-supported margin in BOTH cells; if it ties, prefer the simpler method"): **no arm is
-promoted. g2_fixed remains the lead method.** This directly answers the brief's central Stage-4 question: on
-this benchmark, at this label budget, with matched information, a recurrent/learned correction does NOT deserve
-to become the main method -- not from intuition, but from an actual matched implementation and evaluation that
-gave it every chance (identical features, identical composition, identical endpoint, a design specifically
-built to avoid the empty-supervision trap).
+**Per the pre-registered decision rule** (promote a learned arm only if it beats g2_fixed by a material,
+bootstrap-supported margin in both cells): still no arm is promoted -- g2_fixed remains the lead method, now on
+materially more trustworthy evidence.
 
-## Honest caveats
-- 45 training triples (charged N-3 labels) is still a modest label budget; a larger charged-label experiment
-  is the natural next check before generalising this conclusion.
-- The residual and DeepSets networks are small (single hidden layer variants); a larger architecture or longer
-  training was not attempted given the time budget -- flagged as a real limitation, not swept under the rug.
-- GRU/outage-order sensitivity was avoided by construction (the commutative DeepSets architecture), so the
-  brief's 6-permutation GRU test was not needed and was not run.
+## Honest caveats, updated
+- The pre-rejection checklist item `deepsets_loss_decreased` (comparing the first vs. last tracked validation
+  loss) reads `False` even though the model's actual BEST-checkpoint validation MSE (4.5e-6) was the lowest of
+  any trained arm (ridge 1.26e-5, gbm 1.33e-5) -- the checklist's first-vs-last comparison is a weak proxy for
+  "did the model ever improve," not a correctness bug, but worth flagging as an imprecise diagnostic rather than
+  over- or under-reading it.
+- 35 training outages (down from 45, to make room for a genuinely disjoint validation split) is a smaller
+  charged-label budget than before; a larger budget was not attempted given the time already spent on repairs.
+- GRU/outage-order sensitivity remains avoided by construction (the edge-pooled architecture is exactly
+  invariant), so no permutation-averaging cost was needed or charged.
