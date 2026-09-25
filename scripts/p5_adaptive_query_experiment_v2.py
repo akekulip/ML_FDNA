@@ -23,7 +23,7 @@ import json
 import numpy as np
 
 from fdna import spec, v2, v2data
-from fdna.adaptive_query import bounds, posterior_mass_bounds
+from fdna.adaptive_query import bounds, posterior_mass_bounds, predict_from_bounds
 from fdna.physical_correction import island_floor
 from fdna.dataset import G, RATING
 from fdna.opgen import sample_op
@@ -111,9 +111,10 @@ for cell, (q, s, cov) in CELLS.items():
                 nq_r, qLr, qUr = resolve("random_bounds", y_true_grid, floor, g2grid, pc, budget, guided_rng)
                 tot_q_guided += nq_g; tot_q_random += nq_r
 
-                # FIX 1: prediction from (qL,qU) ONLY -- no access to true_c_idx anywhere in this expression.
-                pred_g = (qLg > 0.5) if qLg > 0.5 else ((qLg + qUg) / 2 > 0.5)
-                pred_r = (qLr > 0.5) if qLr > 0.5 else ((qLr + qUr) / 2 > 0.5)
+                # FIX 1: prediction from (qL,qU) ONLY, via the shared fdna.adaptive_query.predict_from_bounds --
+                # no access to true_c_idx anywhere (its signature has no such parameter to leak through).
+                pred_g = predict_from_bounds(qLg, qUg)
+                pred_r = predict_from_bounds(qLr, qUr)
                 correct_guided += int(bool(pred_g) == bool(true_label)); correct_random += int(bool(pred_r) == bool(true_label))
 
                 # FIX 2: draw K=budget control indices DIRECTLY from the exact posterior pc -- true posterior MC.

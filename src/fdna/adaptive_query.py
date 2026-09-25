@@ -35,3 +35,13 @@ def bounds(CV: np.ndarray, queried_idx: np.ndarray, queried_val: np.ndarray, flo
 def posterior_mass_bounds(pc: np.ndarray, L: np.ndarray, U: np.ndarray, tau: float) -> tuple[float, float]:
     """qL = P(L(c) > tau), qU = P(U(c) > tau) under the posterior pc over control vectors."""
     return float((pc * (L > tau)).sum()), float((pc * (U > tau)).sum())
+
+
+def predict_from_bounds(qL: float, qU: float) -> bool:
+    """The severe/not-severe prediction rule used by scripts/p5_adaptive_query_experiment_v2.py, factored out
+    so the script and its regression test (tests/test_adaptive_query_integrity.py) call the exact same function
+    rather than two hand-copied copies of the formula that could silently drift apart. Its signature is a
+    structural guarantee against external review finding 4 (hidden-state leakage): this function has no
+    parameter through which a hidden true control state could enter -- it can only ever see (qL,qU), the
+    posterior-mass bounds any real policy actually observes."""
+    return bool((qL > 0.5) if qL > 0.5 else ((qL + qU) / 2 > 0.5))
