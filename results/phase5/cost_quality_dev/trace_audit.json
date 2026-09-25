@@ -1,0 +1,81 @@
+{
+  "metrics_records": 604800,
+  "feasible_records": 429600,
+  "skipped_infeasible": 175200,
+  "metrics_reconstructed": 429600,
+  "metric_reconstruction_cache_entries": 149880,
+  "metric_reconstruction_cache_hits": 279720,
+  "trace_records": 171120,
+  "trace_id_min": 0,
+  "trace_id_max": 50028359,
+  "trace_kind_counts": {
+    "construction": 840,
+    "evaluation_snapshot": 120,
+    "execution": 170160
+  },
+  "regime_summary": {
+    "cold": {
+      "evaluations": 150000,
+      "total_unique_keys": 3337277725
+    },
+    "warm": {
+      "evaluations": 279600,
+      "total_unique_keys": 2202276519
+    }
+  },
+  "failures": [],
+  "audit_mode": "six independent disjoint-shard audits; merged gzip is the concatenation of the verified shard members",
+  "shard_trace_id_ranges": [
+    [
+      0,
+      29419
+    ],
+    [
+      10000000,
+      10029199
+    ],
+    [
+      20000000,
+      20028149
+    ],
+    [
+      30000000,
+      30026999
+    ],
+    [
+      40000000,
+      40028989
+    ],
+    [
+      50000000,
+      50028359
+    ]
+  ],
+  "shard_audits": [
+    {
+      "path": "/tmp/fdna-cost-parts/part600/audit/trace_audit.json",
+      "sha256": "8f9c3aea63f42302e7e5621338840bf73bbc6233ea8c181199c76e55742e0ae8"
+    },
+    {
+      "path": "/tmp/fdna-cost-parts/part610/audit/trace_audit.json",
+      "sha256": "53f8cd0cce04a36e44bfc995a0dde91ac62efd625559f4101025dc0c68fc9b2f"
+    },
+    {
+      "path": "/tmp/fdna-cost-parts/part620/audit/trace_audit.json",
+      "sha256": "4b82eb99f832bfcb54f84cfb6700b591af81f3c074be862ae0d72835453658d0"
+    },
+    {
+      "path": "/tmp/fdna-cost-parts/part630/audit/trace_audit.json",
+      "sha256": "ed6cf3cee64bcd75b5cea22770e31bc5f7afdde69a5592196e1d5b2dbc3d09ca"
+    },
+    {
+      "path": "/tmp/fdna-cost-parts/part640/audit/trace_audit.json",
+      "sha256": "0cfb0c7f11d921583ee4a730e8c7bf3a01a0241bf89ce587ec44ee254dcf0ea3"
+    },
+    {
+      "path": "/tmp/fdna-cost-parts/part650/audit/trace_audit.json",
+      "sha256": "186c6c83cd164590215c18ca1ed1e055edc0f373e90173881f1a0a252969c2d0"
+    }
+  ],
+  "audit_source_sha256": "d2ba53526d8f7bab5ed180797b0ed1931c8995f5a9975fd2f02fcf200be3b346"
+}

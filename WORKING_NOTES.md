@@ -1,4 +1,33 @@
 # WORKING_NOTES — ML_FDNA
+## Current work — 2026-09-25
+
+The approved development plan is [COST_QUALITY_PLAN.md](results/phase5/COST_QUALITY_PLAN.md).
+It completes all three existing DeepSets seeds and measures screening quality at
+enforced total scalar LP budgets on reused operating points 600–659. No retraining
+or fresh confirmatory block is part of this work. The current results are in
+[cost_quality_dev/REPORT.md](results/phase5/cost_quality_dev/REPORT.md) and
+[STAGE4_MATCHED_RECURRENT.md](results/phase5/STAGE4_MATCHED_RECURRENT.md).
+
+Development gate: cold **no-go**; warm **cv_full at 280 target labels/op** passes
+the 0.01 practical margin against both baselines in both cells. This is conditional
+on a preexisting 227,328-label lower-order cache, and remains exploratory.
+Hardware verification passed on the Ryzen 9 5950X and RTX 2070. The selected
+warm policy and both baselines used 140,803 actual unique CPU LP solves across
+all 60 development points, with zero score, metric, or gate differences.
+All 2,882 numerical neural evaluation results matched exactly between CPU and
+CUDA. Source, input, checkpoint, and output hashes were checked after the runs.
+The full suite passes 145 tests. No commits or pushes were created.
+
+Historical pooling-causation and equivalence language below is superseded: this
+architecture comparison does not isolate pooling as the cause, and failure to
+detect a difference does not establish equivalence. Earlier control-variate
+“zero additional oracle cost” statements assume a preexisting lower-order cache;
+the new cold curves charge its construction explicitly. Historical review files
+deleted from this checkout remain accessible through Git history.
+
+The sections below preserve the earlier experiment history; their test counts,
+push status, and next-action notes are dated records.
+
 Repo: ~/Projects/ML_FDNA (github.com/akekulip/ML_FDNA private; **pushed head 943e09a** (refreshed 2026-09-24, was stale at 31aff42); local-only commits since then, no push without asking).
 Read first: results/SUMMARY.md, results/PHASE2.md, results/LEDGER.md, results/phase3/{STEP1,STEP1_EXT}.md, results/phase4/STATUS_AUDIT.md, registry/*.yaml (locked hypotheses, addenda, amendment, slots, locks).
 
@@ -139,8 +168,8 @@ Repair round 3 (T1-T7) is complete; see `results/phase5/RUN_JOURNAL.md` for the 
 ## Open / next (needs Philip)
 1. Push the local commits? (asked before every push) -- round 2 (T1-T6, up to 10fb6da) was pushed; the
    repair-round-3 commits (672c7e1, 4db9fb9, 0c3f0b9) have NOT been pushed yet.
-2. T7's independent verification report, once it arrives: resolve anything it flags before treating round 3's
-   corrected conclusions (especially the DeepSets/pooling-architecture finding) as final.
+2. Round 3 T7 verification is complete, as recorded above. Its architecture interpretation
+   is superseded by the all-seed analysis; it does not identify pooling causally.
 3. Direction (unchanged, still open): (a) benchmark + protocol paper (workshop/IEEE Access tier); (b) pre-registered scale experiment (large dependency graph, approximate-posterior oracle, headroom gate first);
    (c) N-1->N-2 label-efficiency method; (d) second topology (IEEE-118).
 4. Commits authored by Philip only, no attribution lines.

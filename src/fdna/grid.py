@@ -31,6 +31,31 @@ class Grid:
         return len(self.gen_bus)
 
 
+def validate_branch_ids(n_branch: int | None, branches: tuple[int, ...]) -> tuple[int, ...]:
+    """Return canonical sorted branch ids, rejecting malformed outage sets.
+
+    `n_branch=None` validates type, sign, and uniqueness only for callers such as `hik.outage_key` that do not
+    have a grid. Callers at public grid boundaries should pass `grid.n_branch` to reject out-of-range ids too.
+    """
+    ids = []
+    for raw in branches:
+        if isinstance(raw, (bool, np.bool_)) or not isinstance(raw, (int, np.integer)):
+            raise ValueError(f"branch id must be an integer, got {raw!r}")
+        b = int(raw)
+        if b < 0:
+            raise ValueError(f"branch id must be nonnegative, got {b}")
+        if n_branch is not None and b >= n_branch:
+            raise ValueError(f"branch id {b} out of range for {n_branch} branches")
+        ids.append(b)
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"duplicate branch id in outage set {tuple(ids)!r}")
+    return tuple(sorted(ids))
+
+
+def validate_outage(grid: Grid, branches: tuple[int, ...]) -> tuple[int, ...]:
+    return validate_branch_ids(grid.n_branch, branches)
+
+
 def load_case30() -> Grid:
     import pandapower as pp
     import pandapower.networks as pn

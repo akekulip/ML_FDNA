@@ -3360,18 +3360,25 @@
  "provenance": {
   "head": "a7ec4d0a6adade844dd9d553b9d749deca10bf3b",
   "torch_threads": 4,
-  "elapsed_s": 689.9984746498521,
+  "elapsed_s": 547.1343601229601,
   "command": [
-   "scripts/p5_matched_recurrent_eval_v2.py"
+   "scripts/p5_matched_recurrent_eval_v2.py",
+   "--device",
+   "cuda",
+   "--output",
+   "results/phase5/matched_recurrent_eval_v2_cuda.json"
   ],
   "hardware": {
-   "selected_device": "cpu",
+   "selected_device": "cuda",
    "torch_version": "2.5.1+cu121",
-   "cuda_available": false,
+   "cuda_available": true,
    "cuda_version": "12.1",
-   "cuda_device_name": null,
-   "cuda_device_capability": null,
-   "nvidia_smi": "unavailable: Command '['nvidia-smi', '--query-gpu=name,driver_version,memory.total', '--format=csv,noheader']' returned non-zero exit status 9.",
+   "cuda_device_name": "NVIDIA GeForce RTX 2070",
+   "cuda_device_capability": [
+    7,
+    5
+   ],
+   "nvidia_smi": "NVIDIA GeForce RTX 2070, 535.183.01, 8192 MiB",
    "python_version": "3.13.12",
    "numpy_version": "2.4.6",
    "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",

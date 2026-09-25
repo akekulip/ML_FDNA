@@ -1,0 +1,424 @@
+{
+  "scope": "normal-approximation planning estimate from reused development data; no guaranteed power",
+  "bootstrap": {
+    "draws": 4000,
+    "seed": 9025,
+    "resampling": "paired operating-point rows and replicate columns"
+  },
+  "alpha_one_sided": 0.05,
+  "target_joint_power": 0.9,
+  "individual_power_target": 0.975,
+  "power_rule": "union bound: four individual failure probabilities <=0.025 imply joint failure <=0.10; normal approximation for each contrast",
+  "proposed_n": 280,
+  "required_n_max": 262,
+  "contrasts": [
+    {
+      "cell": "P1_v2b",
+      "comparator": "mc",
+      "mean": 0.031099761637019465,
+      "margin": 0.01,
+      "sigma_equivalent": 0.05104012393641973,
+      "n_for_individual_power_975": 77,
+      "power_at_40": 0.8338993789914997,
+      "power_at_280": 0.9999999327395034
+    },
+    {
+      "cell": "P1_v2b",
+      "comparator": "proxy_full",
+      "mean": 0.015638082313401375,
+      "margin": 0.01,
+      "sigma_equivalent": 0.025288608779606956,
+      "n_for_individual_power_975": 262,
+      "power_at_40": 0.4071830421984592,
+      "power_at_280": 0.9815018466858585
+    },
+    {
+      "cell": "P2_v2c",
+      "comparator": "mc",
+      "mean": 0.041773907681647376,
+      "margin": 0.01,
+      "sigma_equivalent": 0.06697751501797397,
+      "n_for_individual_power_975": 58,
+      "power_at_40": 0.9123699110510697,
+      "power_at_280": 0.999999999844627
+    },
+    {
+      "cell": "P2_v2c",
+      "comparator": "proxy_full",
+      "mean": 0.02059643430423025,
+      "margin": 0.01,
+      "sigma_equivalent": 0.030876552401264835,
+      "n_for_individual_power_975": 111,
+      "power_at_40": 0.7004350375959765,
+      "power_at_280": 0.9999791420624948
+    }
+  ],
+  "conservative_joint_power_at_280": 0.9814809213324837,
+  "proposed_manifest_sha256": "14deb9ff8232f073f2f968b1c1892051789e7fedf9cb913440ce63bd373ac64f",
+  "freshness_scope": "no overlap in checked repository manifests and explicit cached op-ID fields; no global freshness assertion; unindexed files cannot establish freshness",
+  "checked_inputs": [
+    {
+      "path": "data_hik/manifest_amortization_new200.json",
+      "sha256": "5962c1c515d14d94c0426a18af15a0066ed9df502d9ff0f20839a3fb10f0b662",
+      "op_ids": [],
+      "overlap": []
+    },
+    {
+      "path": "data_hik/manifest_k3_confirm.json",
+      "sha256": "03f7af5a27d814dda60918862ccbf0efb11e1e83df94f555e0bf365407db51d5",
+      "op_ids": [
+        600,
+        601,
+        602,
+        603,
+        604,
+        605,
+        606,
+        607,
+        608,
+        609,
+        610,
+        611,
+        612,
+        613,
+        614,
+        615,
+        616,
+        617,
+        618,
+        619,
+        620,
+        621,
+        622,
+        623,
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640,
+        641,
+        642,
+        643,
+        644,
+        645,
+        646,
+        647,
+        648,
+        649,
+        650,
+        651,
+        652,
+        653,
+        654,
+        655,
+        656,
+        657,
+        658,
+        659
+      ],
+      "overlap": []
+    },
+    {
+      "path": "data_hik/manifest_k3_screen.json",
+      "sha256": "0f1e996412ee847b8f7cc5f60a4d1de445be8c13dab96cc24f43a0658a994a9c",
+      "op_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "overlap": []
+    },
+    {
+      "path": "data_hik/manifest_k4_screen.json",
+      "sha256": "3f98300e0be3b0340ccbdf9c928c484c2d14cd04a2843b9a959cbd210ab9d6c5",
+      "op_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "overlap": []
+    },
+    {
+      "path": "data_hik/manifest_train_n2sample.json",
+      "sha256": "3852ac621cae9a6b6acbafda401739ec7a498df8d61369fb792b4ab0fa7b48ed",
+      "op_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "overlap": []
+    },
+    {
+      "path": "data/ops.npz",
+      "checked_id_fields": [
+        "op_id"
+      ],
+      "known_id_count": 200,
+      "overlap": []
+    },
+    {
+      "path": "data/preds_seeds.npz",
+      "checked_id_fields": [],
+      "known_id_count": 0,
+      "overlap": []
+    },
+    {
+      "path": "data/preds_tuned.npz",
+      "checked_id_fields": [],
+      "known_id_count": 0,
+      "overlap": []
+    },
+    {
+      "path": "data_fresh/ops.npz",
+      "checked_id_fields": [
+        "op_id"
+      ],
+      "known_id_count": 80,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/confirm_predictions.npz",
+      "checked_id_fields": [
+        "op_id"
+      ],
+      "known_id_count": 60,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/k3_screen.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 20,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/k4_screen.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 20,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/n1_confirm.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 60,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/n2_confirm.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 60,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/n3_confirm.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 60,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/train_n1n2.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 20,
+      "overlap": []
+    },
+    {
+      "path": "data_hik/ypair_fullgrid.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 20,
+      "overlap": []
+    },
+    {
+      "path": "data_v2/vtable_test.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 80,
+      "overlap": []
+    },
+    {
+      "path": "data_v2/vtable_train.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 100,
+      "overlap": []
+    },
+    {
+      "path": "data_v2/vtable_val.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 20,
+      "overlap": []
+    },
+    {
+      "path": "data_v2_confirm/ops_confirm.npz",
+      "checked_id_fields": [
+        "op_id"
+      ],
+      "known_id_count": 80,
+      "overlap": []
+    },
+    {
+      "path": "data_v2_confirm/ops_replicate.npz",
+      "checked_id_fields": [
+        "op_id"
+      ],
+      "known_id_count": 80,
+      "overlap": []
+    },
+    {
+      "path": "data_v2_confirm/vtable_confirm.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 80,
+      "overlap": []
+    },
+    {
+      "path": "data_v2_confirm/vtable_replicate.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 80,
+      "overlap": []
+    },
+    {
+      "path": "data_v2_fs/ops_train2.npz",
+      "checked_id_fields": [
+        "op_id"
+      ],
+      "known_id_count": 25,
+      "overlap": []
+    },
+    {
+      "path": "data_v2_fs/vtable_train2.npz",
+      "checked_id_fields": [
+        "op_ids"
+      ],
+      "known_id_count": 25,
+      "overlap": []
+    }
+  ],
+  "development_metrics_sha256": "e3e9e3275729cbd6cf4669afe757d474118b52d4f768b648ea34d9f35e6e9bc8",
+  "development_gate_sha256": "d1ff6df0832b6fd2c39f9f21053d3877e1ef49b3c14d524ec6e434ee3e437efa",
+  "registered_unused_tail": [
+    660,
+    661,
+    662,
+    663,
+    664,
+    665,
+    666,
+    667,
+    668,
+    669,
+    670,
+    671,
+    672,
+    673,
+    674,
+    675,
+    676,
+    677,
+    678,
+    679,
+    680,
+    681,
+    682,
+    683,
+    684,
+    685,
+    686,
+    687,
+    688,
+    689,
+    690,
+    691,
+    692,
+    693,
+    694,
+    695,
+    696,
+    697,
+    698,
+    699
+  ],
+  "caveat": "Selected development effect can overestimate future gains. Forty known unused reserve ops are not a powered confirmatory design. No fresh labels generated."
+}

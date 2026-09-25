@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import pytest
 
 from fdna.dataset import G, PAIRS
 from fdna.lodf import ptdf_lodf, compensation_det
@@ -12,7 +13,12 @@ from fdna.dataset import RATING
 def test_generalized_det_matches_k2_compensation_det_exactly():
     _, LODF = ptdf_lodf(G)
     for a, b in PAIRS[:60]:
-        assert abs(hik_diag.generalized_det(LODF, (a, b)) - compensation_det(LODF, a, b)) < 1e-9
+        got = hik_diag.generalized_det(LODF, (a, b))
+        want = compensation_det(LODF, a, b)
+        if np.isfinite(want):
+            assert abs(got - want) < 1e-9
+        else:
+            assert got == want
 
 
 def _bridges():
@@ -51,6 +57,17 @@ def test_minimal_cut_struct_generalizes_to_k3_without_error():
         struct, _ = hik_diag.minimal_cut_struct(G, S, demand=op.demand)
         assert abs(struct - lp.struct_mw) < 1e-6, (S, struct, lp.struct_mw)
         break        # one spot check is enough here; the bulk k=3 check runs in scripts/hik_diag_screen.py
+
+
+def test_hik_diag_rejects_invalid_outage_ids():
+    _, LODF = ptdf_lodf(G)
+    for bad in [(-1,), (G.n_branch,), (1, 1), (1.5,), (True,)]:
+        with pytest.raises(ValueError):
+            hik_diag.generalized_det(LODF, bad)
+        with pytest.raises(ValueError):
+            hik_diag.minimal_cut_struct(G, bad)
+        with pytest.raises(ValueError):
+            hik_diag.is_new_cut(G, bad)
 
 
 def test_is_new_cut_false_for_connected_triple():

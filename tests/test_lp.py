@@ -90,6 +90,16 @@ def test_shed_at_least_structural(world):
             assert lp.y(np.ones(5)) >= lp.struct_mw / lp.total - 1e-9
 
 
+def test_scenario_lp_rejects_invalid_outage_ids(world):
+    g, ops = world
+    op = ops[0]
+    for bad in [(-1,), (g.n_branch,), (1, 1), (1.5,), (True,)]:
+        with pytest.raises(ValueError):
+            ScenarioLP(g, op, bad, PRM)
+    assert ScenarioLP(g, op, (2, 1), PRM).alive[1] == np.False_
+    assert ScenarioLP(g, op, (2, 1), PRM).alive[2] == np.False_
+
+
 def test_matches_independent_cvxpy(world):
     g, ops = world
     rng = np.random.default_rng(3)

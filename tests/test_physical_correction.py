@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from fdna import spec, physical_correction as pc
 from fdna.dataset import G, RATING
@@ -25,6 +26,17 @@ def test_g2_clipped_never_drops_below_floor_and_never_exceeds_1():
         assert f - 1e-9 <= clipped <= 1.0 + 1e-9
 
 
+def test_physical_floor_apis_reject_invalid_outage_ids():
+    op = sample_op(G, RATING, np.random.default_rng(1))
+    for bad in [(-1,), (G.n_branch,), (1, 1), (1.5,), (True,)]:
+        with pytest.raises(ValueError):
+            pc.island_floor(G, op.demand, bad)
+        with pytest.raises(ValueError):
+            pc.capacity_floor(G, op, spec.PARAMS, bad, np.ones(5))
+        with pytest.raises(ValueError):
+            pc.g2_clipped(0.0, G, op.demand, bad)
+
+
 def test_g2_residual_reduces_to_floor_when_all_residuals_are_zero():
     """If V(T,c)=F(T) exactly for every subset T (a degenerate case, constructed directly), g2_residual must
     return exactly F(S), not F(S) plus spurious interaction noise."""
@@ -37,6 +49,27 @@ def test_g2_residual_reduces_to_floor_when_all_residuals_are_zero():
     y_pairs = {p: F(p) for p in pairs}
     result = pc.g2_residual(y_singles, y_pairs, G, op.demand, outage)
     assert abs(result - F(outage)) < 1e-9
+
+
+def test_g2_residual_raw_estimate_is_not_floor_enforcement():
+    """g2_residual returns the raw residual-series estimate. It can sit below the structural floor; callers that
+    need the bound must apply g2_clipped."""
+    from fdna.grid import Grid
+
+    toy = Grid(n_bus=3, frm=np.array([0, 0, 2]), to=np.array([1, 2, 1]), x=np.ones(3),
+               gen_bus=np.array([0]), gen_pmax=np.array([10.0]), load=np.array([0.0, 1.0, 0.0]))
+    outage = (0, 1, 2)
+    y_singles = {b: 0.0 for b in outage}
+    a, b, c = outage
+    y_pairs = {
+        (min(a, b), max(a, b)): 0.0,
+        (min(a, c), max(a, c)): 0.0,
+        (min(b, c), max(b, c)): 0.0,
+    }
+    raw = pc.g2_residual(y_singles, y_pairs, toy, toy.load, outage)
+    floor = pc.island_floor(toy, toy.load, outage)
+    assert raw < floor
+    assert pc.g2_clipped(raw, toy, toy.load, outage) == pytest.approx(floor)
 
 
 def test_hand_checkable_counterexample_all_n1_n2_harmless_but_n3_sheds():

@@ -17,13 +17,14 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 
-from .grid import Grid
+from .grid import Grid, validate_outage
 from .hik_diag import minimal_cut_struct
 from .lp import OperatingPoint, Params
 
 
 def island_floor(grid: Grid, demand: np.ndarray, outage: tuple[int, ...]) -> float:
     """F(S) = exact fraction of total demand stranded in generator-less islands after removing `outage`."""
+    outage = validate_outage(grid, outage)
     struct_mw, _ = minimal_cut_struct(grid, outage, demand=demand)
     return struct_mw / demand.sum()
 
@@ -43,6 +44,7 @@ def capacity_floor(grid: Grid, op: OperatingPoint, params: Params, outage: tuple
     tests/test_capacity_floor.py against real ScenarioLP solves (capacity_floor <= exact shed) and against
     island_floor (capacity_floor >= island_floor, since a generator-less island's own term is identical and
     every other island can only add further deficit)."""
+    outage = validate_outage(grid, outage)
     demand = op.demand
     pmax, p0 = grid.gen_pmax, op.p0
     c = np.asarray(c, float)
@@ -67,7 +69,12 @@ def g2_clipped(g2_value: float, grid: Grid, demand: np.ndarray, outage: tuple[in
 
 
 def g2_residual(y_singles: dict, y_pairs: dict, grid: Grid, demand: np.ndarray, outage: tuple[int, ...]) -> float:
-    """y_singles: {branch: V({branch},c)}; y_pairs: {(a,b): V({a,b},c)} for the 3 sub-pairs of `outage`."""
+    """Raw residual-series estimate.
+
+    y_singles: {branch: V({branch},c)}; y_pairs: {(a,b): V({a,b},c)} for the 3 sub-pairs of `outage`.
+    This does not enforce the floor bound; use g2_clipped(raw, ...) when the caller needs the lower bound.
+    """
+    outage = validate_outage(grid, outage)
     a, b, c = outage
     F = lambda S: island_floor(grid, demand, S)
     Fs = F(outage)

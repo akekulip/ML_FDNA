@@ -1,19 +1,28 @@
 import numpy as np
+import pytest
 
 from fdna import hik, v2data
 from fdna.dataset import G
+from fdna.grid import Grid
+from fdna.lp import Params
 
 
 def test_outage_key_canonical_sorted_dedup():
     assert hik.outage_key((5, 2)) == (2, 5)
-    assert hik.outage_key((3, 3, 1)) == (1, 3)
     assert hik.outage_key(()) == ()
+
+
+def test_outage_key_rejects_duplicate_negative_and_non_integer_ids():
+    for bad in [(3, 3, 1), (-1, 2), (1.5, 2), (True, 2)]:
+        with pytest.raises(ValueError):
+            hik.outage_key(bad)
 
 
 def test_is_feasible_rejects_duplicates_and_out_of_range():
     assert hik.is_feasible(G, (1, 2))
     assert not hik.is_feasible(G, (1, 1))
     assert not hik.is_feasible(G, (-1, 2))
+    assert not hik.is_feasible(G, (1.5, 2))
     assert not hik.is_feasible(G, (G.n_branch, 2))
 
 
@@ -60,6 +69,41 @@ def test_label_kset_matches_old_oracle_on_n0_n1_n2():
     y_new, any_infeasible, note = hik.label_kset(G, op_id2, outage, va["CV"])
     assert not any_infeasible, note
     assert np.allclose(y_old, y_new, atol=1e-6)
+
+
+def test_label_kset_requires_rating_for_non_default_grid_and_accepts_provided_rating():
+    """label_kset used to ignore its grid argument by always sampling with case30 ratings. A non-case30 grid now
+    requires an explicit rating, and the supplied rating makes a hand-sized six-generator toy grid usable."""
+    toy = Grid(
+        n_bus=2,
+        frm=np.array([0]),
+        to=np.array([1]),
+        x=np.array([0.1]),
+        gen_bus=np.array([0, 0, 0, 0, 0, 0]),
+        gen_pmax=np.array([200., 100., 100., 100., 100., 100.]),
+        load=np.array([0., 100.]),
+    )
+    cv = np.zeros((1, 5))
+    with pytest.raises(ValueError):
+        hik.label_kset(toy, 0, (), cv)
+
+    y, any_infeasible, note = hik.label_kset(toy, 0, (), cv, rating=np.array([200.]), params=Params(0.3, 40.0))
+    assert not any_infeasible, note
+    assert y.shape == (1,)
+
+
+def test_label_kset_rejects_non_six_generator_grid_even_with_rating():
+    toy = Grid(
+        n_bus=2,
+        frm=np.array([0]),
+        to=np.array([1]),
+        x=np.array([0.1]),
+        gen_bus=np.array([0, 1]),
+        gen_pmax=np.array([100., 100.]),
+        load=np.array([50., 50.]),
+    )
+    with pytest.raises(ValueError, match="six-generator dispatch contract"):
+        hik.label_kset(toy, 0, (), np.zeros((1, 1)), rating=np.array([200.]), params=Params(0.3, 40.0))
 
 
 def test_manifest_size_error_when_exceeding_total():

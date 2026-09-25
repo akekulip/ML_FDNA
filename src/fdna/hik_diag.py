@@ -14,13 +14,14 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 
-from .grid import Grid
+from .grid import Grid, validate_branch_ids, validate_outage
 from .lodf import ptdf_lodf
 
 
 def generalized_det(LODF: np.ndarray, S: tuple[int, ...]) -> float:
     """det(M_S) for M_S[i,i]=1, M_S[i,j]=-LODF(S[i],S[j]) i!=j. At |S|=2 this equals 1-LODF(a,b)*LODF(b,a)
     (lodf.compensation_det) exactly -- checked in tests/test_hik_diag.py."""
+    S = validate_branch_ids(LODF.shape[0], S)
     k = len(S)
     if k <= 1:
         return 1.0
@@ -40,6 +41,7 @@ def minimal_cut_struct(grid: Grid, S: tuple[int, ...], demand: np.ndarray | None
     (checked in tests/test_hik_diag.py, which caught this)."""
     if demand is None:
         demand = grid.load
+    S = validate_outage(grid, S)
     alive = np.ones(grid.n_branch, bool); alive[list(S)] = False
     k = np.flatnonzero(alive)
     adj = coo_matrix((np.ones(len(k)), (grid.frm[k], grid.to[k])), shape=(grid.n_bus, grid.n_bus))
@@ -54,6 +56,7 @@ def is_new_cut(grid: Grid, S: tuple[int, ...]) -> bool:
     """True iff S disconnects the grid AND no proper subset of S alone does (a genuinely NEW k-way cut, not one
     already implied by a smaller subset -- matches STEP1's 'new_2cut' axis, generalized to any k)."""
     from itertools import combinations
+    S = validate_outage(grid, S)
     _, n_isl = minimal_cut_struct(grid, S)
     if n_isl <= 1:
         return False

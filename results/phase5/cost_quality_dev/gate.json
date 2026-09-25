@@ -1,0 +1,74 @@
+{
+  "cold": {
+    "status": "no_go",
+    "margin": 0.01,
+    "selected": null,
+    "passing_candidates": 0
+  },
+  "warm": {
+    "status": "candidate",
+    "margin": 0.01,
+    "selected": {
+      "budget": 280,
+      "method": "cv_full",
+      "evidence": [
+        {
+          "regime": "warm",
+          "cell": "P1_v2b",
+          "budget": 280,
+          "method": "cv_full",
+          "comparator": "mc",
+          "mean": 0.031099761637019465,
+          "lo95": 0.02066254473901885,
+          "hi95": 0.042215891373651254,
+          "n_ops": 60,
+          "n_replicates": 10,
+          "bootstrap_draws": 4000
+        },
+        {
+          "regime": "warm",
+          "cell": "P1_v2b",
+          "budget": 280,
+          "method": "cv_full",
+          "comparator": "proxy_full",
+          "mean": 0.015638082313401375,
+          "lo95": 0.010434571512773388,
+          "hi95": 0.020937714804785054,
+          "n_ops": 60,
+          "n_replicates": 10,
+          "bootstrap_draws": 4000
+        },
+        {
+          "regime": "warm",
+          "cell": "P2_v2c",
+          "budget": 280,
+          "method": "cv_full",
+          "comparator": "mc",
+          "mean": 0.041773907681647376,
+          "lo95": 0.028454543411746865,
+          "hi95": 0.05672083168286236,
+          "n_ops": 60,
+          "n_replicates": 10,
+          "bootstrap_draws": 4000
+        },
+        {
+          "regime": "warm",
+          "cell": "P2_v2c",
+          "budget": 280,
+          "method": "cv_full",
+          "comparator": "proxy_full",
+          "mean": 0.02059643430423025,
+          "lo95": 0.014142401948331253,
+          "hi95": 0.027352495058645603,
+          "n_ops": 60,
+          "n_replicates": 10,
+          "bootstrap_draws": 4000
+        }
+      ]
+    },
+    "passing_candidates": 1
+  },
+  "scope": "development selection only; no fresh-data access",
+  "complete_development_run": true,
+  "regime_claims": "independent cold/warm gates; warm-only success requires a preexisting proxy cache"
+}

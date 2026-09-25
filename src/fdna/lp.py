@@ -15,7 +15,7 @@ from scipy.optimize import linprog
 from scipy.sparse import coo_matrix, csr_matrix, hstack, vstack
 from scipy.sparse.csgraph import connected_components
 
-from .grid import BASE_MVA, Grid
+from .grid import BASE_MVA, Grid, validate_outage
 
 
 @dataclass(frozen=True)
@@ -42,6 +42,7 @@ class ScenarioLP:
 
     def __init__(self, grid: Grid, op: OperatingPoint, removed: tuple[int, ...], params: Params):
         self.g, self.op, self.params = grid, op, params
+        removed = validate_outage(grid, removed)
         n, G = grid.n_bus, grid.n_gen
         alive = np.ones(grid.n_branch, dtype=bool)
         alive[list(removed)] = False

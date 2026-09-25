@@ -327,3 +327,71 @@ alternative gets far closer to g2_fixed. g2_fixed remains the lead method throug
 promoted; the control-variate estimator (T6) is the one genuinely new positive candidate to carry forward,
 pending a confirmatory run. Tests: 96 pass. Commits: 672c7e1 (T1), 4db9fb9 (T2/T3/T6), 0c3f0b9 (T4/T5), none
 pushed without explicit request.
+
+## 2026-09-25 — all-seed evaluation and total-cost development screen
+
+Implemented the approved [development plan](COST_QUALITY_PLAN.md) using the
+existing checkpoints and the already-open 600–659 block. No retraining or fresh
+confirmatory labels were used. The prior pooling explanation above is
+superseded: evaluating all three DeepSets seeds gives means 0.8606/0.8901 and
+across-seed standard deviations 0.0196/0.0208 (P1/P2). Seed1 nearly reaches GBM;
+the family mean remains lower. These architectures do not isolate pooling
+causally, and nonsignificance does not establish equivalence. The regenerated
+artifact retains per-op/per-seed scores, paired op × seed intervals, and hashes.
+JSON output is strict and atomically replaced after successful serialization.
+
+The new cost runner uses a budget-enforced query callback, fixed-draw posterior
+MC and control variates, six deterministic sparse proxies, and affordable exact
+enumeration. Query traces record unique scalar labels; cold operation charges
+construction, while warm operation assumes the same method-specific cache.
+R-precision is the primary per-op metric; the earlier accuracy and variance
+results remain separate evidence. The frozen practical gate is a one-sided 95%
+paired lower bound above 0.01 against both MC and the proxy alone in both cells.
+The [result report](cost_quality_dev/REPORT.md) records the gate and validation.
+
+Boundary fixes enforce zero/one-query budgets, avoid duplicate extreme queries,
+and reject invalid branch IDs consistently before array indexing. Alternative
+grid labeling now requires explicit ratings and the existing six-generator
+dispatch contract. Raw residual composition is documented as potentially below
+the physical floor; its formula is preserved and the existing clipped helper
+enforces the bound when required.
+
+Independent reviews caught and closed a truncated evaluation artifact, stale
+single-seed tables, artifact paths tied to their original location, and missing
+merge-time source verification. Dedicated regressions cover estimator
+unbiasedness, draw multiplicities, budget caps, sparse construction, ranking,
+paired gates, relocation, and provenance tampering. Reproduction uses existing
+dependencies; the optional plot renderer uses the installed system Matplotlib.
+No commits or pushes were created in this implementation.
+
+### Final hardware and verification evidence
+
+The full development run contains 604,800 policy evaluations. An independent
+audit checked 171,120 trace records and reconstructed all 429,600 feasible
+metric rows, with zero failures. The other 175,200 rows are explicitly infeasible.
+The result is **cold no-go; warm cv_full at 280 target labels/op**, conditional
+on a preexisting 227,328-label lower-order cache. The proposed 280-point follow-up
+protocol is recorded separately; it is not registered and no fresh block was opened.
+
+Actual CPU verification on the AMD Ryzen 9 5950X covered all 60 development
+points, both cells, ten repeats, and the selected warm policy plus both baselines:
+3,600 rows, 538,234 independently charged target queries, 8,400 realized-label
+checks, and 140,803 unique physical LP solves. Maximum cached-label deviation was
+1.471605e-8; score, metric, query-count, severity, and gate mismatches were zero.
+The final run took 126.48 seconds. Lower-order labels remain the frozen warm cache,
+and probability-MSE truth remains the frozen exact-posterior snapshot.
+[HARDWARE_VERIFICATION.json](cost_quality_dev/HARDWARE_VERIFICATION.json) records
+the scope, hardware, hashes, and regenerated gate. A separate bounded timing
+workload executed 22,717 queries, with 60.78 seconds of summed solver time.
+
+The complete neural evaluation was also rerun on CPU and the NVIDIA GeForce
+RTX 2070. All 2,882 numerical cell-result values were identical (maximum
+difference zero), preserving the corrected all-seed conclusion. Timings were
+690.00 seconds on CPU and 547.13 seconds on CUDA; these are single runs, not a
+performance benchmark. The comparison and artifact hashes are in
+[matched_recurrent_eval_v2_device_compare.json](matched_recurrent_eval_v2_device_compare.json).
+
+Final validation: 145 tests passed; compilation and Git whitespace checks passed.
+Post-run source/input/artifact hashes match the current files. Existing document
+deletions and checkpoints were preserved. No commits, attribution trailers, or
+pushes were created.

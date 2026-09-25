@@ -10,6 +10,60 @@ not deleted, at every stage.
 g2 is exact for any set of size <=2 by construction, so the residual-correction arm is trained ONLY on charged
 N-3 labels, never on N-1/N-2 rows where the residual is trivially zero.
 
+## Superseding current result: all declared DeepSets seeds evaluated on TEST
+
+**Status (2026-09-25):** `results/phase5/matched_recurrent_eval_v2.json` now supersedes the earlier seed-0-only
+DeepSets TEST rows below. The evaluation uses the existing checkpoints only -- no retraining, no fresh holdout
+-- over the same 60 operating points x 25 held-out TEST outages x 50 posterior draws in both P1/P2 cells. It
+adds canonical `deepsets_seed0`, `deepsets_seed1`, and `deepsets_seed2` arms while preserving legacy `deepsets`
+as the seed-0 alias. The JSON contains per-op R-precision rows, per-seed bootstrap CIs, seed-family mean/std,
+and paired matrix bootstraps over operating points x seeds against `g2_fixed`, `gbm`, and
+`ordered_perm_avg`.
+
+| arm / family | P1 R-precision | P1 vs g2_fixed (90% CI) | P2 R-precision | P2 vs g2_fixed (90% CI) |
+|---|---:|---:|---:|---:|
+| **g2_fixed** | **0.8921** | -- | **0.9221** | -- |
+| gbm | 0.8895 | -0.0026 [-0.0046, -0.0006] | 0.9185 | -0.0036 [-0.0059, -0.0013] |
+| ridge | 0.8663 | -0.0259 [-0.0310, -0.0209] | 0.9065 | -0.0156 [-0.0186, -0.0126] |
+| **DeepSets mean across seeds 0/1/2** | **0.8606 (std 0.0196)** | **-0.0315 [-0.0495, -0.0139]** | **0.8901 (std 0.0208)** | **-0.0320 [-0.0514, -0.0134]** |
+| ordered mean across seeds 0/1/2 | 0.8796 (std 0.0030) | -0.0125 [-0.0162, -0.0092] | 0.9097 (std 0.0053) | -0.0123 [-0.0181, -0.0075] |
+| ordered, permutation-averaged mean across seeds 0/1/2 | 0.8883 (std 0.0023) | -0.0038 [-0.0062, -0.0014] | 0.9165 (std 0.0045) | -0.0056 [-0.0101, -0.0011] |
+| residual seed 0 | 0.8380 | -0.0541 [-0.0594, -0.0490] | 0.8736 | -0.0485 [-0.0541, -0.0430] |
+| residual seed 1 (zero-correction checkpoint) | 0.8921 | 0.0000 [0.0000, 0.0000] | 0.9221 | 0.0000 [0.0000, 0.0000] |
+| residual seed 2 | 0.8359 | -0.0562 [-0.0611, -0.0514] | 0.8658 | -0.0563 [-0.0611, -0.0515] |
+| residual frozen-shrunk | 0.8922 | +0.0001 [-0.0004, +0.0006] | 0.9224 | +0.0003 [+0.0000, +0.0006] |
+
+DeepSets per-seed TEST rows:
+
+| arm | P1 R-precision | P1 vs g2_fixed (90% CI) | P2 R-precision | P2 vs g2_fixed (90% CI) |
+|---|---:|---:|---:|---:|
+| deepsets_seed0 / legacy `deepsets` | 0.8535 | -0.0386 [-0.0439, -0.0333] | 0.8840 | -0.0380 [-0.0436, -0.0324] |
+| deepsets_seed1 | 0.8874 | -0.0047 [-0.0070, -0.0024] | 0.9180 | -0.0041 [-0.0061, -0.0020] |
+| deepsets_seed2 | 0.8409 | -0.0512 [-0.0567, -0.0457] | 0.8682 | -0.0539 [-0.0598, -0.0480] |
+
+Seed-family paired matrix bootstraps (operating points x seeds) show the DeepSets family below all three
+comparators: P1 vs GBM = -0.0289 [-0.0472, -0.0110], vs ordered permutation-average = -0.0277 [-0.0458,
+-0.0098]; P2 vs GBM = -0.0285 [-0.0478, -0.0097], vs ordered permutation-average = -0.0264 [-0.0471,
+-0.0059]. This is a matched-condition comparison under the same data, features, split, and seeds; it does not
+identify pooling as a causal mechanism, and it does not establish whether ordered branch-position information
+would transfer to other topologies or branch renumberings.
+
+Provenance is embedded in `results/phase5/matched_recurrent_eval_v2.json`: HEAD
+`a7ec4d0a6adade844dd9d553b9d749deca10bf3b`, torch threads = 4, SHA256 for all used checkpoints/input caches,
+the training config/scaler JSON, and the relevant source files. The final artifact is not from a later clean
+fresh rerun: a full all-seed scoring run completed both cells, then failed only while serializing old NumPy
+coverage provenance. Those completed cell results were recovered, the scope text and provenance were regenerated
+with JSON-safe coverage, and the final JSON was written by atomic replace after
+`json.dumps(..., allow_nan=False)` completed and strict JSON validation passed.
+
+**Hardware validation update.** The evaluator now supports explicit `--device cpu|cuda` and `--output` options.
+After that source change, the default CPU artifact was rerun end-to-end and a separate CUDA artifact was run on
+the host GPU (`results/phase5/matched_recurrent_eval_v2_cuda.json`). The comparison artifact
+`results/phase5/matched_recurrent_eval_v2_device_compare.json` records source/input/output hashes, versions,
+hardware metadata, and elapsed times. CPU and CUDA results match exactly across all compared cell result fields:
+maximum absolute difference = 0.0. CPU elapsed = 690.0s; CUDA elapsed = 547.1s. The CUDA provenance reports
+`NVIDIA GeForce RTX 2070`, driver `535.183.01`, 8192 MiB, torch `2.5.1+cu121`.
+
 ## The four bugs, each confirmed by reproduction before being fixed
 
 1. **Validation target misalignment (critical, external review finding 1).** The original script sampled
@@ -116,8 +170,8 @@ this repair round's evidence for that conclusion is now stronger, not weaker.
   `residual_frozen_shrunk` (freeze the trained correction, sweep a prespecified `[0, 0.25, 0.5, 0.75, 1.0]`
   shrinkage grid on validation via the SAME per-op/dual-cell diagnostic, since `lam` trained jointly with the
   final layer is not independently identifiable as a validated shrinkage factor -- the layer's own weights can
-  absorb any rescaling). Selected shrink = 0.25. On test: statistically indistinguishable from `g2_fixed` at P1
-  (mean diff +0.00013, CI includes zero, p=0.34) and a tiny but technically significant improvement at P2
+  absorb any rescaling). Selected shrink = 0.25. On test: CI includes zero at P1
+  (mean diff +0.00013, p=0.34) and a tiny but technically significant improvement at P2
   (+0.00029, CI excludes zero, p=0.048) -- practically negligible either way, well below any reasonable
   promotion bar, but a properly-separated estimate rather than reading a jointly-trained scalar as evidence. A
   tiny-batch overfit check (12 rows, one per distinct outage/op block with the largest single-row residual,
@@ -128,43 +182,38 @@ this repair round's evidence for that conclusion is now stronger, not weaker.
   target at this label budget, now on considerably more rigorous diagnostic footing than round 2's coarse,
   P1-only, pooled version.
 
-## Repair round 3: the DeepSets ablation -- isolating architecture from the other confounds
+## Historical repair round 3 ablation -- superseded for DeepSets by the all-seed table above
 The review pointed out that round 2's readout fix changed representation, normalization, AND optimization
 simultaneously, so the score change (gap widened, see above) couldn't be attributed to any one of them --
 and that the earlier "leaking information" framing overclaimed the mechanism (the pair-risk features are
 legitimate inputs available to every arm; the old model violated its own claimed invariance property, it did
-not access forbidden information). To separate architecture from the rest: `OrderedMLP` (a plain MLP directly on
-the same 15-column raw row, deliberately NOT invariant -- matched rough parameter count, 9,409 vs. DeepSets'
-9,089) and `PermAveragedModel` (wraps ANY trained model, averaging its output over all 6 relabelings --
-EXACTLY invariant by construction, 6 forward passes charged, regardless of whether the base model itself is
-invariant), both trained/evaluated across the same 3 predeclared seeds as everything else this round.
+not access forbidden information). The ablation compared `OrderedMLP` (a plain MLP directly on the same
+15-column raw row, deliberately NOT invariant -- matched rough parameter count, 9,409 vs. DeepSets' 9,089) and
+`PermAveragedModel` (wraps ANY trained model, averaging its output over all 6 relabelings -- EXACTLY invariant
+by construction, 6 forward passes charged, regardless of whether the base model itself is invariant), both
+trained/evaluated across the same 3 predeclared seeds. The table below is retained as history: ordered rows are
+seed-family mean/std rows, while the DeepSets row is the legacy seed-0 alias only and is superseded by the
+all-seed DeepSets section above.
 
-| arm | P1 mean (std across seeds) | P1 vs g2_fixed | P2 mean (std) | P2 vs g2_fixed |
+| arm | P1 score | P1 vs g2_fixed | P2 score | P2 vs g2_fixed |
 |---|---|---|---|---|
 | **g2_fixed** | **0.8921** | -- | **0.9221** | -- |
 | gbm | 0.8895 | -0.0026 | 0.9185 | -0.0036 |
 | **ordered (raw, NOT invariant)** | **0.8796 (0.0030)** | -0.009 to -0.016, all sig. | **0.9097 (0.0053)** | -0.008 to -0.020, all sig. |
-| **ordered, permutation-averaged (invariant)** | **0.8883 (0.0023)** | -0.001 to -0.006 (1/3 seeds n.s.) | **0.9165 (0.0045)** | 0.0000 to -0.011 (1/3 seeds n.s.) |
-| **deepsets (pooling architecture, invariant)** | **0.8535** | **-0.039, sig.** | **0.8840** | **-0.038, sig.** |
+| **ordered, permutation-averaged (invariant)** | **0.8883 (0.0023)** | -0.001 to -0.006; one seed CI includes zero | **0.9165 (0.0045)** | 0.0000 to -0.011; one seed CI includes zero |
+| **deepsets seed0 / legacy alias (pooling architecture, invariant)** | **0.8535** | **-0.039, sig.** | **0.8840** | **-0.038, sig.** |
 | residual (best of 2 nonzero-correction seeds) | 0.8380 | -0.054, sig. | 0.8736 | -0.049, sig. |
 
-**A clear, substantive finding.** The RAW ordered model -- not even invariant, no architectural constraint at
-all -- already beats DeepSets by a wide margin (0.880 vs 0.854 at P1, 0.910 vs 0.884 at P2). Forcing invariance
-onto it via POST-HOC PERMUTATION AVERAGING (not architectural pooling) closes MOST of the remaining gap to
-g2_fixed, and for one of the three seeds in EACH cell, the permutation-averaged model is statistically
-INDISTINGUISHABLE from g2_fixed (90% CI includes zero: P1 seed 0, p=0.85; P2 seed 0, p=0.49) -- something no
-version of DeepSets has come close to in any round. This points specifically at the POOLING ARCHITECTURE, not
-the invariance requirement itself, as the more likely explanation for DeepSets' underperformance: a model can be
-made genuinely, exactly invariant (permutation-averaging is invariant by construction, unconditionally) and
-still perform much closer to g2_fixed than the pooling-based approach does. This does not prove pooling is
-inherently worse in general, and it does not establish whether the ordered model's own (non-invariant)
-performance reflects a real, transferable use of branch-position information or an artifact specific to this
-one fixed topology's branch numbering (out of scope, unchanged) -- but within this experiment, holding data,
-features, split, and seeds fixed, pooling is the more likely culprit, not the earlier round's vaguer "leaking
-information" story.
+**Matched-comparison reading.** The raw ordered family and the permutation-averaged ordered family both score
+above the all-seed DeepSets family under the same data, features, split, and seed set, and the
+permutation-averaged wrapper shows that exact invariance by prediction-time averaging can perform much closer to
+g2_fixed than this pooled DeepSets architecture does in this experiment. This comparison does not identify
+pooling as a causal mechanism, does not prove pooling is inherently worse in general, and does not establish
+whether the ordered model's own non-invariant performance reflects transferable branch-position information or
+an artifact specific to this fixed topology's branch numbering.
 - **Scope caveat (unchanged, still accurate, restated for clarity):** `deepsets` here is a set model (pooled,
   order-independent by design intent), not a recurrent network. No actual RNN/GRU comparator for N-1->N-k
-  transfer has been trained or evaluated anywhere in Phase 4/5 -- the earlier Phase 4 GRU/DeepSets screen
-  (`results/phase4/RESULTS.md`) used a different, smaller-budget setup and is not superseded by this experiment.
-  A DeepSets result, buggy or fixed, is not evidence for or against recurrent architectures specifically; that
-  question remains open and untested, not decided in either direction.
+  transfer has been trained or evaluated in this matched Phase 5 experiment. The earlier Phase 4 GRU/DeepSets
+  screen (`results/phase4/RESULTS.md`) used a different, smaller-budget setup and is not superseded by this
+  experiment. A DeepSets result, buggy or fixed, is not evidence for or against recurrent architectures
+  specifically in this matched setup; that question remains open here.

@@ -1,5 +1,10 @@
 # Phase 4 — Reproduction
 
+For the subsequent all-seed evaluation and total-cost screening experiment, use
+the [Phase 5 development report](../phase5/cost_quality_dev/REPORT.md) and
+[matched-model report](../phase5/STAGE4_MATCHED_RECURRENT.md). Test counts below
+describe historical commits, not the current checkout.
+
 Environment: `uv` project at repo root, Python via `.venv` (torch 2.5.1+cu121, CUDA available, RTX 2070 8GB).
 `uv run pytest -q` should show 70 passed at commit 784b099 (this file's commit; check `git log -1` for the
 current head, which may have moved).

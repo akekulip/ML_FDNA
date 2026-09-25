@@ -10,15 +10,15 @@ from itertools import combinations
 import numpy as np
 
 from .dataset import G, RATING
-from .grid import Grid
+from .grid import Grid, validate_branch_ids, validate_outage
 from .lp import ScenarioLP
-from .opgen import sample_op
+from .opgen import BASE_COST, sample_op
 from .spec import PARAMS
 
 
 def outage_key(branches: tuple[int, ...]) -> tuple[int, ...]:
-    """Canonical sorted, deduplicated outage-set identifier. () = N-0."""
-    return tuple(sorted(set(int(b) for b in branches)))
+    """Canonical sorted outage-set identifier. () = N-0."""
+    return validate_branch_ids(None, branches)
 
 
 def n_possible_ksets(n_branch: int, k: int) -> int:
@@ -29,8 +29,11 @@ def n_possible_ksets(n_branch: int, k: int) -> int:
 def is_feasible(grid: Grid, branches: tuple[int, ...]) -> bool:
     """Cheap pre-check: every branch id is distinct and in range. Does not run the LP (islanding/infeasible
     control combinations are counted, not filtered, by the caller -- see sample_kset_manifest)."""
-    key = outage_key(branches)
-    return len(key) == len(branches) and all(0 <= b < grid.n_branch for b in key)
+    try:
+        validate_outage(grid, branches)
+    except ValueError:
+        return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -81,11 +84,27 @@ def sample_kset_manifest(grid: Grid, k: int, n_sets: int, seed: int, stress_frac
     return KSetManifest(k=k, op_ids=np.array([]), outage_sets=sets_, strata=np.array(strata), seed=seed)
 
 
-def label_kset(grid: Grid, op_id: int, outage: tuple[int, ...], cv: np.ndarray) -> tuple[np.ndarray, bool, str]:
+def label_kset(grid: Grid, op_id: int, outage: tuple[int, ...], cv: np.ndarray, *,
+               rating: np.ndarray | None = None, params=None) -> tuple[np.ndarray, bool, str]:
     """Exact oracle label: shed/total for every row of cv (n_cv, G-1). Returns (y (n_cv,), any_infeasible, note).
-    Infeasible/failed LP solves are COUNTED, not silently dropped (brief 6.2)."""
-    op = sample_op(grid, RATING, np.random.default_rng(op_id))
-    lp = ScenarioLP(grid, op, outage, PARAMS)
+    Infeasible/failed LP solves are COUNTED, not silently dropped (brief 6.2).
+
+    `rating` permits alternative topologies that keep the same six-generator dispatch contract used by opgen's
+    frozen BASE_COST vector. It is not a general arbitrary-generator-grid API.
+    """
+    outage = validate_outage(grid, outage)
+    if grid.n_gen != len(BASE_COST):
+        raise ValueError(
+            f"label_kset requires the six-generator dispatch contract from opgen.BASE_COST; got {grid.n_gen} generators"
+        )
+    if rating is None:
+        if grid is not G:
+            raise ValueError("label_kset requires an explicit rating for non-default grids")
+        rating = RATING
+    if params is None:
+        params = PARAMS
+    op = sample_op(grid, rating, np.random.default_rng(op_id))
+    lp = ScenarioLP(grid, op, outage, params)
     y = np.zeros(len(cv)); failed = 0
     for i in range(len(cv)):
         try:

@@ -1,0 +1,41 @@
+{
+  "head": "a7ec4d0a6adade844dd9d553b9d749deca10bf3b",
+  "inputs": {
+    "data_hik/manifest_k3_confirm.json": "03f7af5a27d814dda60918862ccbf0efb11e1e83df94f555e0bf365407db51d5",
+    "configs/spec.json": "d016081d4dd1f2f4bac01a5e9e239365ddb9f5e46d01e78b0850d8525a3b20ab",
+    "data_hik/n1_confirm.npz": "dad551e762167f65542c4a88da4be0ff5eeb254cde75c145e656850ffe08a4be",
+    "data_hik/n2_confirm.npz": "5090e5a3913d039c5404e13f4f1c3f7bdae6ae0608a132f5292582ad95dd4247",
+    "data_hik/n3_confirm.npz": "70ea4483d25ca8f2a485be68ae12e9a867ed79c20469a5dba7750b4ad6a7a3d8"
+  },
+  "sources": {
+    "/home/philip/Projects/ML_FDNA/scripts/p5_cost_quality.py": "20fcb5275c796b48c8f65256506d9d621d1cd224e2556180bdc5c987f9f1f3ff",
+    "src/fdna/query_budget.py": "d74c6e46f4ddbff0ef140b874003e98f4c7212ab50bb35c116cb3ceec13eab6c",
+    "src/fdna/cost_quality.py": "7613f46fd9c8cf64b3b94ac857720dd7c21fe630bbc91ea76cbd05e7f156baf1",
+    "src/fdna/adaptive_query.py": "3ac20d287933f37dd5bcb96438d4b5531cf67056c7dea02d0d2a97fe84563fad",
+    "src/fdna/evalutil.py": "8b42040a298e70c201012efe8dd502593a6e6fe0e209c18e246793083b3710f5",
+    "src/fdna/v2.py": "ff833c53a3d58a9071efcac178a8f3a5c4e54b23e781b3bb5027b3703322e4ff",
+    "src/fdna/v2data.py": "932072befa00b8f88dbca3e3206138b718119ce25b771108d627ac2922511b10",
+    "src/fdna/lp.py": "3086cdba72d538abe56ee3e8e57a5b90eaae65ffd4b1b15de66e8745aaa5073e",
+    "src/fdna/grid.py": "6d25f639c19c9ef8424863576acbed5e0a2218d01e0bc4fd593767a4a6102961",
+    "src/fdna/opgen.py": "35f8e5f46557641f853098e4698e4cb2339aedcb09ef1c9420d5c5e1ee933ef2",
+    "src/fdna/spec.py": "46843c918f88e4b7c2ea4bff8b286610ef1adb0b1bd7084363dce588108c4cc3"
+  },
+  "merge_source_sha256": "3082cd27ff6b062a297d06b750b61b01b89f49a77c0371bc99adba5f09c3d4d1",
+  "config_sha256": "39ea47271b179ad9d75800cee623b149eae92bf4c487cd68fadd1fdcd1aa4b34",
+  "artifacts": {
+    "data_hik/cost_quality_dev/traces.jsonl.gz": "89e06421ff0ab979d29afbd5564cdb0712101c9786544903be51e794ecdd9160",
+    "data_hik/cost_quality_dev/metrics.jsonl.gz": "e3e9e3275729cbd6cf4669afe757d474118b52d4f768b648ea34d9f35e6e9bc8"
+  },
+  "trace_records": 171120,
+  "parallel_replay_wall_s": 665.4932644367218,
+  "summed_worker_replay_wall_s": 3534.6880607120693,
+  "shards": [
+    "/tmp/fdna-cost-parts/part600",
+    "/tmp/fdna-cost-parts/part610",
+    "/tmp/fdna-cost-parts/part620",
+    "/tmp/fdna-cost-parts/part630",
+    "/tmp/fdna-cost-parts/part640",
+    "/tmp/fdna-cost-parts/part650"
+  ],
+  "note": "cached replay and accounting time; actual LP times are reported separately"
+}

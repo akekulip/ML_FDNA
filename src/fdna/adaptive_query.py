@@ -59,6 +59,15 @@ def predict_from_bounds(qL: float, qU: float) -> bool:
     return bool((qL > t) if qL > t else ((qL + qU) / 2 > t))
 
 
+def _validate_budget(budget: int) -> int:
+    if isinstance(budget, (bool, np.bool_)) or not isinstance(budget, (int, np.integer)):
+        raise ValueError(f"budget must be a nonnegative integer, got {budget!r}")
+    budget = int(budget)
+    if budget < 0:
+        raise ValueError(f"budget must be nonnegative, got {budget}")
+    return budget
+
+
 def resolve(policy: str, y_true_grid: np.ndarray, floor: float, g2grid: np.ndarray, pc_support: np.ndarray,
             budget: int, guided_rng, CV: np.ndarray, tau: float) -> tuple[int, float, float]:
     """Adaptively query up to `budget` controls; stop once qL==qU over pc_support OR the binary decision is
@@ -77,10 +86,15 @@ def resolve(policy: str, y_true_grid: np.ndarray, floor: float, g2grid: np.ndarr
     not incorrect condition (wasted queries, never an invalid certificate, since tau=0.01 < 0.5 made the old
     condition MORE restrictive). Decision-aware early exit checked BEFORE the full-resolution check, so it
     fires first whenever it applies (repair round 2)."""
+    budget = _validate_budget(budget)
     pn = pc_support / pc_support.sum() if pc_support.sum() > 0 else pc_support
     queried_idx, queried_val = [], []
-    extremes = [int(np.argmax(CV.sum(1))), int(np.argmin(CV.sum(1)))]
-    for e in extremes:
+    extremes = []
+    for e in (int(np.argmax(CV.sum(1))), int(np.argmin(CV.sum(1)))):
+        if e not in extremes:
+            extremes.append(e)
+    L, U = bounds(CV, np.array(queried_idx), np.array(queried_val), floor)
+    for e in extremes[:budget]:
         queried_idx.append(e); queried_val.append(y_true_grid[e])
     L, U = bounds(CV, np.array(queried_idx), np.array(queried_val), floor)
     while len(queried_idx) < budget:
@@ -98,7 +112,8 @@ def resolve(policy: str, y_true_grid: np.ndarray, floor: float, g2grid: np.ndarr
             nxt = unqueried_unresolved[np.argmin(np.abs(g2grid[unqueried_unresolved] - tau))]
         else:
             nxt = unqueried_unresolved[guided_rng.integers(len(unqueried_unresolved))]
-        queried_idx.append(int(nxt)); queried_val.append(y_true_grid[nxt])
+        nxt = int(nxt)
+        queried_idx.append(nxt); queried_val.append(y_true_grid[nxt])
         L, U = bounds(CV, np.array(queried_idx), np.array(queried_val), floor)
     qL, qU = posterior_mass_bounds(pn, L, U, tau)
     return len(queried_idx), qL, qU

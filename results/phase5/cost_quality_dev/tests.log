@@ -1,0 +1,18 @@
+........................................................................ [ 49%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/pandapower/build_branch.py:525
+.venv/lib/python3.13/site-packages/pandapower/build_branch.py:525
+tests/test_lp.py::test_n0_needs_no_shed
+  /home/philip/Projects/ML_FDNA/.venv/lib/python3.13/site-packages/pandapower/build_branch.py:525: DeprecationWarning: tap_dependency_table is missing in net, which is most probably due to unsupported net data. tap_dependency_table was introduced with pandapower 3.0 and replaced spline characteristics. Spline characteristics will still work, but they are deprecated and will be removed in future releases.
+    warnings.warn(DeprecationWarning("tap_dependency_table is missing in net, which is most probably due to "
+
+.venv/lib/python3.13/site-packages/pandapower/build_branch.py:1087
+.venv/lib/python3.13/site-packages/pandapower/build_branch.py:1087
+tests/test_lp.py::test_n0_needs_no_shed
+  /home/philip/Projects/ML_FDNA/.venv/lib/python3.13/site-packages/pandapower/build_branch.py:1087: DeprecationWarning: tap_dependency_table is missing in net, which is most probably due to unsupported net data. tap_dependency_table was introduced with pandapower 3.0 and replaced spline characteristics. Spline characteristics will still work, but they are deprecated and will be removed in future releases.
+    warnings.warn(DeprecationWarning(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+145 passed, 6 warnings in 44.72s

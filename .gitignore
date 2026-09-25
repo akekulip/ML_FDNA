@@ -9,3 +9,4 @@ data_v2/
 data_v2_*/
 data_hik/*.parquet
 data_hik/*.npz
+data_hik/cost_quality_dev/

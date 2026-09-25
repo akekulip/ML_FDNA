@@ -1,0 +1,293 @@
+{
+  "artifacts": {
+    "live_rows": "data_hik/cost_quality_dev/hardware_verify_live_rows.jsonl.gz",
+    "live_rows_sha256": "23ae751e7aaba611a09f24de126072c6ca56739747903df989e11f02b9a93789",
+    "report": "results/phase5/cost_quality_dev/HARDWARE_VERIFICATION.json",
+    "report_content_sha256_excluding_this_field": "d7a9303b37d77fd1c3ce5f9bef40ad573ba57631b275ff28b29275b2ae1b9ce3"
+  },
+  "counts": {
+    "event_labels_compared": 538234,
+    "fresh_realized_label_checks": 8400,
+    "frozen_rows_checked": 3600,
+    "independent_policy_target_queries": 538234,
+    "live_rows_written": 3600,
+    "physical_backend_requests_before_memoization": 546634,
+    "unique_physical_solves_within_op_workers": 140803
+  },
+  "elapsed_s": 126.47751359804533,
+  "environment": {
+    "cpu_model": "AMD Ryzen 9 5950X 16-Core Processor",
+    "max_workers": 6,
+    "package_versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.18.1"
+    },
+    "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",
+    "python": "3.13.12",
+    "thread_env": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "gate_diff": {
+    "difference_count": 0,
+    "differences": [],
+    "max_abs_diff": 0.0
+  },
+  "inputs": {
+    "data_dir": "data_hik",
+    "exact_probability_source_for_mse": "frozen evaluation snapshots; realized labels and target queries are live ScenarioLP",
+    "gate": "results/phase5/cost_quality_dev/gate.json",
+    "target_label_source": "live ScenarioLP CPU solves",
+    "trace_dir": "data_hik/cost_quality_dev",
+    "warm_proxy_cache_source": "frozen n1/n2 cached lower-order labels only"
+  },
+  "maxima": {
+    "event_abs_error": 1.4716050100727074e-08,
+    "metric_abs_diff": 0.0,
+    "score_abs_diff": 0.0
+  },
+  "mismatches": {
+    "event_missing_frozen": 0,
+    "event_missing_live": 0,
+    "event_severity_mismatches": 0,
+    "event_value_mismatches": 0,
+    "failure_count": 0,
+    "failures": [],
+    "metric_mismatches": 0,
+    "query_count_mismatches": 0,
+    "realized_severity_mismatches": 0,
+    "score_mismatches": 0
+  },
+  "provenance": {
+    "development_provenance_matches": {
+      "configs/spec.json": {
+        "current_sha256": "d016081d4dd1f2f4bac01a5e9e239365ddb9f5e46d01e78b0850d8525a3b20ab",
+        "matches": true,
+        "recorded_sha256": "d016081d4dd1f2f4bac01a5e9e239365ddb9f5e46d01e78b0850d8525a3b20ab",
+        "status": "match"
+      },
+      "data_hik/cost_quality_dev/metrics.jsonl.gz": {
+        "current_sha256": "e3e9e3275729cbd6cf4669afe757d474118b52d4f768b648ea34d9f35e6e9bc8",
+        "matches": true,
+        "recorded_sha256": "e3e9e3275729cbd6cf4669afe757d474118b52d4f768b648ea34d9f35e6e9bc8",
+        "status": "match"
+      },
+      "data_hik/cost_quality_dev/traces.jsonl.gz": {
+        "current_sha256": "89e06421ff0ab979d29afbd5564cdb0712101c9786544903be51e794ecdd9160",
+        "matches": true,
+        "recorded_sha256": "89e06421ff0ab979d29afbd5564cdb0712101c9786544903be51e794ecdd9160",
+        "status": "match"
+      },
+      "data_hik/manifest_k3_confirm.json": {
+        "current_sha256": "03f7af5a27d814dda60918862ccbf0efb11e1e83df94f555e0bf365407db51d5",
+        "matches": true,
+        "recorded_sha256": "03f7af5a27d814dda60918862ccbf0efb11e1e83df94f555e0bf365407db51d5",
+        "status": "match"
+      },
+      "data_hik/n1_confirm.npz": {
+        "current_sha256": "dad551e762167f65542c4a88da4be0ff5eeb254cde75c145e656850ffe08a4be",
+        "matches": true,
+        "recorded_sha256": "dad551e762167f65542c4a88da4be0ff5eeb254cde75c145e656850ffe08a4be",
+        "status": "match"
+      },
+      "data_hik/n2_confirm.npz": {
+        "current_sha256": "5090e5a3913d039c5404e13f4f1c3f7bdae6ae0608a132f5292582ad95dd4247",
+        "matches": true,
+        "recorded_sha256": "5090e5a3913d039c5404e13f4f1c3f7bdae6ae0608a132f5292582ad95dd4247",
+        "status": "match"
+      },
+      "results/phase5/cost_quality_dev/config.json": {
+        "current_sha256": "39ea47271b179ad9d75800cee623b149eae92bf4c487cd68fadd1fdcd1aa4b34",
+        "matches": true,
+        "recorded_sha256": "39ea47271b179ad9d75800cee623b149eae92bf4c487cd68fadd1fdcd1aa4b34",
+        "status": "match"
+      },
+      "results/phase5/cost_quality_dev/gate.json": {
+        "current_sha256": "d1ff6df0832b6fd2c39f9f21053d3877e1ef49b3c14d524ec6e434ee3e437efa",
+        "matches": null,
+        "recorded_sha256": null,
+        "status": "not_recorded_in_development_provenance"
+      },
+      "results/phase5/cost_quality_dev/provenance.json": {
+        "current_sha256": "aaf2d29dd5b1f3473bb6c1e0f9d0bc24328a2232f617536c2998ee56c0de0890",
+        "matches": null,
+        "recorded_sha256": null,
+        "status": "not_recorded_in_development_provenance"
+      }
+    },
+    "git_head": "a7ec4d0a6adade844dd9d553b9d749deca10bf3b",
+    "inputs_sha256": {
+      "configs/spec.json": "d016081d4dd1f2f4bac01a5e9e239365ddb9f5e46d01e78b0850d8525a3b20ab",
+      "data_hik/cost_quality_dev/metrics.jsonl.gz": "e3e9e3275729cbd6cf4669afe757d474118b52d4f768b648ea34d9f35e6e9bc8",
+      "data_hik/cost_quality_dev/traces.jsonl.gz": "89e06421ff0ab979d29afbd5564cdb0712101c9786544903be51e794ecdd9160",
+      "data_hik/manifest_k3_confirm.json": "03f7af5a27d814dda60918862ccbf0efb11e1e83df94f555e0bf365407db51d5",
+      "data_hik/n1_confirm.npz": "dad551e762167f65542c4a88da4be0ff5eeb254cde75c145e656850ffe08a4be",
+      "data_hik/n2_confirm.npz": "5090e5a3913d039c5404e13f4f1c3f7bdae6ae0608a132f5292582ad95dd4247",
+      "results/phase5/cost_quality_dev/config.json": "39ea47271b179ad9d75800cee623b149eae92bf4c487cd68fadd1fdcd1aa4b34",
+      "results/phase5/cost_quality_dev/gate.json": "d1ff6df0832b6fd2c39f9f21053d3877e1ef49b3c14d524ec6e434ee3e437efa",
+      "results/phase5/cost_quality_dev/provenance.json": "aaf2d29dd5b1f3473bb6c1e0f9d0bc24328a2232f617536c2998ee56c0de0890"
+    },
+    "sources_sha256": {
+      "/home/philip/Projects/ML_FDNA/scripts/p5_hardware_verify.py": "9bb9b1cee8a83d10d1d861ee1929eb820b296322ea3b0890e579167c0c14ca7f",
+      "scripts/p5_cost_quality.py": "20fcb5275c796b48c8f65256506d9d621d1cd224e2556180bdc5c987f9f1f3ff",
+      "src/fdna/cost_quality.py": "7613f46fd9c8cf64b3b94ac857720dd7c21fe630bbc91ea76cbd05e7f156baf1",
+      "src/fdna/dataset.py": "821ffc9b5a4477ee397bf2d9c7e170e238c2aec752d77f6c65c51d8852e983a8",
+      "src/fdna/evalutil.py": "8b42040a298e70c201012efe8dd502593a6e6fe0e209c18e246793083b3710f5",
+      "src/fdna/grid.py": "6d25f639c19c9ef8424863576acbed5e0a2218d01e0bc4fd593767a4a6102961",
+      "src/fdna/lp.py": "3086cdba72d538abe56ee3e8e57a5b90eaae65ffd4b1b15de66e8745aaa5073e",
+      "src/fdna/opgen.py": "35f8e5f46557641f853098e4698e4cb2339aedcb09ef1c9420d5c5e1ee933ef2",
+      "src/fdna/physical_correction.py": "3728bd1502d35e6fa3943a41b14df04a3c736a801cb8c18901f9d74f7ea9b966",
+      "src/fdna/query_budget.py": "d74c6e46f4ddbff0ef140b874003e98f4c7212ab50bb35c116cb3ceec13eab6c",
+      "src/fdna/spec.py": "46843c918f88e4b7c2ea4bff8b286610ef1adb0b1bd7084363dce588108c4cc3",
+      "src/fdna/v2.py": "ff833c53a3d58a9071efcac178a8f3a5c4e54b23e781b3bb5027b3703322e4ff",
+      "src/fdna/v2data.py": "932072befa00b8f88dbca3e3206138b718119ce25b771108d627ac2922511b10"
+    }
+  },
+  "regenerated_gate": {
+    "cold": {
+      "margin": 0.01,
+      "passing_candidates": 0,
+      "selected": null,
+      "status": "no_go"
+    },
+    "scope": "hardware verification of frozen warm development gate; no fresh holdout or retraining",
+    "warm": {
+      "margin": 0.01,
+      "passing_candidates": 1,
+      "selected": {
+        "budget": 280,
+        "evidence": [
+          {
+            "bootstrap_draws": 4000,
+            "budget": 280,
+            "cell": "P1_v2b",
+            "comparator": "mc",
+            "hi95": 0.042215891373651254,
+            "lo95": 0.02066254473901885,
+            "mean": 0.031099761637019465,
+            "method": "cv_full",
+            "n_ops": 60,
+            "n_replicates": 10,
+            "regime": "warm"
+          },
+          {
+            "bootstrap_draws": 4000,
+            "budget": 280,
+            "cell": "P1_v2b",
+            "comparator": "proxy_full",
+            "hi95": 0.020937714804785054,
+            "lo95": 0.010434571512773388,
+            "mean": 0.015638082313401375,
+            "method": "cv_full",
+            "n_ops": 60,
+            "n_replicates": 10,
+            "regime": "warm"
+          },
+          {
+            "bootstrap_draws": 4000,
+            "budget": 280,
+            "cell": "P2_v2c",
+            "comparator": "mc",
+            "hi95": 0.05672083168286236,
+            "lo95": 0.028454543411746865,
+            "mean": 0.041773907681647376,
+            "method": "cv_full",
+            "n_ops": 60,
+            "n_replicates": 10,
+            "regime": "warm"
+          },
+          {
+            "bootstrap_draws": 4000,
+            "budget": 280,
+            "cell": "P2_v2c",
+            "comparator": "proxy_full",
+            "hi95": 0.027352495058645603,
+            "lo95": 0.014142401948331253,
+            "mean": 0.02059643430423025,
+            "method": "cv_full",
+            "n_ops": 60,
+            "n_replicates": 10,
+            "regime": "warm"
+          }
+        ],
+        "method": "cv_full"
+      },
+      "status": "candidate"
+    }
+  },
+  "scope": "hardware-backed verification of frozen warm cv_full budget280 candidate and mc/proxy_full baselines",
+  "selection": {
+    "budget": 280,
+    "complete_frozen_scope": true,
+    "methods": [
+      "mc",
+      "proxy_full",
+      "cv_full"
+    ],
+    "ops": [
+      600,
+      601,
+      602,
+      603,
+      604,
+      605,
+      606,
+      607,
+      608,
+      609,
+      610,
+      611,
+      612,
+      613,
+      614,
+      615,
+      616,
+      617,
+      618,
+      619,
+      620,
+      621,
+      622,
+      623,
+      624,
+      625,
+      626,
+      627,
+      628,
+      629,
+      630,
+      631,
+      632,
+      633,
+      634,
+      635,
+      636,
+      637,
+      638,
+      639,
+      640,
+      641,
+      642,
+      643,
+      644,
+      645,
+      646,
+      647,
+      648,
+      649,
+      650,
+      651,
+      652,
+      653,
+      654,
+      655,
+      656,
+      657,
+      658,
+      659
+    ],
+    "replicates": 10
+  }
+}

@@ -214,8 +214,26 @@ metrics move the same direction: cv(beta=1.0)'s per-op recall@40% (0.869 at P1 b
 ceiling against the one frozen realized true state each candidate uses here -- so a lower-variance finite-sample
 estimator can occasionally edge past it on this particular frozen sample without that meaning it beat the truth.
 
-**Verdict: the control variate looks like a genuine, low-cost improvement over plain posterior MC, worth a
-confirmatory run.** Still not attempted (explicitly future work): validation-selected/adaptive beta (needs a
+**Historical verdict, superseded by the total-cost development gate below:** the
+control variate improved this target-query-only comparison. Its lower-order cache
+was assumed available; these results alone do not justify fresh confirmation.
+Still not attempted: validation-selected/adaptive beta (needs a
 separated pilot-sample protocol per the review's own caution); a genuine shortlist-boundary-aware acquisition
 rule; a global budget allocation shared across the whole shortlist rather than an independent per-candidate cap;
 and a confirmatory run on genuinely unused operating points/outages.
+
+## Total-cost development gate (2026-09-25)
+
+The [cost–quality report](cost_quality_dev/REPORT.md) evaluates a fixed global LP
+budget per operating point and uses per-op severe-case R-precision as primary.
+It charges all unique lower-order construction and N-3 target labels for cold
+operation; warm operation explicitly assumes the same proxy cache is available.
+The comparisons include posterior MC with affordable exact enumeration, the
+proxy without target queries, full g2, and six sparse-control proxies.
+
+The frozen practical margin is 0.01 absolute R-precision, with a paired one-sided
+95% lower bound above that margin against both baselines in both cells. Cold and
+warm gates are independent. This reused development block is exploratory; its
+gate decision supersedes the historical recommendation for immediate fresh
+confirmation. Variance reduction remains a separate estimator property and does
+not by itself establish a screening benefit.

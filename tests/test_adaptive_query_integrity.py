@@ -3,6 +3,7 @@ critical bugs it found in the adaptive-query experiment (findings 4 and 5)."""
 import inspect
 
 import numpy as np
+import pytest
 from pytest import approx
 
 from fdna import spec, v2, v2data
@@ -124,3 +125,36 @@ def test_resolve_per_candidate_rng_is_independent_of_other_candidates_consumptio
         "scenario itself may have stopped being RNG-sensitive and needs reconstructing, not the assertion "
         "loosened"
     )
+
+
+def test_resolve_honors_zero_and_one_query_budget_before_extremes():
+    """Budget is a hard oracle-query cap. A previous implementation always queried both extreme controls before
+    checking the cap, so budget 0 and 1 both spent 2 queries on this hand-checked four-control grid."""
+    pc = np.array([0.25, 0.25, 0.25, 0.25])
+    n0, qL0, qU0 = resolve("random_bounds", _Y4, 0., _Y4, pc, 0, np.random.default_rng(1), _CV4, spec.SEVERE)
+    assert n0 == 0
+    assert qL0 == approx(0.0)
+    assert qU0 == approx(1.0)
+
+    n1, qL1, qU1 = resolve("random_bounds", _Y4, 0., _Y4, pc, 1, np.random.default_rng(1), _CV4, spec.SEVERE)
+    assert n1 == 1
+    assert qL1 == approx(0.0)
+    assert qU1 == approx(0.75)
+
+
+def test_resolve_uses_unique_extreme_once_on_single_control_grid():
+    """When the control grid has one row, argmax and argmin are the same row. The oracle must count that as one
+    query, not two duplicate queries of the same control."""
+    cv1 = np.array([[0.0, 0.0]])
+    y1 = np.array([0.02])
+    pc = np.array([1.0])
+    n, qL, qU = resolve("random_bounds", y1, 0., y1, pc, 4, np.random.default_rng(1), cv1, spec.SEVERE)
+    assert n == 1
+    assert qL == approx(1.0)
+    assert qU == approx(1.0)
+
+
+def test_resolve_rejects_negative_and_non_integer_budget():
+    for bad in [-1, 1.5, True]:
+        with pytest.raises(ValueError):
+            resolve("random_bounds", _Y4, 0., _Y4, np.ones(4) / 4, bad, np.random.default_rng(1), _CV4, spec.SEVERE)

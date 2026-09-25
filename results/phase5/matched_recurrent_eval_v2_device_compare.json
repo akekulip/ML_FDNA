@@ -1,0 +1,121 @@
+{
+ "status": "exact_match",
+ "max_abs_diff": 0.0,
+ "max_abs_diff_path": "/P1_v2b/ablation_summary/deepsets_legacy_alias_seed0",
+ "max_abs_diff_values": {
+  "cpu": 0.8535474005098634,
+  "cuda": 0.8535474005098634
+ },
+ "numeric_value_count": 2882,
+ "non_numeric_differences": [],
+ "artifacts": {
+  "cpu": {
+   "path": "results/phase5/matched_recurrent_eval_v2.json",
+   "sha256": "39ac13d80a344cb666978414caf91cb9151fa0c428edcf972773b5611dff49b8",
+   "elapsed_s": 689.9984746498521,
+   "hardware": {
+    "selected_device": "cpu",
+    "torch_version": "2.5.1+cu121",
+    "cuda_available": false,
+    "cuda_version": "12.1",
+    "cuda_device_name": null,
+    "cuda_device_capability": null,
+    "nvidia_smi": "unavailable: Command '['nvidia-smi', '--query-gpu=name,driver_version,memory.total', '--format=csv,noheader']' returned non-zero exit status 9.",
+    "python_version": "3.13.12",
+    "numpy_version": "2.4.6",
+    "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",
+    "processor": "x86_64",
+    "omp_num_threads_env": "4"
+   }
+  },
+  "cuda": {
+   "path": "results/phase5/matched_recurrent_eval_v2_cuda.json",
+   "sha256": "56c795159eaa5b76c47f27ab75b31d312a2afc7dbf11885c93b6c454b6cac31b",
+   "elapsed_s": 547.1343601229601,
+   "hardware": {
+    "selected_device": "cuda",
+    "torch_version": "2.5.1+cu121",
+    "cuda_available": true,
+    "cuda_version": "12.1",
+    "cuda_device_name": "NVIDIA GeForce RTX 2070",
+    "cuda_device_capability": [
+     7,
+     5
+    ],
+    "nvidia_smi": "NVIDIA GeForce RTX 2070, 535.183.01, 8192 MiB",
+    "python_version": "3.13.12",
+    "numpy_version": "2.4.6",
+    "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",
+    "processor": "x86_64",
+    "omp_num_threads_env": "4"
+   }
+  }
+ },
+ "source_and_input_hashes": {
+  "data_hik/n1_confirm.npz": "dad551e762167f65542c4a88da4be0ff5eeb254cde75c145e656850ffe08a4be",
+  "data_hik/n2_confirm.npz": "5090e5a3913d039c5404e13f4f1c3f7bdae6ae0608a132f5292582ad95dd4247",
+  "data_hik/n3_confirm.npz": "70ea4483d25ca8f2a485be68ae12e9a867ed79c20469a5dba7750b4ad6a7a3d8",
+  "data_hik/manifest_k3_confirm.json": "03f7af5a27d814dda60918862ccbf0efb11e1e83df94f555e0bf365407db51d5",
+  "data_hik/matched_recurrent_models_v2.pkl": "178340ef6bfaa53bf946b2b3ddab6f3b2461f3feb1f8eaac9e69e1138873d4d9",
+  "data_hik/deepsets_model_v2.pt": "e8af9dc7722149b5a7b5c2d3ff4f820cc3079fbe80c9a84ca3550f21a4d7c2b9",
+  "data_hik/deepsets_model_v2_seed1.pt": "5a8f714631194c915b62b975c5ec64b8bc2a788455c5d4dd383e52022bee4527",
+  "data_hik/deepsets_model_v2_seed2.pt": "733804c6cbf2733d51e7f3132037ff915804ba6fa32e19573693ba82b03cb88d",
+  "data_hik/residual_model_v2.pt": "27b43a95ee78af7915ccc49b2b5d475e742684fdcf6bec09c5ee2f81dd40f137",
+  "data_hik/residual_model_v2_seed1.pt": "ecd1ea84a224f3d9884ecc913ffa29334587d17010accc57267a85f1964347ec",
+  "data_hik/residual_model_v2_seed2.pt": "a7a0a35f1ee114dbb728c0b82362dfb9244f6b8627064dcbaa4d8e3d87942202",
+  "data_hik/ordered_model_v2_seed0.pt": "f9800ba7f07828f56c9f85b35a20b3605f8d448932523fd0eec213a194f86a31",
+  "data_hik/ordered_model_v2_seed1.pt": "2d669363d9b5c99134e4b7202b71935ab8c90579956520b7e119a03ed8e313dd",
+  "data_hik/ordered_model_v2_seed2.pt": "7881eda799937694fd66c348a2066141b3b21b2b4f1d767900d778d1be5a0d84",
+  "results/phase5/matched_recurrent_training_v2.json": "89a79393e90ca7f13d2767845374d78a062debe1e2f6b0d165acfb82e5af9ad3",
+  "scripts/p5_matched_recurrent_eval_v2.py": "e9fc563ccf6a74f9b187c85de0e8f46cab1a15dc8fd7b9fa5d9374815a6bc3df",
+  "src/fdna/nn/evaluation.py": "c0f2663c72d416f8fcb618bedb46c1ff492be36ea7476299ff059e597593fe49",
+  "src/fdna/nn/pairset.py": "5b39f208a201d937ec070869bd1ca3e754f6c3be46fb0cd4abd12922d3b77adf",
+  "src/fdna/nn/pairset_features.py": "855361e14753d5e4ca7f86bef2e1bba8a82136567304e3e99283d4f82d2fa4ce",
+  "src/fdna/rules.py": "9068e8690fc94621cc795d7deb75619093ff40d6f065417d01b5763b8a04ec8b"
+ },
+ "hash_agreement": true,
+ "protocol": {
+  "op_count": 60,
+  "test_outage_count": 25,
+  "posterior_draw_count": 50,
+  "cells": {
+   "P1_v2b": {
+    "q": 0.7,
+    "s": 0.3,
+    "coverage": null
+   },
+   "P2_v2c": {
+    "q": 0.3,
+    "s": 0.2,
+    "coverage": [
+     true,
+     false,
+     false,
+     false,
+     true,
+     false,
+     false,
+     false,
+     true,
+     false,
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  "deep_sets_seeds": [
+   0,
+   1,
+   2
+  ],
+  "ordered_seeds": [
+   0,
+   1,
+   2
+  ],
+  "no_retrain": true,
+  "fresh_holdout": false
+ },
+ "scientific_conclusion": "CPU and CUDA artifacts are numerically identical across all cell result fields; hardware rerun preserves the all-seed conclusion."
+}
