@@ -13,12 +13,18 @@ regime: >
   sets), not by row, so no triple's information leaks between train and test; all 60 confirmatory operating
   points used for both splits (paired structure preserved for the eventual posterior-composed evaluation).
 split: 45 triples train (charged N-3 supervision) / 25 triples held-out test, fixed seed, frozen before fitting.
-arms: {g2_fixed (no training), g2_clipped (no training, Stage 2 physical repair), ridge (symmetric linear,
-  trained), gbm_tuned (trained), deepsets_pairaware (COMMUTATIVE set-state model, sum-pooled over the 3
-  elements' singleton values + 3 pairs' interaction values + physical descriptors -- chosen over a GRU
-  specifically to avoid outage-order sensitivity and the associated permutation-testing burden, per the
-  brief's own stated preference), g2_plus_learned_residual (retains the exact g2 term, learns ONLY the
-  residual, trained exclusively on the N-3 train split per the identifiability check above)}.
+arms:
+  g2_fixed: no training
+  g2_clipped: no training, Stage 2 physical repair
+  ridge: symmetric linear, trained
+  gbm_tuned: trained
+  deepsets_pairaware: >
+    COMMUTATIVE set-state model, sum-pooled over the 3 elements' singleton values + 3 pairs' interaction
+    values + physical descriptors -- chosen over a GRU specifically to avoid outage-order sensitivity and the
+    associated permutation-testing burden, per the brief's own stated preference
+  g2_plus_learned_residual: >
+    retains the exact g2 term, learns ONLY the residual, trained exclusively on the N-3 train split per the
+    identifiability check above
 information_given_to_every_arm: op_id-conditioned demand (via the physical descriptors), the 3 singleton
   values, the 3 pairwise interaction values, island floor F(S), LODF risk for each sub-pair, new-cut flag --
   IDENTICAL feature set for every trained arm (ridge, gbm, deepsets, residual-net).
