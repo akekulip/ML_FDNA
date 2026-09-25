@@ -14,15 +14,51 @@ floor: it truncates the RESIDUAL series (V-F), not V itself, then adds F(S) back
 from __future__ import annotations
 
 import numpy as np
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
 
 from .grid import Grid
 from .hik_diag import minimal_cut_struct
+from .lp import OperatingPoint, Params
 
 
 def island_floor(grid: Grid, demand: np.ndarray, outage: tuple[int, ...]) -> float:
     """F(S) = exact fraction of total demand stranded in generator-less islands after removing `outage`."""
     struct_mw, _ = minimal_cut_struct(grid, outage, demand=demand)
     return struct_mw / demand.sum()
+
+
+def capacity_floor(grid: Grid, op: OperatingPoint, params: Params, outage: tuple[int, ...], c: np.ndarray) -> float:
+    """Stage R5 (external review's proposed mechanism, independently verified against the review's own toy LP:
+    generator-less floor 0%, capacity floor 20%, repo's exact LP 20% -- exact agreement).
+
+    island_floor only catches ISLANDS WITH NO GENERATOR AT ALL. An island can contain a generator and still lack
+    enough reachable capacity to serve its own load. F_capacity(S,c) = sum_I max(0, D_I - sum_{g in I} U_g(c)) /
+    total_demand, where U_g(c) = min(p0_g + rng_g(c), pmax_g) is generator g's maximum deliverable output under
+    control c -- the SAME upper corrective bound ScenarioLP._bounds enforces (lp.py:119-127), so this uses the
+    real control-to-capacity mapping, not an approximation of it.
+
+    Like island_floor, this ignores intra-island congestion (routing/branch-rating limits inside a still-
+    connected island), so it is a valid LOWER bound on the true LP shed, not an exact value -- gated in
+    tests/test_capacity_floor.py against real ScenarioLP solves (capacity_floor <= exact shed) and against
+    island_floor (capacity_floor >= island_floor, since a generator-less island's own term is identical and
+    every other island can only add further deficit)."""
+    demand = op.demand
+    pmax, p0 = grid.gen_pmax, op.p0
+    c = np.asarray(c, float)
+    rng = np.r_[params.local_mw, params.ramp_frac * pmax[1:] * c]
+    U = np.minimum(p0 + rng, pmax)
+
+    alive = np.ones(grid.n_branch, bool)
+    alive[list(outage)] = False
+    k = np.flatnonzero(alive)
+    adj = coo_matrix((np.ones(len(k)), (grid.frm[k], grid.to[k])), shape=(grid.n_bus, grid.n_bus))
+    n_isl, isl = connected_components(adj, directed=False)
+    gen_isl = isl[grid.gen_bus]
+    cap_by_isl = np.bincount(gen_isl, weights=U, minlength=n_isl)
+    dem_by_isl = np.bincount(isl, weights=demand, minlength=n_isl)
+    deficit = np.maximum(dem_by_isl - cap_by_isl, 0.0)
+    return float(deficit.sum() / demand.sum())
 
 
 def g2_clipped(g2_value: float, grid: Grid, demand: np.ndarray, outage: tuple[int, ...]) -> float:
