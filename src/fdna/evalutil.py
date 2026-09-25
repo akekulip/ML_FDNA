@@ -59,6 +59,43 @@ def recall_at(yt, yp, key, frac, thr=None):
     return float(sev[rank_order(yp, key)[:k]].sum() / sev.sum())
 
 
+def precision_at(yt, yp, key, frac, thr=None):
+    """Precision within the top `frac` of the ranked shortlist (sibling of `recall_at`; needed for the
+    adaptive-query registry's declared "shortlist recall/precision at 10/20/40% budgets" metric, which the
+    original experiment never computed)."""
+    thr = spec.SEVERE if thr is None else thr
+    sev = yt > thr
+    k = max(1, int(round(frac * len(yt))))
+    return float(sev[rank_order(yp, key)[:k]].mean())
+
+
+def sample_posterior_and_truth(w, q, s, cov, op_id, outage, seed, K_DRAWS=50):
+    """One P1/P2-style posterior sampling + observation-conditioning draw for one (op_id, outage), shared
+    across every arm's predictions -- factored out of p5_matched_recurrent_eval_v2.py (repair round 2) so a
+    training-time diagnostic and the real eval script use the identical, already-tested composition logic
+    instead of two copies that could silently drift apart. Returns (pc, true_c_idx, key); `key` is the same
+    model-independent tie-break key `rprec` expects."""
+    from . import v2, v2data
+    rng = np.random.default_rng([op_id, *outage, seed])
+    st = v2.sample_states(w, rng, K_DRAWS)
+    obs = v2.emit(w, st, q, s, rng, cov)
+    pc = v2data.oracle_features(w, obs, s)[0]
+    true_c_idx = w.cidx[st]
+    key = scenario_uniform(np.full(K_DRAWS, op_id), np.full(K_DRAWS, outage[0]),
+                            np.arange(K_DRAWS) + hash(outage) % 100000, np.arange(K_DRAWS), salt=13)
+    return pc, true_c_idx, key
+
+
+def evaluate_rprec_for_preds(w, q, s, cov, op_id, outage, y_true_grid, preds_grid, seed, K_DRAWS=50):
+    """Posterior-compose ONE arm's `preds_grid` (predictions over the full CV control grid for this
+    (op_id,outage)) with the cell's own sampling, returning (composed_pred, y_true, key) rows ready to be
+    concatenated across (op_id,outage) pairs and passed to `rprec`/`op_metrics`."""
+    pc, true_c_idx, key = sample_posterior_and_truth(w, q, s, cov, op_id, outage, seed, K_DRAWS)
+    pred = (pc * preds_grid).sum(1)
+    y_true = y_true_grid[true_c_idx]
+    return pred, y_true, key
+
+
 def op_metrics(yt, yp, key) -> dict:
     sev = yt > spec.SEVERE
     return dict(

@@ -1,9 +1,12 @@
 # Phase 5 Stage 3 — bounded adaptive-query screening
 
-**This document was corrected after an external evidence review found two critical bugs** (hidden-state leakage
-in the prediction logic, and a "posterior MC" baseline that actually sampled the prior) plus several execution
-mismatches. Every claim below was re-verified; the original (buggy) script and its output are kept, not
-deleted, at `scripts/p5_adaptive_query_experiment.py` / `results/phase5/adaptive_query_experiment.json`.
+**This document was corrected across two independent review rounds.** Round 1 found two critical bugs
+(hidden-state leakage in the prediction logic, and a "posterior MC" baseline that actually sampled the prior)
+plus several execution mismatches. Round 2 found the experiment still didn't implement several things its own
+registry declared (shortlist metrics, decision-aware stopping, cache accounting, an uncertainty bound on its
+headline comparison) plus a cheap diagnostic worth measuring. Every claim below was re-verified both times; the
+original (buggy) script and its output are kept, not deleted, at `scripts/p5_adaptive_query_experiment.py` /
+`results/phase5/adaptive_query_experiment.json`.
 
 ## Control-monotonicity: proven and exhaustively verified, now with a committed reproducible artifact
 `V(op,outage,c)` is provably non-increasing in `c` (componentwise): `c` enters `ScenarioLP` only through the
@@ -50,22 +53,30 @@ Two required acceptance tests added (`tests/test_adaptive_query_integrity.py`): 
 provably independent of hidden truth given fixed observables) and a posterior-vs-prior distribution check
 reproducing the review's exact 0.169-vs-0.99998 numbers.
 
-**Corrected result, all 60 confirmatory operating points, all 70 triples** (`results/phase5/adaptive_query_experiment_v2.json`):
+**Corrected result, all 60 confirmatory operating points, all 70 triples** (`results/phase5/adaptive_query_experiment_v2.json`; P1 cell shown, P2 follows the same pattern):
 
 | budget | guided q/candidate | random q/candidate | guided acc | random acc | **mc acc (posterior, K=budget)** |
 |---|---|---|---|---|---|
 | 2 | 2.00 | 2.00 | 0.872 | 0.872 | **0.932** |
-| 6 | 3.70 | 3.71 | 0.915 | 0.915 | **0.944** |
-| 12 | 6.06 | 6.27 | 0.923 | 0.939 | **0.951** |
-| 16 | 7.56 | 7.97 | 0.929 | 0.942 | **0.951** |
+| 6 | 3.49 | 3.50 | 0.915 | 0.915 | **0.944** |
+| 12 | 5.48 | 5.71 | 0.923 | 0.938 | **0.951** |
+| 16 | 6.72 | 7.17 | 0.929 | 0.943 | **0.951** |
 
-(P1 cell shown; P2 follows the same pattern, both in the JSON.) **With leakage removed, the picture is
-completely different from the original, invalidated report: plain posterior Monte Carlo -- the simplest
-possible policy, direct samples from the exact posterior -- beats BOTH bound-based policies at every budget
-tested, in both cells.** Between the two bound-based policies, g2-guided acquisition uses modestly fewer
-queries than random (about 5-10% fewer, consistent with the pre-correction finding) but random acquisition
-reaches equal or slightly HIGHER accuracy at most budgets -- so guided acquisition still does not clear any
-reasonable promotion bar over random, and now neither bound-based policy beats simple posterior MC either.
+(Query counts at budget 12/16 are lower than an earlier pass of this same table -- e.g. 6.72 vs a previously
+reported 7.56 at budget 16 -- because of the decision-aware stopping fix added in repair round 2, see below; the
+accuracy numbers are essentially unchanged, confirming the earlier stopping rule was wasting queries without
+changing the eventual decision.) **With leakage removed, the picture is completely different from the original,
+invalidated report: plain posterior Monte Carlo -- the simplest possible policy, direct samples from the exact
+posterior -- beats guided acquisition's point estimate at every budget tested, in both cells, and (repair round
+2) this is now backed by a paired-per-op bootstrap CI that excludes zero at every budget in both cells (p<0.05
+throughout, mostly p<0.01) -- a real, significant effect, not just a point estimate.** MC vs. RANDOM acquisition
+is a more nuanced picture: MC's point estimate is higher at every budget in both cells, and the difference is
+statistically significant at low-to-mid budgets, but loses significance at the highest budgets tested (P1
+budget 16: p=0.086; P2 budgets 12/16: p=0.056/0.150) -- so "MC beats random" is a solid finding at low budgets
+and a real but not yet statistically confirmed one at the highest budgets. Between the two bound-based policies,
+g2-guided acquisition uses fewer queries than random at every budget (now more so, thanks to decision-aware
+stopping) but random acquisition reaches equal or slightly HIGHER accuracy at most budgets -- guided acquisition
+still does not clear any reasonable promotion bar over random.
 
 **Cost accounting, corrected (external review finding 6/10):** the query counts above are ONLY the N-3 target
 queries charged against the budget. Building g2's own guidance additionally requires the FULL lower-order table
@@ -75,28 +86,61 @@ lower-order queries" the original report implied (a 1024x undercount, since each
 (`results/phase5/adaptive_query_experiment_v2.json`'s `cost_accounting` field), not folded into the per-candidate
 counts.
 
-## Verdict, corrected
+## Verdict, corrected (repair round 2: now with real significance, not just point estimates)
 Monotonicity and the bound machinery are solid, exact, and now independently reproducible from committed
 scripts. The acquisition experiment's ORIGINAL conclusion ("mostly null, doesn't clear the gate") happened to
-survive in DIRECTION once the bugs were fixed, but the actual finding is sharper and different: **simple
-posterior Monte Carlo beats both bound-based acquisition policies outright**, not merely "guided doesn't beat
-random by 25%." Neither bound-based policy is promoted. This is a genuinely corrected, leakage-free result, not
-a restatement of the original -- the original's specific numbers (guided 0.951/0.936/0.957 at budgets 8/16/32,
-MC "capped at K=8" showing erratic 0.81-0.89 accuracy) were artifacts of the leakage and prior-sampling bugs and
-are withdrawn.
+survive in DIRECTION once the bugs were fixed, but the actual finding is sharper and different, and now
+statistically backed rather than a bare point estimate: **plain posterior Monte Carlo significantly beats
+g2-guided acquisition at every budget tested, in both cells (paired-per-op bootstrap, p<0.05 throughout, mostly
+p<0.01)**; it also beats random acquisition's point estimate at every budget, but that specific comparison is
+only statistically significant at low-to-mid budgets, not at the highest ones tested. Neither bound-based policy
+is promoted. This is a genuinely corrected, leakage-free result, not a restatement of the original -- the
+original's specific numbers (guided 0.951/0.936/0.957 at budgets 8/16/32, MC "capped at K=8" showing erratic
+0.81-0.89 accuracy) were artifacts of the leakage and prior-sampling bugs and are withdrawn. Repair round 2 also
+added decision-aware stopping (genuinely saves queries at the same accuracy), unique-query/cache accounting,
+the registry's declared shortlist recall/precision metrics, and a favorable-looking (but not yet implemented)
+control-variate diagnostic -- see the section below for all five.
 
-**What remains untested:** a genuine shortlist-boundary-aware acquisition rule (the brief's fuller
-specification, not the simpler "closest to tau" heuristic implemented here); the residual/control-variate
-fallback the brief also requested (`E[V-g2|obs]` estimated from valid posterior samples) was not attempted.
+**What remained untested at this point:** a genuine shortlist-boundary-aware acquisition rule (the brief's
+fuller specification, not the simpler "closest to tau" heuristic implemented here); the residual/control-variate
+fallback the brief also requested was DIAGNOSED but not implemented as a policy -- see repair round 2 below.
 
-**Additional gaps confirmed by an independent second-round review (2026-09-25, repair in progress):** the
-registry's own `metrics` field requires shortlist recall/precision at 10/20/40% budgets -- not computed anywhere
-in this experiment, only classification accuracy and query counts. `resolve()`'s stopping rule waits until
-every posterior-support control state is individually resolved, which is strictly stronger (and more expensive)
-than what the binary decision needs -- `qL>0.5` or `qU<=tau` alone already certifies the prediction, so the
-policy keeps querying past the point the decision was already locked in. Each candidate gets its own
-independent budget cap with no shared/global allocation across the shortlist. `mc_queries_total` charges every
-Monte Carlo draw as a fresh oracle solve, with no credit for a cache on repeated control-state draws (at budget
-16, `4200*16=67200` "queries," most of them plausibly cache hits). The "posterior MC beats both bound-based
-policies at every budget" finding above has no saved uncertainty bound -- a real point-estimate finding, not
-yet a significance claim. All of this is being addressed; see `results/phase4/CLAIM_LEDGER.md` for status.
+## Repair round 2: the registered-contract gaps a second independent review found, now addressed
+The review found four things the registry itself declared but the experiment never implemented, plus one
+requested cheap diagnostic. All five addressed in `scripts/p5_adaptive_query_experiment_v2.py`:
+
+1. **Decision-aware stopping.** `resolve()` used to wait until every posterior-support control state was
+   individually resolved (`L(c)==U(c)`), strictly stronger than the binary decision needs. Fixed: an early exit
+   checks `qL>0.5` or `qU<=tau` after every query and stops the moment the decision is already certified. Effect
+   confirmed in the corrected table above: fewer queries used at the same budget cap (e.g. 6.72 vs 7.56 at
+   budget 16), same accuracy -- the old rule was provably wasting queries without changing outcomes.
+2. **Unique-query / cache accounting.** MC's `mc_queries_total` (draws charged) is now reported alongside
+   `mc_unique_queries_total` (distinct control indices among those draws, which a real cache could serve
+   without a fresh solve). At budget 16, P1: 67,200 draws charged, only 40,187 unique (60%) -- a real cache
+   would cut MC's effective cost by roughly 40% at this budget. At budget 2, the ratio is much closer to 1
+   (7,699/8,400, 92%) -- caching matters more as the budget (and therefore the redundancy) grows.
+3. **Shortlist recall/precision at 10/20/40% budgets** (the registry's own declared metric, absent before):
+   implemented via `fdna.evalutil.recall_at`/`precision_at`, ranking pooled candidates by each policy's own
+   continuous severity score. For the guided policy at budget 16 (P1): recall@10/20/40% = 0.240/0.481/0.906,
+   precision@10/20% = 1.00 (every candidate in the top 10-20% by guided score really is severe), precision@40% =
+   0.943. One reasonable operationalization of the registry's underspecified field, not claimed to be the only
+   valid one -- full numbers for every policy/budget/cell in the JSON's `shortlist_metrics`.
+4. **A paired-per-op bootstrap CI**, added as described above -- MC vs guided is significant at every budget in
+   both cells; MC vs random is significant at low-to-mid budgets only.
+5. **A cheap, cached-data-only diagnostic for the review's proposed control-variate estimator**
+   (`p_hat = E_p[h0] + mean(h(c_j)-h0(c_j))`, `h0(c)=1[g2(c)>tau]`, `h(c)=1[V(c)>tau]`): computed exactly under
+   the posterior (`Var_p[h-h0]` vs `Var_p[h]`, no simulation needed). Result is striking and genuinely favorable
+   for MOST candidates but dominated by a small number of outliers in the naive mean: **median ratio = 0.0** (for
+   the typical candidate, g2's threshold call matches the true label across the ENTIRE posterior support --
+   zero residual variance, a perfect control variate) and **97% of candidates have a favorable ratio (<1)** --
+   but the MEAN ratio is enormous (415,909 for P1, 25,334 for P2), driven by a small fraction of candidates where
+   `Var_p[h]` itself is close to zero (dividing by a near-zero denominator). Read honestly: this is a promising
+   signal that g2 as a control variate could substantially reduce posterior-MC's variance for most candidates,
+   worth implementing as an actual policy in a future round -- but this round only measures the diagnostic, per
+   the plan's explicit scope, and does not build an adaptive policy around it yet.
+
+**Still not attempted this round** (explicitly scoped as future work, not silently dropped): a genuine
+shortlist-boundary-aware acquisition rule (the brief's fuller specification, not the simpler "closest to tau"
+heuristic implemented here); a global budget allocation shared across the whole shortlist rather than an
+independent per-candidate cap; and actually implementing the control-variate estimator as a policy (only
+diagnosed above).
