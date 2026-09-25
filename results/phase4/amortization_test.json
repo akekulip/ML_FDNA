@@ -10,6 +10,13 @@
   "mae": 0.0008241235859248114,
   "rho": 0.9757918388648477
  },
- "reuse_ratio_claim": "8436 triples constructible from 477 pairs among the 38 touched branches",
- "note": "This tests genuine reuse: the incremental solves to extend the pair table (small) vs the g2 prediction quality on triples that were NEVER part of the original 60-triple manifest -- the correct test of the amortisation claim the original 'practically unaffordable' framing did not measure."
+ "coverage_CORRECTED": {
+  "n_cached_pairs": 477,
+  "n_triples_with_all_3_subpairs_cached": 2698,
+  "n_triples_possible_among_touched_branches": 8436,
+  "n_all_possible_pairs_among_touched_branches": 703,
+  "n_triples_covered_if_ALL_possible_pairs_were_cached": 8436,
+  "note": "the original 'reuse_ratio_claim' field wrongly paired 477 (cached pairs) with 8436 (all triples) -- 477 cached pairs cover only a FRACTION of the 8436 possible triples; only the FULL 703-pair set covers all 8436."
+ },
+ "note": "This tests genuine reuse: the incremental solves to extend the pair table (small) vs the g2 prediction quality on triples that were NEVER part of the original 60-triple manifest. The cost-savings claim itself is separately measured, not assumed."
 }

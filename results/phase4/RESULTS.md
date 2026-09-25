@@ -83,74 +83,80 @@ cluster bootstrap, no confirmatory block. This is a strong screen, not a confirm
 
 ## Partial-observation validation: does the Mobius result survive realistic communication uncertainty?
 
-**This section was corrected after an external review found real issues in the first version** (invalid
-registry YAML, an undisclosed draws/metric deviation, an overstated "achievable gap" framing, an unfair neural
-comparator, a cost-savings claim that didn't hold at the tested scale, and a reproducibility bug). Each claim
-was independently verified against the code/data before being accepted; all are recorded, with fixes, in
-`registry/phase4_step_partialobs_v2.yaml`. The original run and files are kept, not deleted. The corrected
-analysis (`scripts/p4_mobius_partialobs_v2.py`) fixes a genuine reproducibility bug along the way: the original
-script advanced one shared RNG across a loop ordered by a `.npz` file that multiprocessing had written in
-completion order (nondeterministic across regenerations) — so the exact per-row observation draws were not
-reproducible even at a fixed top-level seed. Fixed by sorting every loaded array by a canonical `(op_id,
-outage)` key and deriving each row's RNG from that key directly (`np.random.default_rng([op_id, *outage, ...])`),
-not from loop position.
+**This section has been corrected TWICE by external review**, each round independently verified against the
+code/data before anything was accepted or changed. Round 1 found invalid registry YAML, an undisclosed
+draws/metric deviation, an overstated "achievable gap" framing, an unfair neural comparator, an unmeasured
+cost-savings claim, and a reproducibility bug (fixed in `scripts/p4_mobius_partialobs_v2.py`,
+`registry/phase4_step_partialobs_v2.yaml`). Round 2 found that round 1's own "fix" for the reproducibility bug
+was itself unstable (`hash()` of a Python string is process-randomised, so the "deterministic" seed changed
+across runs — verified: three different values from three fresh `python3 -c` calls), that the reported
+R-precision was computed by pooling all 20 operating points into one ranking instead of the project's
+established per-operating-point convention, and that the linear-baseline and amortisation follow-ups had their
+own bugs (below). All prior versions (`_v2` scripts/registries) are kept, not deleted.
 
-**Setup, unchanged in substance:** `y_pair` across all 1024 control vectors for the 156 needed sub-pairs x 20
-ops (3,194,880 LP solves, 350s on 24 cores); `y_single` free from the existing dense N-1 rows; composed with the
-exact communication-state posterior p(c|obs) (`src/fdna/v2.py`, unchanged), K_DRAWS=100 (stated explicitly —
-the original registration's "200" was inside invalid YAML and was never actually registered).
+**Setup, unchanged in substance across all three versions:** `y_pair` across all 1024 control vectors for the
+156 needed sub-pairs x 20 ops (3,194,880 LP solves, 350s on 24 cores); `y_single` free from the existing dense
+N-1 rows; composed with the exact communication-state posterior p(c|obs) (`src/fdna/v2.py`, unchanged),
+K_DRAWS=100 stated explicitly. Final, corrected script: `scripts/p4_mobius_partialobs_v3.py` — a fixed integer
+per cell (no `hash()` anywhere), and R-precision computed WITHIN each operating point then averaged across the
+20 ops, with a proper paired cluster bootstrap (`src/fdna/rules.boot`, this project's standard confirmatory
+statistic) on the per-op (g2 − g1) difference.
 
-| comparator | P1 (v2b) MAE | P2 (v2c) MAE | P1 MSE | P2 MSE |
-|---|---|---|---|---|
-| g1-composed (naive sum + exact posterior) | 0.01554 | 0.01438 | 0.000812 | 0.000736 |
-| prior-only (no observation, average over the communication PRIOR — corrected, stronger than "assume full control") | 0.01552 | 0.01558 | — | — |
-| **g2-composed (order-2 truncation + exact posterior)** | **0.00877** | **0.00702** | **0.000368** | **0.000273** |
-| mean-composed reference (true N-3 table; optimal under MSE, not MAE) | 0.00765 | 0.00578 | 0.000335 | 0.000237 |
-| median-composed reference (true N-3 table; the actual MAE-optimal point estimate) | 0.00595 | 0.00443 | — | — |
+| comparator | P1 (v2b) MAE | P2 (v2c) MAE | P1 MSE | P2 MSE | P1 R-prec | P2 R-prec |
+|---|---|---|---|---|---|---|
+| g1-composed (naive sum + exact posterior) | 0.01557 | 0.01428 | 0.000819 | 0.000725 | 0.686 | 0.697 |
+| prior-only (no observation, average over the prior) | 0.01558 | 0.01551 | 0.000774 | 0.000764 | 0.717 | 0.716 |
+| **g2-composed (order-2 truncation + exact posterior)** | **0.00878** | **0.00693** | **0.000369** | **0.000264** | **0.873** | **0.902** |
+| mean-composed reference (true table; optimal under MSE) | 0.00765 | 0.00569 | 0.000336 | 0.000229 | — | — |
+| median-composed reference (true table; MAE-optimal) | 0.00592 | 0.00433 | — | — | — | — |
 
-**Corrected reading.** Under MSE — the metric where the mean-composed reference is genuinely optimal — g2
-closes **93.1% (P1) / 92.8% (P2)** of the gap between naive and oracle, a stronger and now *correctly* scoped
-number than the original's MAE-based 86%. Under MAE, scored against the metric-appropriate (median, not mean)
-reference, g2 closes a smaller but still real **70.6% (P1) / 74.0% (P2)**. The **prior-only baseline is nearly
-as bad as g1** (0.01552/0.01558) — confirming that g2's advantage comes from actually using the observation via
-the posterior, not from the composition formula alone.
+All values are the mean of a per-operating-point statistic over the 20 ops (not a pooled ranking).
+**Paired cluster bootstrap on (g2 − g1), 20,000 resamples over operating points:**
+R-precision improvement: **+0.188 (P1), 90% CI [0.172, 0.204], p ≈ 5×10⁻⁵**; **+0.205 (P2), 90% CI [0.188,
+0.222], p ≈ 5×10⁻⁵**. MAE improvement: **+0.0068 (P1), 90% CI [0.0064, 0.0072]**; **+0.0074 (P2), 90% CI
+[0.0069, 0.0078]**. Both endpoints, both cells: the improvement is large relative to its own sampling
+uncertainty, at the exploratory-screen level (still the same reused manifest, not an independent fresh block).
 
-**Screening-relevant endpoint, not just point-prediction error (the review's other correct point):**
-R-precision (this project's standard metric, `src/fdna/evalutil.rprec`) on the composed predictions: **g2 0.878
-(P1) / 0.908 (P2) vs g1 0.702 (P1) / 0.716 (P2)** — the first positive result on the actual screening metric,
-under partial observation, anywhere in Phase 1-4.
+**Corrected reading of the gap-closure numbers.** Under MSE (where the mean-composed reference is genuinely
+optimal): g2 closes ~93% of the naive-to-oracle gap in both cells. Under MAE against the metric-correct median
+reference: ~70-74%. The **prior-only baseline is nearly as bad as g1** on MAE/MSE but is notably closer to g2 on
+R-precision (0.717/0.716 vs g1's 0.686/0.697) — averaging over the prior alone recovers some ranking value even
+with zero observation, but g2-with-observation still adds a further ~0.16-0.19 R-precision on top.
 
-**Fair comparator addition (the review's point that GRU/DeepSets and g2 had different information budgets).**
-`scripts/p4_linear_baseline.py`: a plain linear regression on the identical 6 numbers g2 uses (5-fold CV,
-exact-control screen). Its FITTED coefficients land at 0.92-1.02 for every ingredient (near the value-1 the
-Möbius identity assigns by construction) — independent evidence the additive/interaction structure is
-approximately correct, not an artifact of hardcoding — but the fitted model still loses to g2's fixed
-coefficients (MAE 0.00164 vs 0.00087 full control; 0.00529 vs 0.00374 no control): with only 60 distinct
-triples, fitting six coefficients adds overfitting variance that the theoretically-derived coefficients (exactly
-1, from the Möbius identity) avoid. This strengthens rather than undermines the finding.
+**Linear-composition baseline, corrected.** `scripts/p4_linear_baseline_v2.py` fixes two issues: (1) the
+original split rows by (op, triple) individually, letting a triple's OTHER operating points leak into training;
+now uses `GroupKFold` grouped by the 60 distinct triples, so an entire triple is held out together. (2) The
+original fit only squared error (OLS) but reported only MAE — "loses to g2 on MAE" does not by itself show
+overfitting when the model was never trained to minimise MAE. Added an L1/MAE-trained `QuantileRegressor`
+alongside OLS. Result: with the matching loss and proper group holdout, **the MAE-trained linear model's fitted
+coefficients are [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] at full control** (0.86-1.0 at no control, one coefficient still
+an outlier) and its held-out MAE (0.00090 full control) essentially TIES g2's fixed-coefficient composition
+(0.00087) — the earlier "overfitting" framing was not well-supported (round 2 correctly caught this: one
+reported OLS coefficient was 0.6432, contradicting the original "every ingredient lands at 0.92-1.02" claim,
+which has been removed). The corrected, more accurate reading: **a linear model trained with the matching loss
+and validated by triple-group essentially recovers g2's exact structural form from data alone** — stronger
+independent validation of the additive/interaction structure than the original, flawed "overfitting" story, not
+weaker.
 
-**Amortisation/cost claim, corrected (the review's point that "practically unaffordable" was unmeasured).**
-`scripts/p4_amortization_test.py`, two measured points plus one exact combinatorial count:
-- At the original 60-triple scale: direct labelling (1,228,800 solves, 135s) was CHEAPER than building the
-  156-pair table (3,194,880 solves, 350s) — confirmed, "practically unaffordable" was wrong here.
-- Extending to 200 NEW, never-before-seen triples (frozen sample, `data_hik/manifest_amortization_new200.json`):
-  only 89/410 needed sub-pairs (22%) were already available; the incremental solves to cover them (6,420 at one
-  control state) still exceeded direct labelling of those 200 triples (4,000 solves) — the crossover has NOT
-  been reached at this scale either.
-- The asymptotic argument remains mathematically valid and is now stated as a count, not a claim: the full
-  703-pair table among the 38 touched branches (14,060 solves at one control state) would predict ALL 8,436
-  possible triples among those branches with zero further solves, against 168,720 solves to label them all
-  directly — about 12x cheaper, but only once essentially the whole combinatorial space is queried.
-- **Where g2 was tested on those 200 genuinely new triples, it remained accurate** (MAE 0.00082, rho 0.976 at
-  full control) — the STRUCTURAL finding (does the composition generalise to unseen triples) holds; the
-  SEPARATE cost-savings claim does not hold at any scale measured, and the true crossover point is not yet
-  characterised.
+**Amortisation/cost claim, corrected again.** `scripts/p4_amortization_test.py` had a genuine arithmetic error:
+its `reuse_ratio_claim` field said "8,436 triples constructible from 477 pairs," which is wrong — a triple
+needs its OWN 3 sub-pairs present, not merely membership in a pool of some pairs. Independently recomputed:
+**477 cached pairs cover only 2,698 of the 8,436 possible triples** (verified exactly, matching the external
+review's independent count); the full 703-pair set covers all 8,436, as it must by definition. The rest of the
+finding is unaffected: at the tested 60-triple and 200-new-triple scales, direct labelling was cheaper than
+extending the pair table (confirmed both times); the asymptotic full-closure argument (703 pairs → all 8,436
+triples, ~12x cheaper than exhaustive direct labelling) remains valid as an exact count, not a measured
+crossover — the crossover point itself is still not characterised.
 
-**What remains, honestly:** still the same frozen 60-triple manifest and 20 operating points as every earlier
-test in this stage (not independent data); still no cluster bootstrap; still no confirmatory block; N-4 under
-partial observation not yet tested; this is not FDNA in any sense (a generic property of the LP's value
-function). The cost/amortisation argument for this specific approach is NOT yet established at any tested scale
-and should not be claimed in a paper without measuring the actual crossover curve.
+**What remains, honestly, going into a confirmatory design:** still the same 60-triple/20-op manifest reused
+across every test in this stage (not independent data — the paired bootstrap above quantifies sampling
+uncertainty WITHIN this manifest, it does not substitute for a fresh one); N-4 under partial observation not
+tested; the 200-triple extension (amortisation test) reused the same operating points and full control only,
+so it strengthens unseen-triple evidence but does not independently confirm partial-observation performance;
+MSE was registered alongside MAE from the start, but treating it as the PRIMARY endpoint is a post-hoc emphasis
+that should be stated as an amendment in any confirmatory pre-registration, not adopted retroactively here; this
+is not FDNA in any sense. The RNN/DeepSets question remains open until they receive matched pairwise information
+and query budget (not yet done).
 
 ## Staged comparator set: does a trained recurrent/set model beat the closed-form composition?
 

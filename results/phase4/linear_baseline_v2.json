@@ -1,0 +1,70 @@
+{
+ "1023": {
+  "n_groups_triples": 60,
+  "g2_fixed_coef1": {
+   "mae": 0.0008678879912733763,
+   "mse": 2.0151209343382175e-05,
+   "rho": 0.9592528396067364
+  },
+  "linear_ols_groupcv": {
+   "mae": 0.0018344209865340327,
+   "mse": 2.3046607084383733e-05
+  },
+  "linear_l1_mae_trained_groupcv": {
+   "mae": 0.0009004851009500836,
+   "mse": 2.0213315570151327e-05
+  },
+  "fitted_coefficients_ols_full_data": [
+   0.9889,
+   0.9892,
+   0.9582,
+   0.9932,
+   0.9228,
+   0.9497
+  ],
+  "fitted_coefficients_l1_full_data": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "g2_beats_ols": true,
+  "g2_beats_l1": true
+ },
+ "0": {
+  "n_groups_triples": 60,
+  "g2_fixed_coef1": {
+   "mae": 0.0037448643344707706,
+   "mse": 0.00011576721138652754,
+   "rho": 0.982084339669818
+  },
+  "linear_ols_groupcv": {
+   "mae": 0.005731051620266883,
+   "mse": 9.502877164916016e-05
+  },
+  "linear_l1_mae_trained_groupcv": {
+   "mae": 0.0037857723574212065,
+   "mse": 0.00010538425392344264
+  },
+  "fitted_coefficients_ols_full_data": [
+   0.9367,
+   1.0176,
+   1.0054,
+   1.0208,
+   0.9612,
+   0.6432
+  ],
+  "fitted_coefficients_l1_full_data": [
+   1.0,
+   0.9991,
+   1.0013,
+   0.9986,
+   1.0,
+   0.8597
+  ],
+  "g2_beats_ols": true,
+  "g2_beats_l1": true
+ }
+}

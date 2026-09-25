@@ -65,6 +65,14 @@ n_direct_solves_for_scoring_only = len(NEW_OUTAGES) * len(OP_IDS)  # NOT needed 
 
 y_true_new, g2_new = np.array(y_true_new), np.array(g2_new)
 mae = float(np.abs(y_true_new - g2_new).mean()); rho = float(spearmanr(g2_new, y_true_new)[0])
+# CORRECTED (external review): "N cached pairs support ALL C(n,3) triples" was wrong -- a triple needs its
+# OWN 3 sub-pairs present, not just any N pairs among the branches. Count actual coverage, not a mismatched pairing.
+all_pairs_possible = set(combinations(touched_branches, 2))
+cached_now = existing_pairs | set(missing_pairs)
+covered_by_cached = sum(1 for t in all_triples_among_touched
+                        if all(tuple(sorted((t[i], t[j]))) in cached_now for i, j in [(0, 1), (0, 2), (1, 2)]))
+covered_by_all_possible = sum(1 for t in all_triples_among_touched
+                              if all(tuple(sorted((t[i], t[j]))) in all_pairs_possible for i, j in [(0, 1), (0, 2), (1, 2)]))
 out = {
     "n_new_unseen_triples": len(NEW_OUTAGES), "n_ops": len(OP_IDS),
     "sub_pairs_needed": len(needed_pairs_new), "sub_pairs_already_available_sunk_cost": len(needed_pairs_new) - len(missing_pairs),
@@ -72,8 +80,15 @@ out = {
     "incremental_solves_to_extend_coverage_to_these_200_new_triples": n_incremental_solves,
     "solves_that_WOULD_be_needed_to_label_these_200_triples_directly": n_direct_solves_for_scoring_only,
     "g2_prediction_quality_on_these_never-seen-before_triples": {"mae": mae, "rho": rho},
-    "reuse_ratio_claim": f"{len(all_triples_among_touched)} triples constructible from {len(existing_pairs)+len(missing_pairs)} pairs among the {len(touched_branches)} touched branches",
-    "note": "This tests genuine reuse: the incremental solves to extend the pair table (small) vs the g2 prediction quality on triples that were NEVER part of the original 60-triple manifest -- the correct test of the amortisation claim the original 'practically unaffordable' framing did not measure."
+    "coverage_CORRECTED": {
+        "n_cached_pairs": len(cached_now),
+        "n_triples_with_all_3_subpairs_cached": covered_by_cached,
+        "n_triples_possible_among_touched_branches": len(all_triples_among_touched),
+        "n_all_possible_pairs_among_touched_branches": len(all_pairs_possible),
+        "n_triples_covered_if_ALL_possible_pairs_were_cached": covered_by_all_possible,
+        "note": "the original 'reuse_ratio_claim' field wrongly paired 477 (cached pairs) with 8436 (all triples) -- 477 cached pairs cover only a FRACTION of the 8436 possible triples; only the FULL 703-pair set covers all 8436."
+    },
+    "note": "This tests genuine reuse: the incremental solves to extend the pair table (small) vs the g2 prediction quality on triples that were NEVER part of the original 60-triple manifest. The cost-savings claim itself is separately measured, not assumed."
 }
 print(json.dumps(out, indent=1))
 json.dump(out, open("results/phase4/amortization_test.json", "w"), indent=1)
