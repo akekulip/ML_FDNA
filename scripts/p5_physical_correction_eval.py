@@ -42,7 +42,11 @@ for cv_idx, cv_name in ((full_idx, "full_control"), (none_idx, "no_control")):
         g2_clip = pc.g2_clipped(g2_plain, G, demands[op_id], outage)
         g2_res = pc.g2_residual(y_singles, y_pairs, G, demands[op_id], outage)
         cls = classify(op_id, outage)
+        # FIX (external review, finding 7): store predictions directly, never reconstruct pred = y - err
+        # (that reconstruction was computing 2*y_true - pred, silently hiding real missed-severe cases --
+        # e.g. y_true=0.05, pred=0 reconstructed to 0.10 and was not counted as missed).
         rows.append(dict(cv=cv_name, op=op_id, outage=outage, cls=cls, y_true=y_true,
+                          pred_plain=g2_plain, pred_clip=g2_clip, pred_res=g2_res,
                           err_plain=g2_plain - y_true, err_clip=g2_clip - y_true, err_res=g2_res - y_true))
 
 out = {}
@@ -60,10 +64,11 @@ for cv_name in ("full_control", "no_control"):
         e = np.array([r[k] for r in sub])
         d[k + "_overall_mae"] = float(np.abs(e).mean())
     # missed-severe: severe = y_true>0.01; "missed" = predicted <= 0.01 when true is severe
+    # FIX (external review, finding 7): use the stored prediction directly, no reconstruction from err.
     yt = np.array([r["y_true"] for r in sub])
     sev = yt > spec.SEVERE
     for k in ("plain", "clip", "res"):
-        pred = yt - np.array([r[f"err_{k}"] for r in sub])
+        pred = np.array([r[f"pred_{k}"] for r in sub])
         missed = sev & (pred <= spec.SEVERE)
         d[f"missed_severe_{k}"] = int(missed.sum())
     d["n_severe"] = int(sev.sum())

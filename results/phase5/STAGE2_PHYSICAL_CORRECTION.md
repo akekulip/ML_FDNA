@@ -17,14 +17,25 @@ never violates its own bounds; the residual form collapses to exactly `F(S)` whe
 zero (a constructed degenerate check).
 
 **Finding: `g2_residual` is algebraically identical to `g2_plain` on every one of the 70 confirmatory triples.**
-Not a bug -- verified directly: zero of the 70 triples are a genuinely NEW order-3 cut
-(`src/fdna/hik_diag.is_new_cut`, checked exhaustively over the manifest). `g2_residual` only differs from
-`g2_plain` when `F` itself has nonzero order-3 Mobius mass, which requires a new cut; without one, the
-correction is provably a no-op. `g2_clipped` gives a small MAE improvement in the `all_gen_or_mixed` class
-(~25% relative, e.g. 0.000209 vs 0.000279 at full control) but **missed-severe counts are IDENTICAL across all
-three variants at both control states tested (1/1/1 at full control, 12/12/12 at no control)** -- the
-predeclared exploratory gate (20% relative missed-severe reduction) is NOT met by any variant on this sample.
-Honest null result for the physical correction, on this specific confirmatory manifest.
+
+**Corrected reasoning (external review, finding 8):** the original write-up used `is_new_cut(S)==False` as the
+justification. That is WRONG in general -- `is_new_cut` asks only whether `S` disconnects the graph when no
+proper subset does; it says nothing about whether `F` (the island-floor function) itself has nonzero
+third-order Mobius mass, which is the quantity that actually determines whether `g2_residual` can differ from
+`g2_plain`. A three-node counterexample (`tests/test_physical_correction.py`) makes this concrete: `is_new_cut`
+is False there, yet `F(S) - Mobius_order_2[F](S) = -1`, clearly nonzero, and `g2_residual` correctly recovers
+`F(S)=1` where `g2_plain` gives `2`. **The correct test was run directly** on all 4,200 (op,triple) rows of the
+real confirmatory sample: `F(S) - Mobius_order_2[F](S)` is exactly zero everywhere, verified exhaustively (not
+sampled) -- so the empirical finding (`g2_residual`==`g2_plain` on this manifest) still holds, but for the
+right, directly-verified reason, not the wrong proxy the original write-up used.
+
+`g2_clipped` gives a small MAE improvement in the `all_gen_or_mixed` class (~25% relative, e.g. 0.000209 vs
+0.000279 at full control). **Missed-severe counts, corrected (external review, finding 7 -- the original eval
+script had a sign error, reconstructing `truth-err` instead of `truth+err`, silently hiding real misses):
+47/47/47 at full control (was wrongly reported as 1/1/1), 38/38/38 at no control (was wrongly reported as
+12/12/12).** The three variants still give IDENTICAL counts to each other (the comparative finding is
+unaffected by the sign bug), so the predeclared exploratory gate (20% relative missed-severe reduction) is
+still NOT met by any variant -- an honest null result, now on corrected absolute numbers.
 
 ## Hand-checkable N-3 counterexample (required deliverable)
 `(9, 26, 33)`: verified a genuine new 3-way cut (`is_new_cut`). At operating point 0 (seed 0), full control:
@@ -40,7 +51,15 @@ why the confirmatory sample's null result is not surprising -- it contained exam
 
 ## What this means for the programme
 The physical correction is a real, well-motivated idea, correctly implemented and gated, but this specific
-confirmatory sample cannot demonstrate its value (no genuinely new cuts in it) and cannot rule out congestion-
-driven emergent shed either. A manifest specifically enriched for new-cut triples (using the free,
-LP-solve-less `is_new_cut`/`generalized_det` screen already built in Stage 3 of the earlier session) would be
-needed to properly test `g2_residual`'s value -- not done tonight; recorded as a specific next step.
+confirmatory sample cannot demonstrate its value (`F`'s third-order Mobius mass is exactly zero throughout it,
+verified directly) and cannot rule out congestion-driven emergent shed either. A manifest specifically enriched
+for nonzero third-order floor interaction (test `F(S) - Mobius_order_2[F](S)` directly, not `is_new_cut`) would
+be needed to properly test `g2_residual`'s value -- not done tonight; recorded as a specific next step.
+
+**A stronger physical mechanism, proposed by the external review and independently verified:** the existing
+`island_floor` only catches generator-LESS islands; an island CAN contain a generator and still lack enough
+reachable capacity to serve its load. `F_capacity(S,c) = sum_I max(0, D_I - sum_{g in I} U_g(c)) / total_demand`
+(`D_I` = island demand, `U_g(c)` = each generator's control-dependent reachable output). Verified on a small toy
+LP (two islands, each with a generator; loads 20/80 MW, base generation 50/50 MW, one generator capped at 60 MW
+reachable): generator-less floor gives 0%, the capacity floor gives 20%, and the repository's own exact LP also
+gives 20% -- exact agreement. This is Stage R5's next physical-correction candidate, not yet implemented.

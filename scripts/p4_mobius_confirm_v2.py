@@ -149,11 +149,19 @@ for tr_i, te_i in gkf.split(X, y, groups):
     m = QuantileRegressor(quantile=0.5, alpha=0.0, solver="highs"); m.fit(X[tr_i], y[tr_i]); pred_l1[te_i] = m.predict(X[te_i])
 g2v = X[:, :3].sum(1) + X[:, 3:].sum(1)
 sq_g2, sq_l1 = (y - g2v) ** 2, (y - pred_l1) ** 2
-# paired per-TRIPLE (not per-row) difference, since rows here are one per triple already
-diff_mse = sq_g2 - sq_l1  # positive = g2 worse (higher squared error)
-boot_diff = boot(diff_mse)
+diff_mse_raw = sq_g2 - sq_l1  # positive = g2 worse (higher squared error); one entry per (op,triple) ROW, 4200 total
+# FIX (external review, finding 9): the row array has 4200 entries (60 ops x 70 triples), NOT 70 -- the earlier
+# comment "rows here are one per triple already" was wrong, and boot(diff_mse_raw) passed all 4200 rows as if
+# independent, understating uncertainty. Aggregate to 70 TRIPLE-level means (via `groups`, the triple index)
+# before bootstrapping, matching the claimed "paired bootstrap over 70 triples."
+n_groups = groups.max() + 1
+diff_mse_per_triple = np.array([diff_mse_raw[groups == g].mean() for g in range(n_groups)])
+assert len(diff_mse_per_triple) == 70
+boot_diff_correct = boot(diff_mse_per_triple)
+boot_diff_raw_mislabeled = boot(diff_mse_raw)  # kept for comparison, explicitly labelled as the WRONG unit
 lin_out = {"g2_mse": float(sq_g2.mean()), "l1_mse": float(sq_l1.mean()), "relative_gap_pct": float((sq_g2.mean() - sq_l1.mean()) / sq_g2.mean() * 100),
-           "paired_bootstrap_over_triples_g2_minus_l1_sq_error": boot_diff,
-           "note": "boot() here clusters over the 70 TRIPLES (not operating points) since this is the exact-control, per-triple comparison; interpret lo90>0 as g2 reliably worse, not just a point estimate."}
+           "paired_bootstrap_over_70_triples_CORRECT": boot_diff_correct,
+           "paired_bootstrap_over_4200_rows_MISLABELED_original": boot_diff_raw_mislabeled,
+           "note": "the original committed version passed all 4200 (op,triple) rows to boot() and called it a 70-triple bootstrap; that was wrong (external review finding 9). The CORRECT field aggregates to 70 triple-level means first, matching the claimed unit; interpret lo90>0 there as g2 reliably worse."}
 print("LINEAR NO-CONTROL", json.dumps(lin_out, indent=1))
 json.dump(lin_out, open("results/phase5/linear_nocontrol_paired.json", "w"), indent=1)

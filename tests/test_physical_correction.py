@@ -67,3 +67,28 @@ def test_hand_checkable_counterexample_all_n1_n2_harmless_but_n3_sheds():
     # congestion/trip-rule effects in the surviving network, a SECOND emergent mechanism the physical (F(S))
     # correction alone does not capture -- recorded honestly, not smoothed over.
     assert lp3.struct_mw / lp3.total < 1e-9
+
+
+def test_third_order_floor_interaction_is_the_correct_test_not_is_new_cut():
+    """External review finding 8: is_new_cut==False does NOT imply zero third-order Mobius mass of F in
+    general (a triangle counterexample: is_new_cut is False, but F(S)-Mobius_order_2[F](S) = -1, nonzero).
+    The CORRECT test is to compute that quantity directly. This also re-verifies, with the correct test, that
+    it genuinely is zero on the real confirmatory sample (not just coincidentally implied by is_new_cut)."""
+    import itertools
+    from fdna import hik_diag
+    from fdna.grid import Grid
+
+    g = Grid(n_bus=3, frm=np.array([0, 0, 2]), to=np.array([1, 2, 1]), x=np.ones(3),
+             gen_bus=np.array([0]), gen_pmax=np.array([10.0]), load=np.array([0.0, 1.0, 0.0]))
+    S = (0, 1, 2)
+    F = lambda s: pc.island_floor(g, g.load, s)
+    Fs, Fpairs, Fsingles = F(S), sum(F(p) for p in itertools.combinations(S, 2)), sum(F((x,)) for x in S)
+    interaction = Fs - (Fpairs - Fsingles)
+    assert not hik_diag.is_new_cut(g, S)          # is_new_cut says "nothing new here"
+    assert abs(interaction) > 0.5                  # but the correct test finds real third-order floor mass
+    for a, b, c in [(9, 26, 33), (0, 23, 34)]:
+        op = sample_op(G, RATING, np.random.default_rng(0))
+        S30 = (a, b, c)
+        F30 = lambda s: pc.island_floor(G, op.demand, s)
+        interaction30 = F30(S30) - (sum(F30(p) for p in itertools.combinations(S30, 2)) - sum(F30((x,)) for x in S30))
+        assert abs(interaction30) < 1e-9  # zero on this benchmark's topology, verified directly (not via is_new_cut)
