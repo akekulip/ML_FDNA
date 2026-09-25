@@ -279,3 +279,44 @@ grid's nominal load instead of the operating point's actual demand).
 4. Cluster-aware statistics (bootstrap over triples and operating points) before any tier claim.
 5. Complete the repaired-FDNA inference-only screen (cell P2, remaining arms) and report a representability
    verdict (not an R-precision claim, per the noise-floor analysis already on record).
+
+## CONFIRMATORY RESULT: fresh operating points, fresh outage sets (registry/phase4_mobius_confirm.yaml)
+
+Per the pre-registered protocol (block opened via `src/fdna/blocks.open_block`, reserve block ids 600-659, 70
+fresh outage-set triples sampled with `block_seed('reserve')`=613, none of this data used in any earlier
+Phase 3/4 screen, locks `reserve__MOBIUS_CONF_P1.lock` / `reserve__MOBIUS_CONF_P2.lock` committed with output
+sha256 `80308ac7...`). 18,001,920 LP solves (32.5 min on 24 cores, 0 infeasible) generated N-1 (all 41 branches),
+N-2 (182 needed sub-pairs), and N-3 (the 70 triples) labels across the full 1024-control grid for 60 fresh
+operating points, `scripts/hik_label_confirm.py` / `scripts/p4_mobius_confirm.py`.
+
+| | P1 (v2b) | P2 (v2c) |
+|---|---|---|
+| R-precision: g1 / prior-only / **g2** | 0.624 / 0.734 / **0.875** | 0.642 / 0.735 / **0.912** |
+| Paired bootstrap, g2 − g1 (90% CI) | **+0.250 [0.237, 0.264]** | **+0.270 [0.255, 0.285]** |
+| Paired bootstrap, g2 − prior-only (90% CI) | +0.141 [0.134, 0.148] | +0.177 [0.168, 0.185] |
+| g2 beats g1 / prior-only, ops out of 60 | 60/60 | 60/60 |
+| **Tier reached (pre-registered: tier1 ≥0.05)** | **tier1** | **tier1** |
+| MAE: g1 / prior-only / g2 | 0.0160 / 0.0155 / 0.0087 | 0.0147 / 0.0155 / 0.0067 |
+| MSE: g1 / prior-only / g2 | 0.000948 / 0.000872 / 0.000409 | 0.000864 / 0.000876 / 0.000293 |
+
+**Both pre-registered primary claims (g2 vs g1, g2 vs prior-only, intersection-union across both cells) reach
+tier1 — the strongest pre-declared tier, at an effect size roughly 5x the tier1 threshold.** This is on data no
+earlier Phase 3/4 test ever touched: fresh operating points, a freshly-sampled outage-set manifest, frozen
+before any label was generated. This is the first genuinely confirmatory (not exploratory-screen) positive
+result in the whole Phase 1-4 programme.
+
+**Exact-control linear-composition comparison, replicated at 3.5x the exploratory sample (70 vs 60 triples, 60
+vs 20 ops).** At full control, g2 beats both OLS and the MAE-trained linear model on MAE and MSE. At no control,
+g2 beats OLS on BOTH MAE and MSE this time (unlike the exploratory screen, where OLS beat g2's MSE by 17.9%);
+the L1 model edges g2 on MSE only slightly (7.33e-5 vs 7.69e-5, ~4.8%, far smaller than the exploratory
+screen's 9%). **The exploratory screen's "learning helps under no control" nuance mostly did not replicate on
+independent data** — read honestly, that specific finding looks like it was partly a small-sample artifact of
+the 60-triple/20-op exploratory manifest, not a robust regime-dependent effect. This is reported as a genuine
+correction from replication, exactly what a confirmatory design is supposed to catch.
+
+**What this does and doesn't establish:** this confirms the g2 composition beats the naive and prior-only
+baselines on R-precision, with a large, tightly-bounded effect, on fresh IEEE-30 data at N-3 with exact control
+of the electrical outage set and partial observation of the communication state. It does NOT establish: N-4
+generalisation under partial observation (untested here); performance on a second topology; a fair RNN/DeepSets
+comparison with matched pairwise information (still open); or that this is FDNA (it is not — a generic property
+of the LP's value function, unchanged from every earlier caveat in this document).

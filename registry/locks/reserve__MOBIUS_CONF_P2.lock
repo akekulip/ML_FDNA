@@ -1,1 +1,1 @@
-{"block": "reserve", "slot": "MOBIUS_CONF_P2", "commit": "37289f281fff771b6a7df63f28d32b4d573f3236", "time": "2026-09-24T20:16:36", "env": {"n_ops": 60, "n_triples": 70}}
+{"block": "reserve", "slot": "MOBIUS_CONF_P2", "commit": "37289f281fff771b6a7df63f28d32b4d573f3236", "time": "2026-09-24T20:16:36", "env": {"n_ops": 60, "n_triples": 70}, "output": "results/phase4/mobius_confirm.json", "output_sha256": "80308ac7b216a686d98ddf0997f0616e41ad792a971c4ce1efb6c3bdbb86b8ca"}
