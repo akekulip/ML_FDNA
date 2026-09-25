@@ -85,11 +85,17 @@ from the same `op_id` seed used throughout Phase 5):
 | full_control | 0 / 4200 | 0.001155 | 0.001145 | 0.001145 (identical to clip-island) | 47 / 47 / 47 |
 | no_control | 120 / 4200 (2.9%) | 0.002629 | 0.002603 | 0.002588 | 38 / 38 / 38 |
 
-**Honest reading.** `capacity_floor` is a real, strictly-tighter, mathematically-guaranteed lower bound, and it
-IS active on a nontrivial fraction (2.9%) of the no-control triples in this sample -- unlike `g2_residual`'s
-mechanism-1 pathway, which is exactly zero throughout the sample. Where it activates, it gives a modest MAE
-improvement over the island-only clip (~1.5% relative reduction in no-control MAE, 0.002603->0.002588). It does
-NOT change the missed-severe count on this specific sample (38/38/38 in both control states) -- the triples where
+**Honest reading (corrected 2026-09-25: an independent second-round review caught two arithmetic/prose errors
+in the two sentences below -- fixed here, verified by recomputing directly from `capacity_floor_eval.json`).**
+`capacity_floor` is a real, strictly-tighter, mathematically-guaranteed lower bound, and it IS active on a
+nontrivial fraction (2.9%) of the no-control triples in this sample -- unlike `g2_residual`'s mechanism-1
+pathway, which is exactly zero throughout the sample. Where it activates, it gives a modest MAE improvement:
+**0.551%** relative to the island-only clip (0.002603->0.002588, the correct arithmetic for that specific
+comparison -- an earlier version of this sentence wrote "~1.5%," which is actually the improvement of
+clip-capacity relative to PLAIN uncorrected g2 (0.002629->0.002588, `100*(1-0.0025884/0.0026290)=1.543%`), a
+different and larger comparison than the one being described). It does NOT change the missed-severe count on
+this specific sample -- **47/47/47 at full control, 38/38/38 at no control** (matching the table above; an
+earlier version of this sentence wrongly said "38/38/38 in both control states") -- the triples where
 capacity_floor binds are not the same triples that were being missed by the severe-threshold test here. At full
 control, capacity_floor never activates (generators have enough corrective range that capacity is never the
 binding constraint on this sample), so `clip_capacity` is identical to `clip_island`. This is a real, verified,

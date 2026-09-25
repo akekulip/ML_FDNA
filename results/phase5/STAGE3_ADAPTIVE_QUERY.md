@@ -88,3 +88,15 @@ are withdrawn.
 **What remains untested:** a genuine shortlist-boundary-aware acquisition rule (the brief's fuller
 specification, not the simpler "closest to tau" heuristic implemented here); the residual/control-variate
 fallback the brief also requested (`E[V-g2|obs]` estimated from valid posterior samples) was not attempted.
+
+**Additional gaps confirmed by an independent second-round review (2026-09-25, repair in progress):** the
+registry's own `metrics` field requires shortlist recall/precision at 10/20/40% budgets -- not computed anywhere
+in this experiment, only classification accuracy and query counts. `resolve()`'s stopping rule waits until
+every posterior-support control state is individually resolved, which is strictly stronger (and more expensive)
+than what the binary decision needs -- `qL>0.5` or `qU<=tau` alone already certifies the prediction, so the
+policy keeps querying past the point the decision was already locked in. Each candidate gets its own
+independent budget cap with no shared/global allocation across the shortlist. `mc_queries_total` charges every
+Monte Carlo draw as a fresh oracle solve, with no credit for a cache on repeated control-state draws (at budget
+16, `4200*16=67200` "queries," most of them plausibly cache hits). The "posterior MC beats both bound-based
+policies at every budget" finding above has no saved uncertainty bound -- a real point-estimate finding, not
+yet a significance claim. All of this is being addressed; see `results/phase4/CLAIM_LEDGER.md` for status.

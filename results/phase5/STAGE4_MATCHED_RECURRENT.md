@@ -67,5 +67,16 @@ materially more trustworthy evidence.
   over- or under-reading it.
 - 35 training outages (down from 45, to make room for a genuinely disjoint validation split) is a smaller
   charged-label budget than before; a larger budget was not attempted given the time already spent on repairs.
-- GRU/outage-order sensitivity remains avoided by construction (the edge-pooled architecture is exactly
-  invariant), so no permutation-averaging cost was needed or charged.
+- **Correction (2026-09-25, independent second-round review):** the line that used to appear here claiming the
+  edge-pooled architecture is "exactly invariant" was wrong. The edge encoder itself IS invariant, but the
+  readout concatenates the raw, unpermuted risk features (`X[:,6:]`) after pooling in fixed slot order, so the
+  full model is NOT genuinely permutation-invariant; the dedicated test used equal risk values and could not
+  detect this. A repair (edge-token risk encoding + a shared scaler across risk slots) is in progress -- see
+  `results/phase4/CLAIM_LEDGER.md` row 12 for status; the table above will be superseded once that fix is
+  retrained.
+- **Scope caveat (unchanged, still accurate, restated for clarity):** `deepsets` here is a set model (pooled,
+  order-independent by design intent), not a recurrent network. No actual RNN/GRU comparator for N-1->N-k
+  transfer has been trained or evaluated anywhere in Phase 4/5 -- the earlier Phase 4 GRU/DeepSets screen
+  (`results/phase4/RESULTS.md`) used a different, smaller-budget setup and is not superseded by this experiment.
+  A DeepSets result, buggy or fixed, is not evidence for or against recurrent architectures specifically; that
+  question remains open and untested, not decided in either direction.

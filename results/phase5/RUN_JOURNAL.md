@@ -88,11 +88,14 @@ prose files -- confirmed genuinely out of scope by the R4 verification pass (gre
    observation). Fixed: draws directly from the exact posterior `pc`.
 5. Matched-recurrent validation targets were misaligned (4,796/4,800 mismatched control indices) and validation
    overlapped training (612/4,800 shared rows). Fixed: `(key,X,y,g2)` built together in one pass with
-   `r+g2==y` asserted; three genuinely disjoint train/val/test groups on both the outage and operating-point
-   axes.
+   `r+g2==y` asserted; TRAIN and VAL are genuinely disjoint on both the outage and operating-point axes
+   (corrected 2026-09-25: an earlier version of this line said "three genuinely disjoint train/val/test groups
+   on both axes," which is false -- TEST deliberately reuses all 60 operating points against 25 held-out
+   outages, the known-operating-point/new-outage-combination axis, as `STAGE4_MATCHED_RECURRENT.md` itself
+   always correctly stated; only this summary line overstated it, caught by an independent second-round review).
 6. The "commutative" DeepSets model was not actually permutation-invariant (0.10 vs 0.11 under relabeling with
    a valid weight assignment). Fixed with a symmetric per-edge encoder (`src/fdna/nn/pairset.py`), verified
-   invariant on the actual trained model.
+   invariant on the actual trained model (later found still incomplete -- see the repair-round-2 entry below).
    Plus: an uncontrolled bootstrap unit (`p4_mobius_confirm_v2.py` passed 4,200 raw rows to `boot()`, mislabeled
    as "70 triples"); corrected CI now includes zero (p=0.36, was p=0.001 mislabeled).
 
