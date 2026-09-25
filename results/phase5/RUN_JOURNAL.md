@@ -44,3 +44,20 @@ Stages 1 (full query-access-wrapper contract), 4 (matched recurrent experiment),
 review), 6 (one extension), 7 (independent-reviewer pass) NOT reached this run -- recorded honestly, not
 silently dropped. See the final status report delivered to Philip for the explicit recommendation on what to
 run next. 95 commits total this session, none pushed without explicit request. Tests: 77 pass.
+
+## Stage 4 — matched recurrent/learned-correction experiment: DONE
+Identifiability check stated first and respected by design (residual arm trained only on N-3, never on the
+trivially-zero N-1/N-2 residual). 45/25 triple split, verified disjoint. All six arms (g2_fixed, g2_clipped,
+ridge, gbm, deepsets [commutative pair-aware set model], residual-correction net) given identical 15-dim
+features, composed with the SAME P1/P2 posterior, scored on R-precision, 25 held-out test triples.
+RESULT: g2_fixed wins decisively in both cells; every learned arm's 90% CI vs g2_fixed lies below zero;
+deepsets (closest to a "recurrent structured correction") is worst of all. No learned arm promoted. See
+results/phase5/STAGE4_MATCHED_RECURRENT.md.
+
+## Stopping point (this stretch)
+Stages 0, 2, 3, 4 (the four core scientific stages) complete with decisive or honestly-null results. Stage 1's
+full query-access-wrapper CLASS was not built as separate infrastructure (canonical keys and cost accounting
+were applied ad hoc within Stages 3/4 instead). Stage 5 (fresh 6-card idea/lit pass) not run this stretch --
+Phase 4's existing results/phase4/IDEA_CARDS.md (6 cards, 3 fields, verified sources) is the closest prior
+artifact and was not superseded. Stage 6 (one extension) and Stage 7 (independent-reviewer pass) not reached.
+99 commits total this session, none pushed without explicit request. Tests: 77 pass throughout.
