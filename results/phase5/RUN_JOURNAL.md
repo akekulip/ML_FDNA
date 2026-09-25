@@ -61,3 +61,75 @@ were applied ad hoc within Stages 3/4 instead). Stage 5 (fresh 6-card idea/lit p
 Phase 4's existing results/phase4/IDEA_CARDS.md (6 cards, 3 fields, verified sources) is the closest prior
 artifact and was not superseded. Stage 6 (one extension) and Stage 7 (independent-reviewer pass) not reached.
 99 commits total this session, none pushed without explicit request. Tests: 77 pass throughout.
+
+## Repair round (2026-09-25): external evidence review of commit d962880, Stages R0-R6
+Philip supplied `ML_FDNA_d962880_Evidence_Review.md`, an external audit of this run's commit d962880, with a
+runnable witness script and 10 numbered findings. **Every finding was independently reproduced against the live
+repo before any fix was written** (all 10 reproduced exactly, using the review's own witness code against this
+repo's actual committed functions), then a repair plan (Stages R0-R6) was approved and executed in full.
+
+**R0 -- registry YAML.** `phase5_adaptive_query.yaml`'s flow-mapping brace error fixed (the third occurrence of
+this exact mistake this session); `phase3_step1.yaml`/`phase3_step2.yaml` also found and fixed during a full
+sweep. `phase4_step_partialobs.yaml` and three older files (`registry.yaml`, `addendum_H4.yaml`,
+`amendment_H5.yaml`) remain invalid YAML but are pre-existing, documented-superseded/unloaded-by-any-code
+prose files -- confirmed genuinely out of scope by the R4 verification pass (grep-confirmed no script ever
+`yaml.safe_load()`s them).
+
+**R1 -- the six code bugs, each independently reproduced then fixed with its own commit:**
+1. Physical-correction missed-severe sign error (`p5_physical_correction_eval.py`): predictions were
+   reconstructed as `truth-err` (=2*truth-pred) instead of used directly; silently hid real missed-severe cases.
+   Corrected counts: full_control 47/47/47 (was 1/1/1), no_control 38/38/38 (was 12/12/12).
+2. `is_new_cut` used as the (wrong) necessary condition for `g2_residual==g2_plain` in STAGE2's reasoning;
+   corrected to the actual test, `F(S)-Mobius_order_2[F](S)`, verified exactly zero on all 4200 real rows.
+3. Adaptive-query hidden-state leakage: prediction indexed the REALIZED hidden control index directly, giving
+   up to 100% "accuracy" on a problem an observation-only policy caps at 50%. Fixed: prediction now uses only
+   the posterior-mass bounds `(qL,qU)`.
+4. "Posterior MC" baseline actually sampled the PRIOR (0.169 vs true posterior 0.99998 for an informative
+   observation). Fixed: draws directly from the exact posterior `pc`.
+5. Matched-recurrent validation targets were misaligned (4,796/4,800 mismatched control indices) and validation
+   overlapped training (612/4,800 shared rows). Fixed: `(key,X,y,g2)` built together in one pass with
+   `r+g2==y` asserted; three genuinely disjoint train/val/test groups on both the outage and operating-point
+   axes.
+6. The "commutative" DeepSets model was not actually permutation-invariant (0.10 vs 0.11 under relabeling with
+   a valid weight assignment). Fixed with a symmetric per-edge encoder (`src/fdna/nn/pairset.py`), verified
+   invariant on the actual trained model.
+   Plus: an uncontrolled bootstrap unit (`p4_mobius_confirm_v2.py` passed 4,200 raw rows to `boot()`, mislabeled
+   as "70 triples"); corrected CI now includes zero (p=0.36, was p=0.001 mislabeled).
+
+**R2/R3 -- acceptance tests woven into each R1 fix, and all four affected cached-data evaluations rerun** (no
+new LP solves anywhere): see `results/phase5/{STAGE2_PHYSICAL_CORRECTION,STAGE3_ADAPTIVE_QUERY,
+STAGE4_MATCHED_RECURRENT}.md` and `results/phase4/CLAIM_LEDGER.md` rows 10-12 for the corrected numbers and an
+honest account of what changed. Headlines: adaptive query -- plain posterior Monte Carlo now beats BOTH
+bound-based acquisition policies at every budget in both cells, reversing the original (leaking) report's
+ranking; matched-recurrent -- g2_fixed still wins both cells (headline unchanged), but the properly-invariant
+DeepSets model's gap shrank from -0.113/-0.122 to -0.011/-0.007, roughly on par with GBM rather than "worst of
+five by a wide margin" (largely an artifact of the invariance bug); linear no-control -- the 4.68% MSE point
+estimate stands but its claimed statistical significance is withdrawn (properly clustered CI includes zero).
+
+**R4 -- independent verification, run by a qa-verifier subagent that authored none of the R1-R3 fixes**, exactly
+as both the original brief and the evidence review required before any corrected conclusion could be treated as
+final. Verdict: **PASS on all 10 findings**, each checked against fresh, independent executions of the real
+code (not comment/docstring inspection) -- a full pytest run, fresh reruns of every affected script, an
+independent from-scratch rebuild of the permutation-invariance and third-order-Mobius checks, and several
+reruns reproducing committed artifacts bit-for-bit. It flagged two non-blocking test-quality nits (a vacuous
+leakage-guard test that re-derived its formula inline instead of calling the real prediction logic, and
+mislabeled permutation index tuples in the DeepSets invariance test) -- both fixed immediately: the prediction
+rule was factored into `fdna.adaptive_query.predict_from_bounds` (a pure function of `(qL,qU)` with a
+structurally-asserted signature that cannot carry a hidden-state parameter) shared by the script and the test,
+and the permutation tuples were corrected by direct vertex-consistent enumeration. No regressions from either
+fix (script output byte-identical after the refactor; full suite went from 84 to 85 passed).
+
+**R5 -- the reviewer's proposed `capacity_floor` mechanism** implemented (`src/fdna/physical_correction.py`) and
+gated (`tests/test_capacity_floor.py`, reproduces the review's own toy LP exactly: 0%/20%/20% agreement).
+Evaluated on the real 70-triple sample: a genuine, mathematically-guaranteed tighter lower bound than
+`island_floor`, active on 2.9% of no-control rows, giving a small MAE improvement but no change to the
+missed-severe count on this specific sample -- real but not decisive here (`CLAIM_LEDGER.md` row 13).
+
+**Verdict on the whole repair round.** Every one of the review's 10 findings had a real bug, a real fix, a
+regression test, and independent confirmation from an agent that did not write the fix. Two of the corrected
+findings (adaptive query, matched-recurrent) materially changed the practical conclusion, not just the
+supporting numbers; two others (physical-correction missed-severe, linear-bootstrap significance) changed the
+evidentiary status of an existing claim without changing its qualitative direction. Nothing in this round
+overturns g2's own confirmatory result (row 5c) or the earlier Phase 4 findings not implicated by any of the 10
+findings. Tests: 85 pass. Commits: R0 through this stage, each its own commit, none pushed without explicit
+request.
