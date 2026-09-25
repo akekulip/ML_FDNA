@@ -21,3 +21,26 @@ Work log below.
 
 Scripts: scripts/p4_mobius_confirm_v2.py (kept p4_mobius_confirm.py, not deleted). Output: results/phase5/mobius_confirm_corrected.json, results/phase5/linear_nocontrol_paired.json.
 No new LP solves needed -- reused cached n1/n2/n3_confirm.npz label tables from the original confirmatory run.
+
+## Stage 2 — physical (island-floor) correction: DONE
+V(empty)=0 proven from the generator's rating calibration + dispatch-balance acceptance criterion, verified
+exactly across 150 (op,control) checks. Three composition variants implemented, correctness-gated (5/5 tests).
+Evaluated on cached confirmatory data: g2_residual collapses to g2_plain (zero genuinely-new 3-cuts in the
+70-triple sample, verified exhaustively); g2_clipped gives a small MAE improvement in one class but misses the
+predeclared missed-severe gate. Hand-checkable N-3 counterexample (9,26,33) added as a permanent test, revealing
+a second emergent mechanism (congestion/trip-rule shed, zero structural floor) neither variant addresses.
+See results/phase5/STAGE2_PHYSICAL_CORRECTION.md.
+
+## Stage 3 — bounded adaptive-query screening (the brief's "main candidate"): DONE
+Control-monotonicity proven and verified exhaustively (415.7M pairs, zero violations; caught+fixed a sign bug
+in the first check). L/U bound machinery implemented, vectorised, verified valid. Acquisition experiment: honest
+mostly-null result -- g2-guided next-query selection saves only ~5-10% of queries vs random at matched-or-worse
+accuracy, missing the predeclared >=25% gate (caught+fixed a stopping-rule bug in the first attempt where
+neither policy ever stopped early). Bound machinery is solid reusable infrastructure; this acquisition heuristic
+is not promoted. See results/phase5/STAGE3_ADAPTIVE_QUERY.md.
+
+## Stopping point (context/time budget)
+Stages 1 (full query-access-wrapper contract), 4 (matched recurrent experiment), 5 (creative idea cards / lit
+review), 6 (one extension), 7 (independent-reviewer pass) NOT reached this run -- recorded honestly, not
+silently dropped. See the final status report delivered to Philip for the explicit recommendation on what to
+run next. 95 commits total this session, none pushed without explicit request. Tests: 77 pass.
