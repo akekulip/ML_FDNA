@@ -6,3 +6,5 @@ D_P1:    {branch: d,    variant: v2b, cell: 3}
 D_P2:    {branch: d,    variant: v2c, cell: 3}
 INF8_P1: {branch: inf8, variant: v2b, cell: 3}
 INF8_P2: {branch: inf8, variant: v2c, cell: 3}
+MOBIUS_CONF_P1: {branch: mobius3confirm, variant: v2b, cell: 3, blocks: [reserve]}
+MOBIUS_CONF_P2: {branch: mobius3confirm, variant: v2c, cell: 3, blocks: [reserve]}

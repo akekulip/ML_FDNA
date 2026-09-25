@@ -1,0 +1,40 @@
+# Phase 4 confirmatory design: fixed Mobius (g2) composition vs matched learned linear composition, on FRESH
+# operating points (reserve block 600-699, never opened before this study) and a FRESH outage-set sample.
+# Committed BEFORE the block is opened and BEFORE any label is generated. Recommended by external review after
+# three rounds of exploratory-screen corrections on the reused 60-triple/20-op manifest.
+hypothesis: >
+  The g2 (order-2 Mobius/interaction truncation) composition, combined with the exact communication-state
+  posterior p(c|obs), beats a naive singleton-sum baseline (g1) and a prior-only baseline on R-precision, on
+  operating points and outage-set triples NEVER used in any earlier Phase 3/4 screen. Secondary: whether a
+  matched-information learned linear composition (OLS and an MAE-trained model, same 6 ingredients as g2,
+  fitted with GroupKFold held out by triple) beats, ties, or loses to g2, separately by control regime and
+  metric (following the exploratory screen's finding that this is regime/metric-dependent, not uniform).
+arms: {g1, prior_only, g2_fixed, linear_ols, linear_l1_mae}
+data: >
+  n_ops=60 fresh operating points (reserve block, ids 600-659; ids 660-699 left unused, reserved for any future
+  replicate look); n_triples=70 fresh outage-set triples, sampled with the SAME stress-weighted procedure as
+  the exploratory manifest (src/fdna/hik.sample_kset_manifest) but a NEW seed derived from block_seed('reserve'),
+  frozen in data_hik/manifest_k3_confirm.json BEFORE any label is generated. y_single (N-1, all 41 branches) and
+  y_pair (N-2, needed sub-pairs) generated fresh across all 1024 controls for these ops; y_true (N-3) generated
+  fresh for all 70 triples across all 1024 controls.
+cells: P1 (v2b q=.7 s=.3), P2 (v2c q=.3 s=.2), unchanged from src/fdna/v2.py; K_DRAWS=100 (matching the
+  exploratory screen).
+metrics: R-precision (primary, per operating point then averaged, src/fdna/evalutil.rprec) and MAE/MSE
+  (secondary), exactly as the corrected exploratory screen computed them (per-op, not pooled).
+statistic: paired cluster bootstrap over the 60 operating points (src/fdna/rules.boot), on (g2 - g1) and
+  (g2 - best_of{linear_ols, linear_l1_mae}), reported with effect size, 90% CI, and the bootstrap's own floor
+  stated explicitly (not quoted as a precise p-value if it saturates).
+sesoi: >
+  tier1 (>=0.05 R-precision, matching this project's existing convention elsewhere), tier2 (mean diff > 0,
+  90% CI excludes 0), tier3 (negligible, 90% CI inside +-0.02) -- reused, not re-derived, since the exploratory
+  screen's effect (+0.19-0.21 R-precision) is far above tier1 and this is a replication design, not a novel
+  SESOI search.
+cost_accounting: every arm's total LP-solve / oracle-query count reported (brief's "charge all methods for
+  their LP queries" requirement); g1/g2/prior_only/linear_* all consume the SAME underlying y_single/y_pair
+  solves (no arm gets privileged extra queries).
+decision_rule: >
+  g2 vs g1 and g2 vs prior_only are the PRIMARY confirmatory claims (intersection-union: both must clear tier2
+  in both cells). g2 vs linear_* is EXPLORATORY within this same run (per the exploratory screen's own finding
+  that this comparison is regime/metric-dependent) -- reported descriptively, not gated on a tier.
+out_of_scope_this_run: N-4; a second topology; the RNN/DeepSets comparison with matched pairwise information
+  and query budget (explicitly flagged as still open by the last review, deferred to a separate study).
