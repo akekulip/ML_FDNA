@@ -1,0 +1,144 @@
+{
+ "P1_v2b": {
+  "2": {
+   "n_candidates": 4200,
+   "guided_queries_total": 8400,
+   "random_queries_total": 8400,
+   "mc_queries_total": 8400,
+   "guided_queries_per_candidate": 2.0,
+   "random_queries_per_candidate": 2.0,
+   "guided_acc": 0.8716666666666667,
+   "random_acc": 0.8716666666666667,
+   "mc_acc": 0.9316666666666666
+  },
+  "4": {
+   "n_candidates": 4200,
+   "guided_queries_total": 11984,
+   "random_queries_total": 11984,
+   "mc_queries_total": 16800,
+   "guided_queries_per_candidate": 2.8533333333333335,
+   "random_queries_per_candidate": 2.8533333333333335,
+   "guided_acc": 0.9054761904761904,
+   "random_acc": 0.9007142857142857,
+   "mc_acc": 0.9438095238095238
+  },
+  "6": {
+   "n_candidates": 4200,
+   "guided_queries_total": 15531,
+   "random_queries_total": 15568,
+   "mc_queries_total": 25200,
+   "guided_queries_per_candidate": 3.697857142857143,
+   "random_queries_per_candidate": 3.7066666666666666,
+   "guided_acc": 0.9154761904761904,
+   "random_acc": 0.9154761904761904,
+   "mc_acc": 0.9438095238095238
+  },
+  "8": {
+   "n_candidates": 4200,
+   "guided_queries_total": 18950,
+   "random_queries_total": 19152,
+   "mc_queries_total": 33600,
+   "guided_queries_per_candidate": 4.511904761904762,
+   "random_queries_per_candidate": 4.56,
+   "guided_acc": 0.9173809523809524,
+   "random_acc": 0.9280952380952381,
+   "mc_acc": 0.9461904761904761
+  },
+  "12": {
+   "n_candidates": 4200,
+   "guided_queries_total": 25460,
+   "random_queries_total": 26314,
+   "mc_queries_total": 50400,
+   "guided_queries_per_candidate": 6.061904761904762,
+   "random_queries_per_candidate": 6.265238095238095,
+   "guided_acc": 0.9233333333333333,
+   "random_acc": 0.939047619047619,
+   "mc_acc": 0.9507142857142857
+  },
+  "16": {
+   "n_candidates": 4200,
+   "guided_queries_total": 31756,
+   "random_queries_total": 33474,
+   "mc_queries_total": 67200,
+   "guided_queries_per_candidate": 7.560952380952381,
+   "random_queries_per_candidate": 7.97,
+   "guided_acc": 0.929047619047619,
+   "random_acc": 0.9421428571428572,
+   "mc_acc": 0.950952380952381
+  }
+ },
+ "P2_v2c": {
+  "2": {
+   "n_candidates": 4200,
+   "guided_queries_total": 8400,
+   "random_queries_total": 8400,
+   "mc_queries_total": 8400,
+   "guided_queries_per_candidate": 2.0,
+   "random_queries_per_candidate": 2.0,
+   "guided_acc": 0.8607142857142858,
+   "random_acc": 0.8607142857142858,
+   "mc_acc": 0.929047619047619
+  },
+  "4": {
+   "n_candidates": 4200,
+   "guided_queries_total": 11983,
+   "random_queries_total": 11984,
+   "mc_queries_total": 16800,
+   "guided_queries_per_candidate": 2.853095238095238,
+   "random_queries_per_candidate": 2.8533333333333335,
+   "guided_acc": 0.8926190476190476,
+   "random_acc": 0.8971428571428571,
+   "mc_acc": 0.9297619047619048
+  },
+  "6": {
+   "n_candidates": 4200,
+   "guided_queries_total": 15526,
+   "random_queries_total": 15568,
+   "mc_queries_total": 25200,
+   "guided_queries_per_candidate": 3.6966666666666668,
+   "random_queries_per_candidate": 3.7066666666666666,
+   "guided_acc": 0.9002380952380953,
+   "random_acc": 0.915,
+   "mc_acc": 0.9330952380952381
+  },
+  "8": {
+   "n_candidates": 4200,
+   "guided_queries_total": 18924,
+   "random_queries_total": 19150,
+   "mc_queries_total": 33600,
+   "guided_queries_per_candidate": 4.505714285714285,
+   "random_queries_per_candidate": 4.559523809523809,
+   "guided_acc": 0.9035714285714286,
+   "random_acc": 0.9171428571428571,
+   "mc_acc": 0.9326190476190476
+  },
+  "12": {
+   "n_candidates": 4200,
+   "guided_queries_total": 25314,
+   "random_queries_total": 26295,
+   "mc_queries_total": 50400,
+   "guided_queries_per_candidate": 6.027142857142858,
+   "random_queries_per_candidate": 6.260714285714286,
+   "guided_acc": 0.9061904761904762,
+   "random_acc": 0.9273809523809524,
+   "mc_acc": 0.9373809523809524
+  },
+  "16": {
+   "n_candidates": 4200,
+   "guided_queries_total": 31409,
+   "random_queries_total": 33357,
+   "mc_queries_total": 67200,
+   "guided_queries_per_candidate": 7.4783333333333335,
+   "random_queries_per_candidate": 7.942142857142857,
+   "guided_acc": 0.9078571428571428,
+   "random_acc": 0.9283333333333333,
+   "mc_acc": 0.9357142857142857
+  }
+ },
+ "n_ops_used": 60,
+ "cost_accounting": {
+  "lower_order_table_size_per_op_scalar_values": 228352,
+  "note": "the guided/random/mc query counts above are ONLY the N-3 target queries charged against the budget. Building g2's guidance additionally requires the full lower-order table (41 singles + 182 pairs x 1024 controls = 228,352 scalar values per operating point) -- an amortized, one-time-per-op cost, reported here separately and explicitly, not folded into or confused with the per-candidate query counts."
+ },
+ "note": "prediction uses ONLY (qL,qU); true_c_idx is used exclusively to score correctness AFTER the prediction is frozen (external review finding 4 fix). MC draws directly from the exact posterior pc (finding 5 fix). Observation is frozen per (op,cell), reused across all budgets (finding 6 fix)."
+}
