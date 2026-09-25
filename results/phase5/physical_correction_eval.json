@@ -1,0 +1,112 @@
+{
+ "full_control": {
+  "n": 4200,
+  "connected": {
+   "n": 3060,
+   "err_plain": {
+    "mae": 0.0004359569013472745,
+    "mean_signed": -0.0003114835414462921
+   },
+   "err_clip": {
+    "mae": 0.00043516035771746494,
+    "mean_signed": -0.0003106869978164825
+   },
+   "err_res": {
+    "mae": 0.0004359569013472745,
+    "mean_signed": -0.0003114835414462921
+   }
+  },
+  "gen_less_only": {
+   "n": 600,
+   "err_plain": {
+    "mae": 0.005610730381888516,
+    "mean_signed": 0.005579679269239174
+   },
+   "err_clip": {
+    "mae": 0.005610730678079183,
+    "mean_signed": 0.005579679661197967
+   },
+   "err_res": {
+    "mae": 0.005610730381888516,
+    "mean_signed": 0.005579679269239174
+   }
+  },
+  "all_gen_or_mixed": {
+   "n": 540,
+   "err_plain": {
+    "mae": 0.00027868242511128,
+    "mean_signed": -0.0002651115629271738
+   },
+   "err_clip": {
+    "mae": 0.000209067492795401,
+    "mean_signed": -0.00019549663061129482
+   },
+   "err_res": {
+    "mae": 0.00027868242511128,
+    "mean_signed": -0.0002651115629271738
+   }
+  },
+  "err_plain_overall_mae": 0.001154989251622824,
+  "err_clip_overall_mae": 0.0011454584637077307,
+  "err_res_overall_mae": 0.001154989251622824,
+  "missed_severe_plain": 1,
+  "missed_severe_clip": 1,
+  "missed_severe_res": 1,
+  "n_severe": 1207
+ },
+ "no_control": {
+  "n": 4200,
+  "connected": {
+   "n": 3060,
+   "err_plain": {
+    "mae": 0.001330007536636513,
+    "mean_signed": -0.00031012930119334064
+   },
+   "err_clip": {
+    "mae": 0.001323748659940247,
+    "mean_signed": -0.0003038704244970747
+   },
+   "err_res": {
+    "mae": 0.001330007536636513,
+    "mean_signed": -0.00031012930119334064
+   }
+  },
+  "gen_less_only": {
+   "n": 600,
+   "err_plain": {
+    "mae": 0.007315524511023455,
+    "mean_signed": 0.006988943717743155
+   },
+   "err_clip": {
+    "mae": 0.007238267229475688,
+    "mean_signed": 0.007066201374055098
+   },
+   "err_res": {
+    "mae": 0.007315524511023455,
+    "mean_signed": 0.006988943717743155
+   }
+  },
+  "all_gen_or_mixed": {
+   "n": 540,
+   "err_plain": {
+    "mae": 0.004782565823039788,
+    "mean_signed": 0.003382460375431467
+   },
+   "err_clip": {
+    "mae": 0.0046998153541702925,
+    "mean_signed": 0.0034652108443009623
+   },
+   "err_res": {
+    "mae": 0.004782565823039788,
+    "mean_signed": 0.003382460375431467
+   }
+  },
+  "err_plain_overall_mae": 0.0026289817412293542,
+  "err_clip_overall_mae": 0.002602745601989173,
+  "err_res_overall_mae": 0.0026289817412293542,
+  "missed_severe_plain": 12,
+  "missed_severe_clip": 12,
+  "missed_severe_res": 12,
+  "n_severe": 2999
+ }
+}
