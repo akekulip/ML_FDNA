@@ -156,8 +156,12 @@ requested cheap diagnostic. All five addressed in `scripts/p5_adaptive_query_exp
   operational way (per-operating-point, then averaged -- see below), the direction reverses at the fine-grained
   end: at recall@10%/20%, GUIDED is modestly but statistically significantly BETTER than MC at several
   budget/cell combinations (e.g. P1 budget 2: mc-guided mean -0.013/-0.012, 90% CI entirely negative both
-  percentiles; P2 shows the same sign at nearly every budget, small magnitude, CI excluding zero at most of
-  them). MC's clear, consistent advantage shows up specifically at the coarser recall@40% threshold (mc-guided
+  percentiles; P2 shows the same sign (guided ahead) at nearly every budget, small magnitude, but only about
+  40% of the recall/precision-by-budget combinations checked for P2 reach 90% significance -- **correction
+  (independent qa-verifier pass, repair round 3): an earlier version of this sentence said "at most of them,"
+  which overstated the fraction; recomputed directly from `shortlist_boot_ci_per_op`, it is roughly 10/24
+  (~42%), not most.** MC's clear, consistent advantage shows up specifically at the coarser recall@40% threshold
+  (mc-guided
   CI excludes zero, positive, at every single budget in both cells) and at raw classification accuracy. Read
   honestly: this is NOT "MC dominates shortlist screening" -- it is "different policies are better at different
   points on the recall curve," a genuinely more interesting and more cautionary finding than either the original

@@ -238,3 +238,92 @@ not "roughly tied with GBM" after all, it is now clearly the second-worst learne
 runner-up to g2_fixed. The headline across both rounds is unchanged throughout: g2_fixed remains the lead
 method, no learned arm is promoted. Tests: 86 pass. Commits: 4a2c630 (T1), 87b4943 (T2-T5), neither pushed
 without explicit request.
+
+## Repair round 3 (2026-09-25): an independent THIRD review of round 2, Stages T1-T7
+Philip supplied `ML_FDNA_10fb6da_Evidence_Review.md`, reviewing round 2 (commit 10fb6da, itself already
+qa-verified). Verdict: the DeepSets invariance repair and canonical-key checks were sound, but one real
+stopping-threshold bug remained, and several round-2 conclusions overclaimed what the evidence supported.
+**Every claim independently reproduced against the live repo before any fix was written**, same discipline as
+rounds 1-2.
+
+**T1 (doc, commit 672c7e1).** Withdrew "leaking non-invariant information" (STAGE4/RUN_JOURNAL/CLAIM_LEDGER):
+the pair-risk features are legitimate, deployable inputs available to every learned arm; the partially-fixed
+model violated its OWN claimed invariance property, it did not access forbidden or hidden information. Also
+corrected "3 predeclared seeds all converging to the same 0.8691 diagnostic R-precision" -- confirmed the
+underlying diagnostic had only 2 distinct achievable values across 17 checked epochs (12-pair sample, P1-only,
+pooled), so 3 seeds landing on the better of 2 outcomes was far less informative than "striking convergence"
+implied.
+
+**T2/T3/T6 (code + retrain, commit 4db9fb9).**
+- `resolve()`'s decision-aware stopping (round 2) compared the probability bound `qU` against `spec.SEVERE`
+  (0.01, the load-shed severity threshold) instead of the actual probability-decision threshold (0.5) --
+  overly conservative (wasted queries) but never an invalid certificate, since 0.01<0.5 made the old condition
+  MORE restrictive. Fixed and moved from the script into `fdna.adaptive_query.resolve`, alongside a named
+  `PROB_DECISION_THRESHOLD` constant so the two thresholds structurally cannot be conflated again. A second,
+  related bug found in the same pass: `guided_rng` was shared and sequentially advanced across all 70 outages
+  per (op,budget), so one candidate's random-policy draws depended on how many draws every PRIOR candidate in
+  the loop happened to consume -- fixed by seeding a fresh rng per (op_id, outage, budget). Five new tests.
+  Rerun: guided queries per candidate drop further (6.72->4.72 at P1 budget 16), accuracy unchanged.
+- Shortlist recall/precision was pooled across all 4,200 candidates and 60 operating points -- a different
+  question from per-operating-point screening, confirmed with a real pooling-artifact witness (pooled
+  recall=0.0 vs. mean per-op recall=0.5 on identical scores). Added genuine per-op metrics with a paired-per-op
+  bootstrap CI, kept alongside the pooled numbers (explicitly relabeled). Real finding: guided is significantly
+  BETTER than MC at recall@10/20% on several budget/cell combinations; MC is significantly better at recall@40%
+  and raw accuracy -- a genuinely nuanced pattern, not the blanket MC superiority the pooled comparison implied.
+- Implemented the review's proposed control-variate estimator as an ACTUAL candidate policy (new
+  `scripts/p5_adaptive_query_experiment_v3.py`, v2 kept unmodified), not only a diagnostic: `p_hat_beta =
+  beta*E_p[h0] + mean(h(c_j)-beta*h0(c_j))` for fixed beta in {0, 0.5, 1.0}, reusing the identical MC draws at
+  zero additional oracle cost (beta=0 asserted live to reduce exactly to plain MC). Also corrected the
+  diagnostic itself: every one of 4,200 candidates now gets a category (zero_variance_tie /
+  zero_variance_harmed_by_proxy / nondegenerate), none silently dropped as v2's did; a stabler pooled statistic
+  across ALL candidates (`ratio_of_summed_variances_all_candidates` = 0.106 P1 / 0.098 P2) confirms the effect
+  is genuinely favorable population-wide. **Result: beta=1.0 closes nearly the entire remaining gap to the
+  theoretical exact-posterior ceiling and significantly beats plain MC at 11 of 12 budget/cell combinations
+  (p<0.01) -- a genuine, low-cost improvement, not just a favorable diagnostic percentage.** Explicitly
+  exploratory (reuses the already-open 600-659 block, no new reserve, no fresh LP solves).
+
+**T4/T5 (code + retrain, commit 0c3f0b9).**
+- Residual diagnostic repairs: the round-2 diagnostic pooled a random 12-pair sample into ONE ranking, P1-only
+  -- coarse and a protocol mismatch with final eval (which ranks per-op then averages). Fixed to the full
+  80-pair `VAL_OUTAGES x VAL_OPS` cross-product, per-op, both cells. Corrected per-seed scores are genuinely
+  distinct (0.8267/0.8262/0.8276); seed 1's selector now correctly reverts to the untrained zero-correction
+  state (never found an improving epoch), which is why `residual_seed1`'s TEST R-precision is numerically
+  identical to `g2_fixed` -- a traced consequence, not a bug. Added a frozen-shrinkage-grid estimate (`lam` is
+  trained jointly with the final layer, not independently identifiable as a shrinkage factor; freezing
+  `raw_correction` and sweeping a prespecified grid on validation is properly separated) -- ties `g2_fixed` at
+  P1, a practically negligible but technically significant +0.03pp at P2.
+- **The DeepSets ablation (the most consequential new result this round).** `OrderedMLP` (a plain, deliberately
+  non-invariant MLP on the same raw features, matched rough parameter count) and `PermAveragedModel` (wraps any
+  trained model, averaging over all 6 relabelings -- exactly invariant by construction), 3 seeds each. **The RAW
+  ordered model already beats DeepSets by a wide margin (0.880/0.910 vs. DeepSets' 0.854/0.884), and
+  permutation-averaging it closes most of the remaining gap to g2_fixed -- for one of three seeds in EACH cell,
+  statistically indistinguishable from g2_fixed, something no version of DeepSets has achieved in any round.**
+  This points at the POOLING architecture specifically, not the invariance requirement itself, as the more
+  likely cause of DeepSets' underperformance. Caught and fixed 3 of my own bugs before trusting this: a
+  small-sample (8-row) spread check gave a false "near-invariant" reading on the trained OrderedMLP checkpoint,
+  corrected with a larger 64-row/all-3-seed check that showed genuine substantial spread; a device-mismatch
+  crash; and a variable-shadowing bug (`for s in ORDERED_SEEDS` clobbering the outer cell-loop's own `s`
+  parameter) that silently corrupted every arm's posterior sampling identically -- caught because ALL arms,
+  including untouched `g2_fixed`, came back with an implausible, identical R-precision (~0.41 instead of ~0.89)
+  on the first real rerun of the eval script, not assumed correct from a clean-looking diff.
+
+**T7 -- independent re-verification, mandatory per the same discipline as rounds 1-2, explicitly instructed to
+be more adversarial given this is the third review of the same code.** A qa-verifier subagent that authored
+none of the T1-T6 fixes independently verified all 6 items: reran both adaptive-query scripts fully (byte-
+identical output), wrote its own witness scripts with different seeds/rows than the shipped tests, recomputed
+the control-variate significance count and the ablation's headline numbers directly from raw JSON rather than
+trusting any doc's summary, and traced the residual-seed-1 tie to actual code logic rather than accepting it as
+asserted. **Verdict: PASS on all 6 items, no regressions (96/96).** It flagged one genuine but minor rhetorical
+overclaim (STAGE3's "CI excluding zero at most of them" for P2's fine-grained shortlist comparison actually
+described roughly 42% of combinations, not "most") -- corrected immediately.
+
+**Verdict on this repair round.** Every finding from the third review was real, fixed, and independently
+reverified by an agent instructed to distrust even a second "PASS" verdict from a prior round -- and it still
+found one small overstatement, confirming the value of that adversarial posture rather than treating a clean
+prior review as evidence the next one would be. The most consequential result (T5) is also the most positive
+finding of the whole three-round repair arc: DeepSets' underperformance looks attributable to its pooling
+architecture specifically, not to genuine invariance being costly -- a permutation-averaged, exactly-invariant
+alternative gets far closer to g2_fixed. g2_fixed remains the lead method throughout; no learned arm is
+promoted; the control-variate estimator (T6) is the one genuinely new positive candidate to carry forward,
+pending a confirmatory run. Tests: 96 pass. Commits: 672c7e1 (T1), 4db9fb9 (T2/T3/T6), 0c3f0b9 (T4/T5), none
+pushed without explicit request.

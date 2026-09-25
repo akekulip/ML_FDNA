@@ -56,7 +56,7 @@ fixed immediately and verified (full suite 84->85 passed, script output byte-ide
 Stage R5 (capacity_floor) and R6 (this journal update) are also done -- see results/phase5/RUN_JOURNAL.md for
 the full consolidated account. The whole repair round (R0-R6) is complete.
 
-## Phase 5 repair round 2 (2026-09-25): independent SECOND review of the repair round, in progress
+## Phase 5 repair round 2 (2026-09-25): independent SECOND review of the repair round -- COMPLETE, pushed
 The Stage R0-R6 repair round above (commit 842e6a9) was pushed, then independently reviewed a SECOND time
 (`ML_FDNA_842e6a9_Repair_Review.md`, committed in the repo root). Verdict: the repairs were real, but one fix
 (DeepSets permutation invariance) was still incomplete, plus several completeness/test-quality/documentation
@@ -94,11 +94,53 @@ than trusting the pytest suite alone, hand-recomputed the control-variate diagno
 independently recomputed the capacity-floor percentages and one bootstrap CI from raw JSON. Verdict: PASS on all
 6, no regressions (86/86 both before and after its reruns), no blockers. Repair round 2 (T1-T6) is complete.
 
+## Phase 5 repair round 3 (2026-09-25): independent THIRD review, of round 2 (commit 10fb6da)
+Round 2 (T1-T6 above, commit 10fb6da) was pushed, then independently reviewed a THIRD time
+(`ML_FDNA_10fb6da_Evidence_Review.md`, committed in repo root). Verdict: the DeepSets invariance repair and
+canonical-key checks were sound, but a real stopping-threshold bug remained, and several round-2 conclusions
+overclaimed what the evidence supported. Every claim independently verified before any fix. Fixed in three
+commits (672c7e1 doc-only T1; 4db9fb9 code T2/T3/T6; 0c3f0b9 code T4/T5):
+- **T1 (doc):** withdrew "leaking non-invariant information" (pair-risk features are legitimate, available to
+  every arm -- the old model violated its OWN claimed invariance, not privileged information); corrected an
+  overstated "3 seeds converging to 0.8691" residual-diagnostic claim (was a too-coarse, 2-value diagnostic).
+- **T2:** `resolve()`'s decision-aware stopping compared `qU` against the LOAD-SHED threshold (spec.SEVERE=0.01)
+  instead of the PROBABILITY-decision threshold (0.5) -- overly conservative, never invalid. Fixed and moved
+  into `fdna.adaptive_query` with a named `PROB_DECISION_THRESHOLD` constant. Also fixed a shared, sequentially-
+  advancing RNG across outages (found while fixing the threshold) -- now seeded per (op,outage,budget).
+- **T3:** shortlist metrics were pooled across all 60 ops (a different question from per-op screening, confirmed
+  with a real pooling-artifact witness). Added genuine per-op metrics + bootstrap CI: reveals guided is
+  significantly BETTER than MC at recall@10/20% on several budgets, MC better at recall@40%/accuracy -- a
+  nuanced pattern, not blanket MC superiority.
+- **T4:** residual diagnostic was too coarse (12-pair sample, P1-only, pooled) -- fixed to the full 80-pair
+  cross-product, per-op, both cells. Seed 1's selector now correctly reverts to the untrained zero-correction
+  state (never found an improving epoch). Added a frozen-shrinkage-grid estimate (properly separated from
+  `lam`'s joint training) -- ties g2_fixed, no promotion-worthy margin.
+- **T5 (the big one):** DeepSets ablation -- `OrderedMLP` (plain, non-invariant) beats DeepSets by a wide margin;
+  permutation-averaging it (exactly invariant by construction) closes most of the gap to g2_fixed, statistically
+  tying it for one of three seeds in each cell. Points at the POOLING architecture, not invariance itself, as
+  DeepSets' likely weakness. Caught and fixed 3 of my own bugs before trusting this: a small-sample (8-row)
+  spread check gave a false "near-invariant" reading, corrected with a larger 64-row/all-3-seed check; a
+  device-mismatch crash; and a variable-shadowing bug (`for s in ORDERED_SEEDS` clobbering an outer cell-loop
+  `s`) that silently corrupted every arm's posterior sampling identically -- caught because ALL arms, including
+  untouched g2_fixed, came back with an implausible, identical R-precision on the first real rerun.
+- **T6:** implements the review's proposed control-variate estimator as an ACTUAL policy (new
+  `scripts/p5_adaptive_query_experiment_v3.py`), not just a diagnostic -- beta=1.0 closes nearly the entire gap
+  to the theoretical posterior ceiling, significantly beats plain MC at 11/12 budget/cell combinations, zero
+  additional oracle cost. Exploratory only (reuses the 600-659 block); confirmatory run is future work.
+Full suite: 96 passed. **T7 (independent re-verification) is DONE and PASSED.** A qa-verifier subagent instructed
+to be more adversarial than the prior two rounds (given this is the third review of the same code) verified all
+6 items: reran both adaptive-query scripts fully (byte-identical output), wrote its own witness scripts with
+different seeds/rows than the shipped tests, recomputed the control-variate significance count and the
+ablation's headline numbers directly from raw JSON, and traced the residual-seed-1 tie to actual code logic.
+Verdict: PASS on all 6, no regressions (96/96). It flagged one minor rhetorical overclaim in STAGE3.md ("at most
+of them" for P2's fine-grained shortlist comparison -- actually ~42%, not "most") -- corrected immediately.
+Repair round 3 (T1-T7) is complete; see `results/phase5/RUN_JOURNAL.md` for the full consolidated account.
+
 ## Open / next (needs Philip)
-1. Push the local commits? (asked before every push) -- the Stage R0-R6 round-1 commits were pushed; the
-   repair-round-2 commits (4a2c630, 87b4943) have NOT been pushed yet.
-2. T6's independent verification report, once it arrives: resolve anything it flags before treating this
-   round's corrected conclusions (especially the DeepSets/GBM ranking reversal) as final.
+1. Push the local commits? (asked before every push) -- round 2 (T1-T6, up to 10fb6da) was pushed; the
+   repair-round-3 commits (672c7e1, 4db9fb9, 0c3f0b9) have NOT been pushed yet.
+2. T7's independent verification report, once it arrives: resolve anything it flags before treating round 3's
+   corrected conclusions (especially the DeepSets/pooling-architecture finding) as final.
 3. Direction (unchanged, still open): (a) benchmark + protocol paper (workshop/IEEE Access tier); (b) pre-registered scale experiment (large dependency graph, approximate-posterior oracle, headroom gate first);
    (c) N-1->N-2 label-efficiency method; (d) second topology (IEEE-118).
 4. Commits authored by Philip only, no attribution lines.
