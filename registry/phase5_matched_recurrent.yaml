@@ -1,0 +1,36 @@
+# Phase 5 Stage 4: matched recurrent/learned-correction experiment. Committed before any training.
+identifiability_check_stated_first: >
+  g2 (order-2 Mobius truncation) is EXACT for any set of size <=2 by construction: g2({a,b}) reduces
+  algebraically to V({a,b}) itself (verified directly this session -- the "residual" V-g2 on any N-1/N-2 row is
+  trivially zero, a tautology of the truncation, not a measured fact). Therefore a residual-correction model
+  CANNOT be trained on N-1/N-2 rows (zero gradient signal about third-order structure); it is trained ONLY on
+  charged N-3 labels, where the residual is genuinely informative. This is stated before any run, per the
+  brief's explicit warning not to run the empty-supervision experiment and call its failure evidence against
+  recurrence.
+regime: >
+  Charged N-3-label budget (brief 10, second option): train on a subset of the 70 confirmatory triples' N-3
+  labels (charged, explicit), held-out test on the remaining triples' N-3 labels. Split by TRIPLE (whole outage
+  sets), not by row, so no triple's information leaks between train and test; all 60 confirmatory operating
+  points used for both splits (paired structure preserved for the eventual posterior-composed evaluation).
+split: 45 triples train (charged N-3 supervision) / 25 triples held-out test, fixed seed, frozen before fitting.
+arms: {g2_fixed (no training), g2_clipped (no training, Stage 2 physical repair), ridge (symmetric linear,
+  trained), gbm_tuned (trained), deepsets_pairaware (COMMUTATIVE set-state model, sum-pooled over the 3
+  elements' singleton values + 3 pairs' interaction values + physical descriptors -- chosen over a GRU
+  specifically to avoid outage-order sensitivity and the associated permutation-testing burden, per the
+  brief's own stated preference), g2_plus_learned_residual (retains the exact g2 term, learns ONLY the
+  residual, trained exclusively on the N-3 train split per the identifiability check above)}.
+information_given_to_every_arm: op_id-conditioned demand (via the physical descriptors), the 3 singleton
+  values, the 3 pairwise interaction values, island floor F(S), LODF risk for each sub-pair, new-cut flag --
+  IDENTICAL feature set for every trained arm (ridge, gbm, deepsets, residual-net).
+composition: every arm evaluated composed with the SAME P1/P2 partial-observation posterior (src/fdna/v2.py,
+  unchanged), SAME R-precision screening endpoint, per-operating-point cluster bootstrap (src/fdna/rules.boot),
+  on the 25 HELD-OUT test triples only.
+pre_rejection_checklist: target variation checked (train/test label std > 0), features on comparable scale
+  (all in [0,1]-ish, no rescale needed), gradient flow checked via loss decrease over epochs, tiny-batch
+  overfit check before full training, split correctness checked (train/test triple sets disjoint, verified by
+  set intersection), loss (MSE) matches a screening-relevant endpoint reasonably well per the earlier Phase-4
+  finding that MSE and R-precision orderings are correlated though not identical -- R-precision remains the
+  reported decision endpoint regardless of training loss.
+decision: retain g2_plus_learned_residual or deepsets as the lead method only if it beats g2_fixed on R-precision
+  by a material, bootstrap-supported margin in BOTH cells; if it ties, prefer the simpler method (g2_fixed) and
+  report the tie, not a promotion.
