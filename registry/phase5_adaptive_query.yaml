@@ -10,10 +10,14 @@ setting: common-observation snapshot (section 7's second setting) -- one hidden 
   shared hidden state to generate realized truth, the policy may not access it.
 tau: 0.01 (spec.SEVERE, unchanged).
 candidate_pool: the 70 confirmatory triples, all 60 fresh operating points (data_hik/manifest_k3_confirm.json).
-policies: {g2_guided_bounds, random_bounds, direct_mc, oracle_full (ceiling, labeled, excluded from practical winner selection)}.
-budget_curve: predeclared, per-candidate query cap in {2, 4, 6, 8, 12, 16}, published in full regardless of outcome.
+policies:
+  g2_guided_bounds: guided by g2's own prediction, bound-based
+  random_bounds: same bound machinery, random next-query choice
+  direct_mc: posterior-conditioned Monte Carlo, no bounds
+  oracle_full: ceiling only, labeled, excluded from practical winner selection
+budget_curve: predeclared, per-candidate query cap in [2, 4, 6, 8, 12, 16], published in full regardless of outcome.
 metrics: total queries charged (cold-start, includes the y_single/y_pair queries needed to build g2's guidance
   for the guided policy only -- charged explicitly, not free); classification accuracy/recall/precision against
   the TRUE severe/not-severe label at the true hidden control; shortlist recall/precision at 10/20/40% budgets.
-promotion_gate: >=25% fewer total charged queries than the best practical baseline (random_bounds or direct_mc)
-  at classification quality within 0.01 of that baseline -- fixed before any result is read.
+promotion_gate: "at least 25% fewer total charged queries than the best practical baseline (random_bounds or
+  direct_mc) at classification quality within 0.01 of that baseline -- fixed before any result is read."

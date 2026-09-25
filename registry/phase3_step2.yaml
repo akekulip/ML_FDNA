@@ -6,8 +6,8 @@ modules:   # all map obs -> log p(c | obs) over the 1024 control vectors; same e
   I5_ref:          existing InfFDNA (flat mask, tau 0.05, mean-field head)              [reference]
   I5_tau0.01:      ablation ii   (only tau changed)
   I5_tau0:         ablation ii   (hard min)
-  I5_OR:           ablation i    (only change: gateway parents of each generator combined by noisy-OR of operabilities 1-prod(1-o) before the unit node; unit inputs = CC, RTU, gateway-group)
-  J_plain:         ablation iii  (only change: joint head. state posterior over the 16384 states = prior(x) * exp(sum_i x_i t_i(obs)); FDNA applied to each binary state, level probs by the same independent-unit product per state, p(c|obs)=sum_x post(x) M(x). prior = independent Bernoulli)
+  I5_OR:           "ablation i (only change: gateway parents of each generator combined by noisy-OR of operabilities 1-prod(1-o) before the unit node; unit inputs = CC, RTU, gateway-group)"
+  J_plain:         "ablation iii (only change: joint head. state posterior over the 16384 states = prior(x) * exp(sum_i x_i t_i(obs)); FDNA applied to each binary state, level probs by the same independent-unit product per state, p(c|obs)=sum_x post(x) M(x). prior = independent Bernoulli)"
   J_plain_CC:      ablation iii  (as J_plain but prior = common-cause mixture over v2.GROUPS with learnable group probs, i.e. shared CC/gateway/RTU-site failures)
   I5_OR_hard:      combined mean-field repair (OR + tau 0)
   J_OR_hard_CC:    COMBINED REPAIRED ARM (OR + hard min + joint head + common-cause prior)

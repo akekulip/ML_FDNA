@@ -2,16 +2,16 @@
 # Status: EXPLORATORY. All screens use already-inspected data (train ops 0-99, test table ops 200-279). No claim can rest on them.
 classes:   # disjoint, computed from topology G minus {a,b}; the original grid is one connected component
   connected: 1 component
-  gen_less_only: >=2 components, every component except the one containing a generator is generator-less (i.e. all new islands have no generator)
-  all_gen: >=2 components, every component contains >=1 generator
-  mixed: >=3 components, at least one generator-less and at least two containing generators
+  gen_less_only: "at least 2 components, every component except the one containing a generator is generator-less (i.e. all new islands have no generator)"
+  all_gen: "at least 2 components, every component contains at least 1 generator"
+  mixed: "at least 3 components, at least one generator-less and at least two containing generators"
   axis_new_2cut: separate boolean axis = pair islands but neither member alone islands (reported, not a class)
 error_definition:
   primary: severe rows (y > spec.SEVERE=1%) not among the top-k by prediction, k = #severe in that (op) group, per-op hashed tie-break (evalutil.rprec); "missed-severe mass" = sum of misses per class / total misses
   secondary: MAE per class (regression error, reported separately)
   model: k=0 arm of fewshot (tuned GBM, exact control vector + electrical features, trained on train N-1 rows only, all 100 ops), unseen N-2 rows of test table
 gates:
-  G1_islanding_concentration: "missed-severe mass in {gen_less_only,all_gen,mixed} >= 50% of total misses" -> Step 3 = island decomposition first; else convex head first. Also report the class's SHARE of N-2 pairs so concentration is read against base rate.
+  G1_islanding_concentration: "missed-severe mass in {gen_less_only,all_gen,mixed} at least 50% of total misses -> Step 3 = island decomposition first; else convex head first. Also report the class's SHARE of N-2 pairs so concentration is read against base rate."
 hypotheses_tested_not_assumed:
   H_sub: "y_ab < y_a + y_b (subadditive) frequency; y_ab > y_a + y_b (superadditive) frequency"
   H_lower: "y_ab >= max(y_a,y_b) violation rate"
