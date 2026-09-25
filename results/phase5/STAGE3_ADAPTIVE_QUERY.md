@@ -129,15 +129,38 @@ requested cheap diagnostic. All five addressed in `scripts/p5_adaptive_query_exp
    both cells; MC vs random is significant at low-to-mid budgets only.
 5. **A cheap, cached-data-only diagnostic for the review's proposed control-variate estimator**
    (`p_hat = E_p[h0] + mean(h(c_j)-h0(c_j))`, `h0(c)=1[g2(c)>tau]`, `h(c)=1[V(c)>tau]`): computed exactly under
-   the posterior (`Var_p[h-h0]` vs `Var_p[h]`, no simulation needed). Result is striking and genuinely favorable
-   for MOST candidates but dominated by a small number of outliers in the naive mean: **median ratio = 0.0** (for
-   the typical candidate, g2's threshold call matches the true label across the ENTIRE posterior support --
-   zero residual variance, a perfect control variate) and **97% of candidates have a favorable ratio (<1)** --
-   but the MEAN ratio is enormous (415,909 for P1, 25,334 for P2), driven by a small fraction of candidates where
-   `Var_p[h]` itself is close to zero (dividing by a near-zero denominator). Read honestly: this is a promising
-   signal that g2 as a control variate could substantially reduce posterior-MC's variance for most candidates,
-   worth implementing as an actual policy in a future round -- but this round only measures the diagnostic, per
-   the plan's explicit scope, and does not build an adaptive policy around it yet.
+   the posterior (`Var_p[h-h0]` vs `Var_p[h]`, no simulation needed). **Correction (2026-09-25, independent
+   third-round review): the "97% favorable" figure below was of an already-filtered subset, not of all 4,200
+   candidates, and the original phrasing didn't say so.** The diagnostic silently drops any candidate where
+   plain-MC variance is already ~zero (`var_h <= 1e-12`) before computing the ratio -- confirmed:
+   `n_candidates_measured` is 2,292/4,200 (P1, 54.6%) and 2,053/4,200 (P2, 48.9%). So "97% favorable" describes
+   roughly half the pool; the other half was never assessed, including cases where a poor surrogate could
+   introduce variance where none existed (worked counterexample from the review, confirmed algebraically:
+   posterior weights [0.5,0.5], true indicators [0,0], proxy indicators [0,1] -- plain-MC variance is exactly
+   zero while the corrected estimator's variance is 0.25, a real excluded-harm case). Read honestly (revised):
+   among the ~half of candidates where plain MC already has meaningful variance, g2 as a control variate looks
+   favorable for the great majority of them (median ratio 0.0, 97% of that subset <1) -- promising, but the
+   excluded half needs its own accounting before claiming a population-wide result. Repair round 3 replaces this
+   diagnostic with a full panel (every candidate categorized, none silently dropped) and implements the
+   estimator as an actual candidate policy rather than only measuring it further.
+
+**Additional caveats confirmed by the third-round review, not previously stated:**
+- **MC's accuracy advantage is not blanket shortlist-screening superiority.** At P1 budget 2, guided's pooled
+  precision@10%/20% is 1.00/1.00 versus MC's 0.962/0.967 -- despite MC's higher overall classification accuracy.
+  A policy that's better at the single binary threshold decision can be worse at selecting a small, high-risk
+  shortlist; these are different operational questions, and the shortlist numbers above answer the second one
+  only in a POOLED-across-60-operating-points sense (see below), not yet in the per-operating-point sense a
+  real deployed screener would face.
+- **The shortlist metrics above pool all 4,200 candidates across all 60 operating points together**, which is a
+  different task from screening 70 outages at ONE operating point (a controller can't spend an unused query slot
+  from one op on a different op). A constructed two-group example reproduces this exactly: pooled recall@20% can
+  be 0.0 while the mean PER-OPERATING-POINT recall@20% on the identical scores is 0.5. Repair round 3 adds
+  genuine per-operating-point shortlist metrics; the pooled numbers above are kept but should be read as an
+  "offline pooled-selection task" answer, not the operational snapshot-screening answer.
+- **"MC beats guided" at matched nominal budget doesn't mean matched real cost.** At P1 budget 16, guided uses
+  about 6.72 target queries/candidate while MC's DISTINCT (unique) target queries per candidate is about 9.57 --
+  MC's accuracy advantage is real but partly bought with more actual oracle work than the nominal budget cap
+  suggests, once repeated draws are accounted for honestly (see `mc_unique_queries_total` in the JSON).
 
 **Still not attempted this round** (explicitly scoped as future work, not silently dropped): a genuine
 shortlist-boundary-aware acquisition rule (the brief's fuller specification, not the simpler "closest to tau"

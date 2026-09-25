@@ -69,14 +69,23 @@ now on genuinely trustworthy evidence for the first time). But the number that c
 direction from round 1's story: fixing the readout's remaining non-invariance did NOT shrink DeepSets' gap
 further -- it WIDENED it, from round 1's partially-fixed **-0.011/-0.007** back out to **-0.039/-0.038**, now
 clearly the SECOND-WORST arm (behind only the residual network), not "near-tied with GBM" as round 1 reported.
-GBM is now unambiguously the second-closest arm to g2_fixed in both cells. The most defensible reading: round
-1's apparently dramatic improvement (from -0.113/-0.122 down to -0.011/-0.007) was ITSELF partly an artifact of
-the model still leaking non-invariant, per-outage/per-op-specific risk information through the unpooled readout
-tail -- information a genuinely relabeling-invariant model cannot use, and which may have let the partially-
-fixed model latch onto spurious per-scenario shortcuts on this specific 45-outage training set that do not
-generalise to the 25 held-out test outages. The pattern across BOTH review rounds is consistent: every time this
-model was tested more rigorously, its measured performance either dropped or its apparent advantage was shown to
-be a bug artifact -- there is no round in which the model's TRUE capability was underestimated by the tooling.
+GBM is now unambiguously the second-closest arm to g2_fixed in both cells.
+
+**Correction (2026-09-25, independent third-round review):** an earlier version of this paragraph attributed the
+regression to the partially-fixed model "leaking non-invariant... information" -- language that reads as a claim
+of forbidden or hidden information access, which is not what happened and is withdrawn. The pair-risk features
+(`risk_ab/ac/bc`) are legitimate, deployable inputs, supplied to every other learned arm (ridge, gbm) as well --
+there is nothing privileged or hidden about them. What the partially-fixed model actually did wrong was violate
+its OWN claimed invariance property: it treated an unordered-edge quantity as if it were tied to a fixed,
+arbitrary branch-numbering convention. Whether that ordering-dependence functioned as a genuinely useful (if
+non-transferable) signal specific to this fixed topology's branch numbering, versus a pure architecture/
+normalization/optimization confound from everything that changed between round 1 and round 2, is NOT yet
+established by anything in this document -- three things changed at once (representation, normalization, and a
+full retrain), and the evidence so far cannot attribute the score change to any one of them. See the ablation in
+`results/phase5/STAGE4_MATCHED_RECURRENT.md`'s later section (repair round 3) for a bounded experiment designed
+to separate these. The pattern across all three review rounds remains consistent: every time this model was
+tested more rigorously, its measured performance either dropped or its apparent advantage was shown to be a bug
+artifact -- there is no round in which the model's TRUE capability was underestimated by the tooling.
 
 **Per the pre-registered decision rule** (promote a learned arm only if it beats g2_fixed by a material,
 bootstrap-supported margin in both cells): still no arm is promoted -- g2_fixed remains the lead method, and

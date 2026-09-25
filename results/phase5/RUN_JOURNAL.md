@@ -178,10 +178,15 @@ checkpoint: max spread 1.49e-8 vs. tolerance 1e-6.
 
 **Retrained result: g2_fixed's lead over DeepSets WIDENED, not shrank further** -- from round 1's
 partially-fixed -0.011/-0.007 to **-0.0386/-0.0380**, now clearly the second-WORST arm (behind only the
-residual network), with GBM (-0.0026/-0.0036) the real second-closest arm to g2_fixed. The most defensible
-reading: round 1's apparently dramatic improvement was itself partly an artifact of the model still leaking
-non-invariant, per-scenario information through the unpooled readout tail -- a genuinely invariant model cannot
-exploit that, and its true generalisation performance is worse than the partially-fixed version's looked.
+residual network), with GBM (-0.0026/-0.0036) the real second-closest arm to g2_fixed. **Correction (round 3
+independent review): the phrase "leaking non-invariant information" used here previously overclaimed the
+mechanism and is withdrawn.** The pair-risk features are legitimate, deployable inputs available to every arm;
+the partially-fixed model violated its OWN claimed invariance property, it did not access forbidden or hidden
+information. Whether the resulting ordering-dependence was a genuinely useful (if non-transferable) signal
+specific to this fixed topology's branch numbering, or purely an artifact of everything else that changed
+(normalization, optimization, a full retrain) at the same time, is not established by this comparison alone --
+see repair round 3's ablation (canonical ordered baseline vs. permutation-averaged ordered baseline vs. the
+pooling model) below for a bounded experiment designed to separate these.
 
 **T4.** A residual-model diagnostic protocol, since the arm's failure had never been properly diagnosed:
 `ResidualNet`'s final layer is now zero-initialized with a separate free scalar `lam`
