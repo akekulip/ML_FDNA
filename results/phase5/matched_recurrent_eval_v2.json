@@ -6,7 +6,16 @@
    "ridge": 0.8662703471132348,
    "gbm": 0.8895474553063546,
    "deepsets": 0.8535474005098634,
-   "residual": 0.8380013566058185
+   "residual": 0.8380013566058185,
+   "residual_seed1": 0.8921208824405612,
+   "residual_seed2": 0.8359409772360284,
+   "residual_frozen_shrunk": 0.8922477210429495,
+   "ordered_seed0": 0.8830716242586553,
+   "ordered_seed1": 0.8798644044931423,
+   "ordered_seed2": 0.8758076680557438,
+   "ordered_perm_avg_seed0": 0.8914972032996961,
+   "ordered_perm_avg_seed1": 0.8864017496503825,
+   "ordered_perm_avg_seed2": 0.8869641711299213
   },
   "boot_vs_g2_fixed": {
    "g2_clipped": {
@@ -43,7 +52,78 @@
     "lo95_one_sided": -0.059390926363544094,
     "lo90": -0.059390926363544094,
     "hi90": -0.04895393327015841
+   },
+   "residual_seed1": {
+    "mean": 0.0,
+    "p": 1.0,
+    "lo95_one_sided": 0.0,
+    "lo90": 0.0,
+    "hi90": 0.0
+   },
+   "residual_seed2": {
+    "mean": -0.05617990520453294,
+    "p": 1.0,
+    "lo95_one_sided": -0.061118883096286804,
+    "lo90": -0.061118883096286804,
+    "hi90": -0.051374568937384346
+   },
+   "residual_frozen_shrunk": {
+    "mean": 0.0001268386023880371,
+    "p": 0.33548322583870804,
+    "lo95_one_sided": -0.00039681619939047763,
+    "lo90": -0.00039681619939047763,
+    "hi90": 0.0006240943713331177
+   },
+   "ordered_seed0": {
+    "mean": -0.009049258181906154,
+    "p": 1.0,
+    "lo95_one_sided": -0.01101780344720511,
+    "lo90": -0.01101780344720511,
+    "hi90": -0.0071109608752361235
+   },
+   "ordered_seed1": {
+    "mean": -0.01225647794741905,
+    "p": 1.0,
+    "lo95_one_sided": -0.014523223657419992,
+    "lo90": -0.014523223657419992,
+    "hi90": -0.010115720154430798
+   },
+   "ordered_seed2": {
+    "mean": -0.016313214384817615,
+    "p": 1.0,
+    "lo95_one_sided": -0.01899035210596863,
+    "lo90": -0.01899035210596863,
+    "hi90": -0.01374224227587642
+   },
+   "ordered_perm_avg_seed0": {
+    "mean": -0.0006236791408653075,
+    "p": 0.8519574021298935,
+    "lo95_one_sided": -0.0016100986512441837,
+    "lo90": -0.0016100986512441837,
+    "hi90": 0.00034060954049287357
+   },
+   "ordered_perm_avg_seed1": {
+    "mean": -0.005719132790178745,
+    "p": 1.0,
+    "lo95_one_sided": -0.007499834706161457,
+    "lo90": -0.007499834706161457,
+    "hi90": -0.004022853954354628
+   },
+   "ordered_perm_avg_seed2": {
+    "mean": -0.005156711310639919,
+    "p": 1.0,
+    "lo95_one_sided": -0.006947737942970086,
+    "lo90": -0.006947737942970086,
+    "hi90": -0.003562169537518488
    }
+  },
+  "ablation_summary": {
+   "ordered_mean": 0.8795812322691804,
+   "ordered_std": 0.0029722499682643855,
+   "ordered_perm_avg_mean": 0.8882877080266667,
+   "ordered_perm_avg_std": 0.0022810413427292796,
+   "deepsets": 0.8535474005098634,
+   "scope": "isolates architecture (pooling vs ordered+6-way averaging) holding data/features/split/seeds fixed; does NOT establish whether ordering is a real transferable signal on other topologies or branch renumberings (out of scope, external review section 4, repair round 3)."
   }
  },
  "P2_v2c": {
@@ -53,7 +133,16 @@
    "ridge": 0.9064903311240603,
    "gbm": 0.9185117730594637,
    "deepsets": 0.8840317820816658,
-   "residual": 0.8735524003309508
+   "residual": 0.8735524003309508,
+   "residual_seed1": 0.9220717658589401,
+   "residual_seed2": 0.8657901403925709,
+   "residual_frozen_shrunk": 0.9223664205963221,
+   "ordered_seed0": 0.9145410786426109,
+   "ordered_seed1": 0.9122268158321313,
+   "ordered_seed2": 0.9024089240608729,
+   "ordered_perm_avg_seed0": 0.9220951061260434,
+   "ordered_perm_avg_seed1": 0.9111851110242273,
+   "ordered_perm_avg_seed2": 0.9161496520373529
   },
   "boot_vs_g2_fixed": {
    "g2_clipped": {
@@ -90,7 +179,78 @@
     "lo95_one_sided": -0.05411657879684063,
     "lo90": -0.05411657879684063,
     "hi90": -0.043022807930398345
+   },
+   "residual_seed1": {
+    "mean": 0.0,
+    "p": 1.0,
+    "lo95_one_sided": 0.0,
+    "lo90": 0.0,
+    "hi90": 0.0
+   },
+   "residual_seed2": {
+    "mean": -0.05628162546636935,
+    "p": 1.0,
+    "lo95_one_sided": -0.06114390413703845,
+    "lo90": -0.06114390413703845,
+    "hi90": -0.051469962398191474
+   },
+   "residual_frozen_shrunk": {
+    "mean": 0.00029465473738193675,
+    "p": 0.047647617619119044,
+    "lo95_one_sided": 4.2553747639520565e-06,
+    "lo90": 4.2553747639520565e-06,
+    "hi90": 0.0006004499473634291
+   },
+   "ordered_seed0": {
+    "mean": -0.007530687216329322,
+    "p": 1.0,
+    "lo95_one_sided": -0.009148372567103198,
+    "lo90": -0.009148372567103198,
+    "hi90": -0.005988059301330345
+   },
+   "ordered_seed1": {
+    "mean": -0.009844950026808854,
+    "p": 1.0,
+    "lo95_one_sided": -0.01182924191796294,
+    "lo90": -0.01182924191796294,
+    "hi90": -0.007908219564674985
+   },
+   "ordered_seed2": {
+    "mean": -0.019662841798067314,
+    "p": 1.0,
+    "lo95_one_sided": -0.022785192718957733,
+    "lo90": -0.022785192718957733,
+    "hi90": -0.016651006379748208
+   },
+   "ordered_perm_avg_seed0": {
+    "mean": 2.3340267103218646e-05,
+    "p": 0.48842557872106396,
+    "lo95_one_sided": -0.0010541893465428431,
+    "lo90": -0.0010541893465428431,
+    "hi90": 0.0010807367730786854
+   },
+   "ordered_perm_avg_seed1": {
+    "mean": -0.010886654834712961,
+    "p": 1.0,
+    "lo95_one_sided": -0.013427026223160119,
+    "lo90": -0.013427026223160119,
+    "hi90": -0.008448301916122522
+   },
+   "ordered_perm_avg_seed2": {
+    "mean": -0.005922113821587205,
+    "p": 1.0,
+    "lo95_one_sided": -0.008235828369273517,
+    "lo90": -0.008235828369273517,
+    "hi90": -0.003917931223970309
    }
+  },
+  "ablation_summary": {
+   "ordered_mean": 0.9097256061785384,
+   "ordered_std": 0.005259235115313273,
+   "ordered_perm_avg_mean": 0.9164766230625411,
+   "ordered_perm_avg_std": 0.004459983618721593,
+   "deepsets": 0.8840317820816658,
+   "scope": "isolates architecture (pooling vs ordered+6-way averaging) holding data/features/split/seeds fixed; does NOT establish whether ordering is a real transferable signal on other topologies or branch renumberings (out of scope, external review section 4, repair round 3)."
   }
  }
 }

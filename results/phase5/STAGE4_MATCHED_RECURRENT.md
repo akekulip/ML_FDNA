@@ -97,21 +97,71 @@ this repair round's evidence for that conclusion is now stronger, not weaker.
   is superseded).
 - 35 training outages (down from 45, to make room for a genuinely disjoint validation split) is a smaller
   charged-label budget than before; a larger budget was not attempted given the time already spent on repairs.
-- **Residual-model diagnostic protocol added (repair round 2, per the review's request):** `ResidualNet`'s final
-  layer is now zero-initialized with a separate free scalar `lam` (`prediction = g2 + lam*r_theta(X)`), so the
-  zero-correction point is a real, reachable step-(-1) state, not an accident of checkpoint selection never
-  being evaluated before the first optimizer step; `g2_fixed`'s row above IS that zero-correction baseline.
-  Checkpoint selection now tracks BOTH value-MSE and posterior-composed R-precision on a small fixed validation
-  subset (ties broken by value-MSE), selecting by R-precision. Three predeclared seeds (0,1,2) all converged to
-  the SAME diagnostic R-precision (0.8691) at different epochs (4, 54, 69) with different final `lam` (0.57,
-  0.44, 0.45) -- a striking, consistent result suggesting the correction's effect on ranking saturates quickly
-  regardless of how long training continues, not seed noise. A tiny-batch overfit check (12 rows, one per
-  distinct outage/op block with the largest single-row residual, chosen for genuine diversity after an earlier
-  version of this same check accidentally selected 12 near-duplicate rows from one block and passed vacuously)
-  confirms the network CAN memorize real signal when given a fair test (final MSE 4.9e-10 vs target variance
-  7.9e-6) -- ruling out an optimization/objective bug as the explanation for the residual arm's poor test
-  performance. Taken together: the residual arm's failure looks like a genuine absence of transferable signal in
-  the residual target at this label budget, not an artifact of how it was trained or selected.
+- **Residual-model diagnostic protocol (repair round 2, corrected round 3).** `ResidualNet`'s final layer is
+  zero-initialized with a separate free scalar `lam` (`prediction = g2 + lam*r_theta(X)`), so the zero-correction
+  point is a real, reachable step-(-1) state; `g2_fixed`'s row above IS that zero-correction baseline. Round 2's
+  checkpoint-selection diagnostic pooled 12 randomly-sampled validation blocks into ONE ranking (P1 only) and
+  reported all 3 seeds converging to the SAME 0.8691 -- an independent third review found this diagnostic too
+  coarse (only 2 distinct achievable values across 17 checked epochs) and mismatched with final eval's own
+  per-op-then-average protocol; "3 seeds converging" was 3 seeds landing on the better of 2 possible outcomes,
+  not a striking result. **Fixed:** the diagnostic now uses the FULL VAL_OUTAGES x VAL_OPS cross-product (80
+  pairs, not a 12-pair sample), ranked per-op then averaged, for BOTH cells. Corrected per-seed diagnostic
+  scores are genuinely distinct: seed 0 = 0.8267, seed 1 = 0.8262, seed 2 = 0.8276 -- and **seed 1's selected
+  checkpoint is epoch -1, the untrained zero-correction state itself**: training never found an epoch that beat
+  the zero-correction baseline on validation for that seed, so the (corrected) selector correctly kept the
+  starting point. On TEST, `residual_seed1`'s R-precision is therefore numerically IDENTICAL to `g2_fixed`
+  (0.8921/0.9221) -- not a coincidence or a bug, a direct consequence of that seed's own selection.
+  `residual`/`residual_seed2` (seeds 0/2, which DID find a nonzero correction) both score clearly BELOW
+  `g2_fixed` on test (P1: 0.838/0.836; P2: 0.874/0.866), 90% CIs entirely negative. Also added:
+  `residual_frozen_shrunk` (freeze the trained correction, sweep a prespecified `[0, 0.25, 0.5, 0.75, 1.0]`
+  shrinkage grid on validation via the SAME per-op/dual-cell diagnostic, since `lam` trained jointly with the
+  final layer is not independently identifiable as a validated shrinkage factor -- the layer's own weights can
+  absorb any rescaling). Selected shrink = 0.25. On test: statistically indistinguishable from `g2_fixed` at P1
+  (mean diff +0.00013, CI includes zero, p=0.34) and a tiny but technically significant improvement at P2
+  (+0.00029, CI excludes zero, p=0.048) -- practically negligible either way, well below any reasonable
+  promotion bar, but a properly-separated estimate rather than reading a jointly-trained scalar as evidence. A
+  tiny-batch overfit check (12 rows, one per distinct outage/op block with the largest single-row residual,
+  chosen for genuine diversity after an earlier version of this same check accidentally selected 12 near-
+  duplicate rows from one block and passed vacuously) confirms the network CAN memorize real signal when given a
+  fair test (final MSE 4.9e-10 vs target variance 7.9e-6) -- ruling out an optimization/objective bug. Taken
+  together: the residual arm's failure looks like a genuine absence of transferable signal in the residual
+  target at this label budget, now on considerably more rigorous diagnostic footing than round 2's coarse,
+  P1-only, pooled version.
+
+## Repair round 3: the DeepSets ablation -- isolating architecture from the other confounds
+The review pointed out that round 2's readout fix changed representation, normalization, AND optimization
+simultaneously, so the score change (gap widened, see above) couldn't be attributed to any one of them --
+and that the earlier "leaking information" framing overclaimed the mechanism (the pair-risk features are
+legitimate inputs available to every arm; the old model violated its own claimed invariance property, it did
+not access forbidden information). To separate architecture from the rest: `OrderedMLP` (a plain MLP directly on
+the same 15-column raw row, deliberately NOT invariant -- matched rough parameter count, 9,409 vs. DeepSets'
+9,089) and `PermAveragedModel` (wraps ANY trained model, averaging its output over all 6 relabelings --
+EXACTLY invariant by construction, 6 forward passes charged, regardless of whether the base model itself is
+invariant), both trained/evaluated across the same 3 predeclared seeds as everything else this round.
+
+| arm | P1 mean (std across seeds) | P1 vs g2_fixed | P2 mean (std) | P2 vs g2_fixed |
+|---|---|---|---|---|
+| **g2_fixed** | **0.8921** | -- | **0.9221** | -- |
+| gbm | 0.8895 | -0.0026 | 0.9185 | -0.0036 |
+| **ordered (raw, NOT invariant)** | **0.8796 (0.0030)** | -0.009 to -0.016, all sig. | **0.9097 (0.0053)** | -0.008 to -0.020, all sig. |
+| **ordered, permutation-averaged (invariant)** | **0.8883 (0.0023)** | -0.001 to -0.006 (1/3 seeds n.s.) | **0.9165 (0.0045)** | 0.0000 to -0.011 (1/3 seeds n.s.) |
+| **deepsets (pooling architecture, invariant)** | **0.8535** | **-0.039, sig.** | **0.8840** | **-0.038, sig.** |
+| residual (best of 2 nonzero-correction seeds) | 0.8380 | -0.054, sig. | 0.8736 | -0.049, sig. |
+
+**A clear, substantive finding.** The RAW ordered model -- not even invariant, no architectural constraint at
+all -- already beats DeepSets by a wide margin (0.880 vs 0.854 at P1, 0.910 vs 0.884 at P2). Forcing invariance
+onto it via POST-HOC PERMUTATION AVERAGING (not architectural pooling) closes MOST of the remaining gap to
+g2_fixed, and for one of the three seeds in EACH cell, the permutation-averaged model is statistically
+INDISTINGUISHABLE from g2_fixed (90% CI includes zero: P1 seed 0, p=0.85; P2 seed 0, p=0.49) -- something no
+version of DeepSets has come close to in any round. This points specifically at the POOLING ARCHITECTURE, not
+the invariance requirement itself, as the more likely explanation for DeepSets' underperformance: a model can be
+made genuinely, exactly invariant (permutation-averaging is invariant by construction, unconditionally) and
+still perform much closer to g2_fixed than the pooling-based approach does. This does not prove pooling is
+inherently worse in general, and it does not establish whether the ordered model's own (non-invariant)
+performance reflects a real, transferable use of branch-position information or an artifact specific to this
+one fixed topology's branch numbering (out of scope, unchanged) -- but within this experiment, holding data,
+features, split, and seeds fixed, pooling is the more likely culprit, not the earlier round's vaguer "leaking
+information" story.
 - **Scope caveat (unchanged, still accurate, restated for clarity):** `deepsets` here is a set model (pooled,
   order-independent by design intent), not a recurrent network. No actual RNN/GRU comparator for N-1->N-k
   transfer has been trained or evaluated anywhere in Phase 4/5 -- the earlier Phase 4 GRU/DeepSets screen

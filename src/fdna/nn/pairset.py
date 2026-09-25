@@ -39,6 +39,48 @@ class DeepSetsPairAware(nn.Module):
         return self.readout(torch.cat([e, F.unsqueeze(1), c], 1)).squeeze(-1)
 
 
+class OrderedMLP(nn.Module):
+    """Canonical ordered baseline for repair round 3's ablation (external review section 4): a plain MLP
+    directly on the raw 15-column row X = [ya,yb,yc, Iab,Iac,Ibc, F, risk_ab,risk_ac,risk_bc, c1..c5], with NO
+    pooling step -- deliberately NOT invariant to relabeling {a,b,c}. Isolates whether the POOLING architecture
+    itself (vs. the invariance property per se) explains DeepSets' worse score after the full invariance fix.
+    Matched rough capacity to DeepSetsPairAware(h=64) (9,089 params): this net has 9,409 (~3.5% more, not a
+    capacity confound in either direction). See tests/test_ordered_and_perm_averaged.py for the required
+    negative control (this model must NOT be invariant on a real checkpoint, or the ablation's premise breaks)."""
+    def __init__(self, d_in: int = 15, h: int = 64):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(d_in, h), nn.ReLU(),
+            nn.Linear(h, h), nn.ReLU(),
+            nn.Linear(h, h), nn.ReLU(),
+            nn.Linear(h, 1),
+        )
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return self.net(X).squeeze(-1)
+
+
+class PermAveragedModel(nn.Module):
+    """Wraps ANY already-trained model taking the 15-column row convention, making it EXACTLY invariant to all
+    6 vertex relabelings by construction, at prediction time only -- averaging the whole raw-input-to-prediction
+    function over the permutation group (external review section 4: "Averaging the whole raw-input-to-
+    prediction function over the permutation group is invariant by construction, even when its base model is
+    not; charge its six forward passes."). Not itself trained -- `base` is frozen/eval'd by the caller.
+
+    Safe to apply directly to already-scaled rows: `pairset_features.apply_scaler` uses ONE shared (mean,std)
+    across risk columns 7/8/9 (`fit_shared_risk_scaler`), so permuting a scaled row is equivalent to permuting
+    then scaling. This wrapper must NOT be used on raw features with a per-slot scaler -- there is no such
+    scaler in this repo, but the invariant is stated explicitly since it's the exact bug class this codebase has
+    hit twice before (repair rounds 1 and 2)."""
+    def __init__(self, base: nn.Module, column_perms: list):
+        super().__init__()
+        self.base = base
+        self.column_perms = column_perms
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return torch.stack([self.base(X[:, perm]) for perm in self.column_perms], dim=0).mean(0)
+
+
 class ResidualNet(nn.Module):
     """Retains the exact g2 term separately (added by the caller); learns ONLY the correction.
     prediction = g2 + lam * r_theta(X). The final layer is zero-initialized AND `lam` is a separate free
