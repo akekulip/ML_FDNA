@@ -112,10 +112,18 @@ statistic) on the per-op (g2 − g1) difference.
 
 All values are the mean of a per-operating-point statistic over the 20 ops (not a pooled ranking).
 **Paired cluster bootstrap on (g2 − g1), 20,000 resamples over operating points:**
-R-precision improvement: **+0.188 (P1), 90% CI [0.172, 0.204], p ≈ 5×10⁻⁵**; **+0.205 (P2), 90% CI [0.188,
-0.222], p ≈ 5×10⁻⁵**. MAE improvement: **+0.0068 (P1), 90% CI [0.0064, 0.0072]**; **+0.0074 (P2), 90% CI
-[0.0069, 0.0078]**. Both endpoints, both cells: the improvement is large relative to its own sampling
-uncertainty, at the exploratory-screen level (still the same reused manifest, not an independent fresh block).
+R-precision improvement: **+0.188 (P1), 90% CI [0.172, 0.204]**; **+0.205 (P2), 90% CI [0.188, 0.222]**. MAE
+improvement: **+0.0068 (P1), 90% CI [0.0064, 0.0072]**; **+0.0074 (P2), 90% CI [0.0069, 0.0078]**. The reported
+p (≈5×10⁻⁵) is exactly the bootstrap's floor, 1/20,001 — verified: none of the 20,000 resamples fell at or
+below zero, so this is "p below the floor this procedure can resolve," not a precisely measured tail
+probability; it should not be quoted as a specific number. The effect sizes and intervals above, and the
+following independently-verified consistency check, are the load-bearing evidence: **g2 beats both the
+naive-sum and prior-only comparators on R-precision at every one of the 20 operating points, in both cells** —
+the gain is not driven by one exceptional operating point.
+
+**This still strengthens the existing exploratory screen; it is not independent confirmation.** The intervals
+quantify variation across operating points conditional on the reused 60-triple manifest, not sampling from a
+fresh one.
 
 **Corrected reading of the gap-closure numbers.** Under MSE (where the mean-composed reference is genuinely
 optimal): g2 closes ~93% of the naive-to-oracle gap in both cells. Under MAE against the metric-correct median
@@ -123,20 +131,33 @@ reference: ~70-74%. The **prior-only baseline is nearly as bad as g1** on MAE/MS
 R-precision (0.717/0.716 vs g1's 0.686/0.697) — averaging over the prior alone recovers some ranking value even
 with zero observation, but g2-with-observation still adds a further ~0.16-0.19 R-precision on top.
 
-**Linear-composition baseline, corrected.** `scripts/p4_linear_baseline_v2.py` fixes two issues: (1) the
-original split rows by (op, triple) individually, letting a triple's OTHER operating points leak into training;
-now uses `GroupKFold` grouped by the 60 distinct triples, so an entire triple is held out together. (2) The
-original fit only squared error (OLS) but reported only MAE — "loses to g2 on MAE" does not by itself show
-overfitting when the model was never trained to minimise MAE. Added an L1/MAE-trained `QuantileRegressor`
-alongside OLS. Result: with the matching loss and proper group holdout, **the MAE-trained linear model's fitted
-coefficients are [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] at full control** (0.86-1.0 at no control, one coefficient still
-an outlier) and its held-out MAE (0.00090 full control) essentially TIES g2's fixed-coefficient composition
-(0.00087) — the earlier "overfitting" framing was not well-supported (round 2 correctly caught this: one
-reported OLS coefficient was 0.6432, contradicting the original "every ingredient lands at 0.92-1.02" claim,
-which has been removed). The corrected, more accurate reading: **a linear model trained with the matching loss
-and validated by triple-group essentially recovers g2's exact structural form from data alone** — stronger
-independent validation of the additive/interaction structure than the original, flawed "overfitting" story, not
-weaker.
+**Linear-composition baseline, corrected, now with MSE reported too.** `scripts/p4_linear_baseline_v2.py` fixes
+two issues: (1) the original split rows by (op, triple) individually, letting a triple's OTHER operating points
+leak into training; now uses `GroupKFold` grouped by the 60 distinct triples, so an entire triple is held out
+together. (2) The original fit only squared error (OLS) but reported only MAE. Added an L1/MAE-trained
+`QuantileRegressor` alongside OLS, and now reports held-out MSE for both, not only MAE.
+
+| control state | g2 (fixed) MAE / MSE | OLS (learned, held-out) MAE / MSE | L1 (learned, held-out) MAE / MSE |
+|---|---|---|---|
+| full control | 0.000868 / 2.015e-5 | 0.001834 / 2.305e-5 | 0.000900 / 2.021e-5 |
+| no control | 0.003745 / 1.158e-4 | 0.005731 / **9.503e-5 (−17.9%)** | 0.003786 / **1.054e-4 (−9.0%)** |
+
+The coefficients quoted below are from an **in-sample fit on the full 60-triple dataset** (for interpretability
+only); the MAE/MSE values above are the actual held-out, group-cross-validated performance and are the numbers
+that matter for the comparison. At full control, an in-sample L1 fit gives coefficients of exactly [1.0, 1.0,
+1.0, 1.0, 1.0, 1.0]; at no control the six coefficients are [1.0, 0.999, 1.001, 0.999, 1.0, 0.860] — one clear
+outlier, not "every coefficient near 1" as an earlier draft of this section claimed (a real error, now
+corrected: the earlier OLS coefficient of 0.6432 at no-control directly contradicted that claim).
+
+**The held-out comparison is genuinely metric- and regime-dependent, not a clean win for g2 everywhere.** At
+full control, g2 beats both learned models on both MAE and MSE. **At no control, learned OLS beats g2 on MSE by
+17.9%, and the L1 model beats it by 9.0%** — a real, previously unreported case where a fitted model outperforms
+the fixed-coefficient composition. g2 still wins on MAE in both regimes. The correct interpretation, following
+the review: since the model's inputs already contain the engineered pairwise-interaction terms, this result
+supports the usefulness of that interaction representation on this exploratory dataset — it is evidence for the
+FEATURES (singleton + pairwise Möbius terms), not proof that g2's specific fixed-coefficient-of-1 form is
+"independently validated as correct." That earlier phrasing overstated what a single in-sample coefficient fit
+can show, and has been withdrawn.
 
 **Amortisation/cost claim, corrected again.** `scripts/p4_amortization_test.py` had a genuine arithmetic error:
 its `reuse_ratio_claim` field said "8,436 triples constructible from 477 pairs," which is wrong — a triple
