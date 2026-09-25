@@ -112,8 +112,13 @@ requested cheap diagnostic. All five addressed in `scripts/p5_adaptive_query_exp
 1. **Decision-aware stopping.** `resolve()` used to wait until every posterior-support control state was
    individually resolved (`L(c)==U(c)`), strictly stronger than the binary decision needs. Fixed: an early exit
    checks `qL>0.5` or `qU<=tau` after every query and stops the moment the decision is already certified. Effect
-   confirmed in the corrected table above: fewer queries used at the same budget cap (e.g. 6.72 vs 7.56 at
-   budget 16), same accuracy -- the old rule was provably wasting queries without changing outcomes.
+   confirmed in the corrected table above: fewer queries used at the same budget cap (6.72 vs 7.56 at budget
+   16), same accuracy -- the old rule was provably wasting queries without changing outcomes. **Correction (repair
+   round 3): this fix itself had a threshold bug** (compared the probability bound `qU` against `spec.SEVERE`,
+   the load-shed threshold, instead of the probability-decision threshold 0.5) -- overly conservative, never an
+   invalid certificate. Fixed and moved into `fdna.adaptive_query.resolve` with a named
+   `PROB_DECISION_THRESHOLD` constant; queries dropped further, to **4.72** at budget 16 (P1) -- accuracy again
+   unchanged, confirming the query counts, not the decisions, were what the bug affected.
 2. **Unique-query / cache accounting.** MC's `mc_queries_total` (draws charged) is now reported alongside
    `mc_unique_queries_total` (distinct control indices among those draws, which a real cache could serve
    without a fresh solve). At budget 16, P1: 67,200 draws charged, only 40,187 unique (60%) -- a real cache
@@ -145,25 +150,68 @@ requested cheap diagnostic. All five addressed in `scripts/p5_adaptive_query_exp
    estimator as an actual candidate policy rather than only measuring it further.
 
 **Additional caveats confirmed by the third-round review, not previously stated:**
-- **MC's accuracy advantage is not blanket shortlist-screening superiority.** At P1 budget 2, guided's pooled
-  precision@10%/20% is 1.00/1.00 versus MC's 0.962/0.967 -- despite MC's higher overall classification accuracy.
-  A policy that's better at the single binary threshold decision can be worse at selecting a small, high-risk
-  shortlist; these are different operational questions, and the shortlist numbers above answer the second one
-  only in a POOLED-across-60-operating-points sense (see below), not yet in the per-operating-point sense a
-  real deployed screener would face.
-- **The shortlist metrics above pool all 4,200 candidates across all 60 operating points together**, which is a
-  different task from screening 70 outages at ONE operating point (a controller can't spend an unused query slot
-  from one op on a different op). A constructed two-group example reproduces this exactly: pooled recall@20% can
-  be 0.0 while the mean PER-OPERATING-POINT recall@20% on the identical scores is 0.5. Repair round 3 adds
-  genuine per-operating-point shortlist metrics; the pooled numbers above are kept but should be read as an
-  "offline pooled-selection task" answer, not the operational snapshot-screening answer.
-- **"MC beats guided" at matched nominal budget doesn't mean matched real cost.** At P1 budget 16, guided uses
-  about 6.72 target queries/candidate while MC's DISTINCT (unique) target queries per candidate is about 9.57 --
-  MC's accuracy advantage is real but partly bought with more actual oracle work than the nominal budget cap
-  suggests, once repeated draws are accounted for honestly (see `mc_unique_queries_total` in the JSON).
+- **MC's accuracy advantage is not blanket shortlist-screening superiority -- and pooling versus per-op framing
+  changes the picture materially.** Pooled across all 4,200 candidates, guided's precision@10%/20% is 1.00/1.00
+  versus MC's 0.962/0.967 at P1 budget 2, despite MC's higher overall classification accuracy. Recomputed the
+  operational way (per-operating-point, then averaged -- see below), the direction reverses at the fine-grained
+  end: at recall@10%/20%, GUIDED is modestly but statistically significantly BETTER than MC at several
+  budget/cell combinations (e.g. P1 budget 2: mc-guided mean -0.013/-0.012, 90% CI entirely negative both
+  percentiles; P2 shows the same sign at nearly every budget, small magnitude, CI excluding zero at most of
+  them). MC's clear, consistent advantage shows up specifically at the coarser recall@40% threshold (mc-guided
+  CI excludes zero, positive, at every single budget in both cells) and at raw classification accuracy. Read
+  honestly: this is NOT "MC dominates shortlist screening" -- it is "different policies are better at different
+  points on the recall curve," a genuinely more interesting and more cautionary finding than either the original
+  pooled comparison or a first-pass per-op summary suggested.
+- **The pooled shortlist metrics answer a different question from per-operating-point screening.** A
+  constructed two-group example reproduces the artifact exactly: pooled recall@20% can be 0.0 while the mean
+  PER-OPERATING-POINT recall@20% on the identical scores is 0.5. Repair round 3 adds genuine per-operating-point
+  shortlist metrics (`shortlist_metrics_per_op` in the JSON, with a paired-per-op bootstrap CI on every
+  policy-vs-policy comparison); the pooled numbers are kept (`shortlist_metrics_pooled`) but should be read as
+  an "offline pooled-selection task" answer, not the operational snapshot-screening answer.
+- **"MC beats guided" at matched nominal budget doesn't mean matched real cost.** At P1 budget 16 (post-threshold-
+  fix), guided uses about 4.72 target queries/candidate while MC's DISTINCT (unique) target queries per candidate
+  is about 9.57 -- MC's accuracy advantage is real but bought with roughly double the actual oracle work the
+  nominal budget cap suggests, once repeated draws are accounted for honestly (`mc_unique_queries_total`).
 
-**Still not attempted this round** (explicitly scoped as future work, not silently dropped): a genuine
-shortlist-boundary-aware acquisition rule (the brief's fuller specification, not the simpler "closest to tau"
-heuristic implemented here); a global budget allocation shared across the whole shortlist rather than an
-independent per-candidate cap; and actually implementing the control-variate estimator as a policy (only
-diagnosed above).
+## Repair round 3: the control-variate estimator implemented as an actual policy, exploratory
+Per the review's own recommendation ("implement and test the actual control-variate estimator... measure
+whether it improves shortlist quality at matched total cost"), not just diagnose it further. New script
+`scripts/p5_adaptive_query_experiment_v3.py` (v2 kept unmodified on disk). Scope, stated explicitly: EXPLORATORY
+only, reusing the already-open 600-659 block and the existing 70-triple manifest -- no new reserve, no fresh LP
+solves; confirmatory work on genuinely unused operating points is future work.
+
+**The full variance panel (correcting the diagnostic itself first).** Every one of the 4,200 candidates now gets
+a category, none silently dropped: P1 -- 1,881 zero-variance ties, 27 zero-variance-but-harmed-by-proxy, 2,292
+nondegenerate; P2 -- 2,111/36/2,053. The stabler pooled statistic across ALL candidates,
+`ratio_of_summed_variances_all_candidates`, is **0.106 (P1) / 0.098 (P2)** -- genuinely favorable (well below 1)
+even accounting for every zero-variance case the old diagnostic silently excluded, not just the nondegenerate
+subset. This is a materially stronger and more complete confirmation than the withdrawn "97% of candidates"
+figure.
+
+**The estimator, for fixed beta in {0, 0.5, 1.0} (0=plain MC, 1=the full correction), reusing the IDENTICAL MC
+draws at zero additional oracle cost** (P1 cell, accuracy):
+
+| budget | guided | mc (=cv, beta=0) | cv, beta=0.5 | cv, beta=1.0 | g2_zero_query | exact_posterior_ceiling |
+|---|---|---|---|---|---|---|
+| 2 | 0.872 | 0.932 | 0.943 | **0.953** | 0.947 | 0.956 |
+| 8 | 0.917 | 0.946 | 0.952 | **0.955** | 0.947 | 0.956 |
+| 16 | 0.929 | 0.951 | 0.955 | **0.956** | 0.947 | 0.956 |
+
+(P2 follows the same pattern, full numbers in the JSON.) **At beta=1.0, the estimator closes almost the entire
+remaining gap to the theoretical exact-posterior ceiling using only the SAME K=budget oracle queries plain MC
+already spends** -- at budget 16, cv(beta=1.0)=0.9564 versus the ceiling's 0.9562 (a labeled oracle quantity,
+never a deployable policy). The improvement over plain MC (`cv_b1.0_minus_mc`) is statistically significant
+(p<0.01) at 11 of the 12 budget/cell combinations tested; the one exception is P1 at budget 12 (p=0.068,
+still the right sign, mean +0.0045) -- a real, overwhelmingly significant, practically meaningful effect, not a
+diagnostic percentage. The shortlist
+metrics move the same direction: cv(beta=1.0)'s per-op recall@40% (0.869 at P1 budget 16) beats both guided
+(0.847) and plain mc (0.868). One caveat worth stating plainly: `exact_posterior_ceiling`'s decision rule
+(`E_p[h_true]>0.5`) is Bayes-optimal in EXPECTATION over the posterior, not a strict per-candidate accuracy
+ceiling against the one frozen realized true state each candidate uses here -- so a lower-variance finite-sample
+estimator can occasionally edge past it on this particular frozen sample without that meaning it beat the truth.
+
+**Verdict: the control variate looks like a genuine, low-cost improvement over plain posterior MC, worth a
+confirmatory run.** Still not attempted (explicitly future work): validation-selected/adaptive beta (needs a
+separated pilot-sample protocol per the review's own caution); a genuine shortlist-boundary-aware acquisition
+rule; a global budget allocation shared across the whole shortlist rather than an independent per-candidate cap;
+and a confirmatory run on genuinely unused operating points/outages.

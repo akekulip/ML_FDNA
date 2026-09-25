@@ -22,8 +22,13 @@ into or confused with the target-query counts.
 
 Repair round 2 (independent second review) adds four things the registry itself declared but v1 never
 implemented, plus one requested cheap diagnostic:
-5. Decision-aware stopping in `resolve()` (a binary decision certified by qL>0.5 or qU<=tau no longer keeps
-   querying past that point -- see the function's own docstring).
+5. Decision-aware stopping in `resolve()` (a binary decision certified by qL>0.5 or qU<=0.5 no longer keeps
+   querying past that point -- see the function's own docstring, now in fdna.adaptive_query). Repair round 3
+   (independent third review) found round 2's own fix compared qU against `spec.SEVERE` (0.01, the load-shed
+   threshold) instead of the probability-decision threshold (0.5) -- overly conservative (wasted queries) but
+   never an invalid certificate, since 0.01<0.5 made the old condition MORE restrictive, not less. Fixed and
+   moved into `fdna.adaptive_query.resolve` alongside a named `PROB_DECISION_THRESHOLD` constant so the two
+   thresholds can't be conflated again.
 6. Unique-query / cache accounting for the MC policy: `mc_queries_total` (draws charged, unchanged) vs
    `mc_unique_queries_total` (distinct control indices among those draws -- a cache could serve the rest).
 7. Shortlist recall/precision at 10/20/40% (the registry's own declared metric, absent from v1's output): for
@@ -41,7 +46,7 @@ import json
 import numpy as np
 
 from fdna import spec, v2, v2data
-from fdna.adaptive_query import bounds, posterior_mass_bounds, predict_from_bounds
+from fdna.adaptive_query import bounds, posterior_mass_bounds, predict_from_bounds, resolve
 from fdna.evalutil import recall_at, precision_at, scenario_uniform
 from fdna.physical_correction import island_floor
 from fdna.dataset import G, RATING
@@ -72,42 +77,6 @@ def g2_full_grid(op_id, outage):
     pairs = [(min(a, b), max(a, b)), (min(a, c), max(a, c)), (min(b, c), max(b, c))]
     Iv = [y2[(op_id, p)] - y1[(op_id, p[0])] - y1[(op_id, p[1])] for p in pairs]
     return ya + yb + yc + sum(Iv)
-
-
-def resolve(policy, y_true_grid, floor, g2grid, pc_support, budget, guided_rng):
-    """Adaptively query up to `budget` controls. Returns (n_queries_used, qL, qU) ONLY -- L/U at the true index
-    are never exposed to the caller's prediction logic.
-
-    Repair round 2 (external review): stopping used to wait until every posterior-support control state was
-    individually resolved (L==U), which is strictly STRONGER than what the binary decision needs. The binary
-    prediction (`predict_from_bounds`) only needs qL>0.5 or qU<=tau to be ALREADY true to be certified --
-    querying further cannot change that decision. Decision-aware early exit added below (checked BEFORE the
-    full-resolution check, so it fires first whenever it applies)."""
-    pn = pc_support / pc_support.sum() if pc_support.sum() > 0 else pc_support
-    queried_idx, queried_val = [], []
-    extremes = [int(np.argmax(CV.sum(1))), int(np.argmin(CV.sum(1)))]
-    for e in extremes:
-        queried_idx.append(e); queried_val.append(y_true_grid[e])
-    L, U = bounds(CV, np.array(queried_idx), np.array(queried_val), floor)
-    while len(queried_idx) < budget:
-        qL, qU = posterior_mass_bounds(pn, L, U, spec.SEVERE)
-        if qL > 0.5 or qU <= spec.SEVERE:
-            break  # decision already certified -- further queries cannot change the binary prediction
-        support = np.flatnonzero(pc_support)
-        unresolved_support = support[(L[support] <= spec.SEVERE) & (U[support] > spec.SEVERE)]
-        if len(unresolved_support) == 0:
-            break
-        unqueried_unresolved = np.array([i for i in unresolved_support if i not in queried_idx])
-        if len(unqueried_unresolved) == 0:
-            break
-        if policy == "g2_guided_bounds":
-            nxt = unqueried_unresolved[np.argmin(np.abs(g2grid[unqueried_unresolved] - spec.SEVERE))]
-        else:
-            nxt = unqueried_unresolved[guided_rng.integers(len(unqueried_unresolved))]
-        queried_idx.append(int(nxt)); queried_val.append(y_true_grid[nxt])
-        L, U = bounds(CV, np.array(queried_idx), np.array(queried_val), floor)
-    qL, qU = posterior_mass_bounds(pn, L, U, spec.SEVERE)
-    return len(queried_idx), qL, qU
 
 
 CELLS = {"P1_v2b": (0.7, 0.3, None), "P2_v2c": (0.3, 0.2, v2.COVERAGE_SPARSE)}
@@ -160,19 +129,30 @@ for cell, (q, s, cov) in CELLS.items():
         per_op_correct = {op: {"guided": [], "random": [], "mc": []} for op in OP_IDS[:N_OPS_USED]}
         shortlist = {"guided": {"score": [], "label": [], "key": []}, "random": {"score": [], "label": [], "key": []},
                      "mc": {"score": [], "label": [], "key": []}}
+        # repair round 3: PER-OPERATING-POINT shortlist accumulator, alongside (not replacing) the pooled one --
+        # a controller screening one op's 70 outages can't spend an unused query slot on a different op, so the
+        # pooled-across-all-60-ops metric above answers a different question (confirmed: a constructed example
+        # gives pooled recall=0.0 vs mean per-op recall=0.5 on identical scores -- a real pooling artifact, not
+        # a hypothetical one).
+        shortlist_by_op = {p: {op: {"score": [], "label": [], "key": []} for op in OP_IDS[:N_OPS_USED]}
+                            for p in ("guided", "random", "mc")}
         for op_id in OP_IDS[:N_OPS_USED]:
             rows_this_op = [(i, outages_sorted[i], V_sorted[i].astype(np.float64), island_floor(G, demands[op_id], outages_sorted[i]))
                              for i in range(len(op_ids_sorted)) if int(op_ids_sorted[i]) == op_id]
             pc = frozen_pc[op_id]; true_c_idx = frozen_true_c_idx[op_id]
-            guided_rng = np.random.default_rng([op_id, budget, 7])
 
             for row_idx, outage, y_true_grid, floor in rows_this_op:
                 g2grid = g2_full_grid(op_id, outage)
                 true_label = y_true_grid[true_c_idx] > spec.SEVERE   # hidden truth, used ONLY to SCORE below
                 cand_key = float(scenario_uniform(np.array([op_id]), np.array([outage[0]]), np.array([outage[1]]), np.array([outage[2]]), salt=17)[0])
+                # repair round 3: seeded per (op_id, outage, budget), not shared across the outage loop -- a
+                # shared, sequentially-advancing RNG here meant changing how many draws one candidate's
+                # random_bounds() call consumed (e.g. from the stopping-threshold fix) would shift every
+                # SUBSEQUENT candidate's random draws too, even though nothing about them changed.
+                guided_rng = np.random.default_rng([op_id, *outage, budget, 7])
 
-                nq_g, qLg, qUg = resolve("g2_guided_bounds", y_true_grid, floor, g2grid, pc, budget, guided_rng)
-                nq_r, qLr, qUr = resolve("random_bounds", y_true_grid, floor, g2grid, pc, budget, guided_rng)
+                nq_g, qLg, qUg = resolve("g2_guided_bounds", y_true_grid, floor, g2grid, pc, budget, guided_rng, CV, spec.SEVERE)
+                nq_r, qLr, qUr = resolve("random_bounds", y_true_grid, floor, g2grid, pc, budget, guided_rng, CV, spec.SEVERE)
                 tot_q_guided += nq_g; tot_q_random += nq_r
 
                 # FIX 1: prediction from (qL,qU) ONLY, via the shared fdna.adaptive_query.predict_from_bounds --
@@ -182,8 +162,13 @@ for cell, (q, s, cov) in CELLS.items():
                 ok_g, ok_r = bool(pred_g) == bool(true_label), bool(pred_r) == bool(true_label)
                 correct_guided += int(ok_g); correct_random += int(ok_r)
                 per_op_correct[op_id]["guided"].append(ok_g); per_op_correct[op_id]["random"].append(ok_r)
-                shortlist["guided"]["score"].append((qLg + qUg) / 2); shortlist["guided"]["label"].append(float(true_label)); shortlist["guided"]["key"].append(cand_key)
-                shortlist["random"]["score"].append((qLr + qUr) / 2); shortlist["random"]["label"].append(float(true_label)); shortlist["random"]["key"].append(cand_key)
+                score_g, score_r = (qLg + qUg) / 2, (qLr + qUr) / 2
+                shortlist["guided"]["score"].append(score_g); shortlist["guided"]["label"].append(float(true_label)); shortlist["guided"]["key"].append(cand_key)
+                shortlist["random"]["score"].append(score_r); shortlist["random"]["label"].append(float(true_label)); shortlist["random"]["key"].append(cand_key)
+                for p, sc in (("guided", score_g), ("random", score_r)):
+                    shortlist_by_op[p][op_id]["score"].append(sc)
+                    shortlist_by_op[p][op_id]["label"].append(float(true_label))
+                    shortlist_by_op[p][op_id]["key"].append(cand_key)
 
                 # FIX 2: draw K=budget control indices DIRECTLY from the exact posterior pc -- true posterior MC.
                 mc_rng = np.random.default_rng([op_id, *outage, budget, 99])
@@ -196,18 +181,54 @@ for cell, (q, s, cov) in CELLS.items():
                 correct_mc += int(ok_mc)
                 per_op_correct[op_id]["mc"].append(ok_mc)
                 shortlist["mc"]["score"].append(float(mc_score)); shortlist["mc"]["label"].append(float(true_label)); shortlist["mc"]["key"].append(cand_key)
+                shortlist_by_op["mc"][op_id]["score"].append(float(mc_score))
+                shortlist_by_op["mc"][op_id]["label"].append(float(true_label))
+                shortlist_by_op["mc"][op_id]["key"].append(cand_key)
                 n_total += 1
 
-        # T5.3: shortlist recall/precision at the registry's declared 10/20/40% budgets, per policy, pooled
-        # across all candidates in this cell/budget -- one reasonable operationalization of the registry's
-        # field (rank by each policy's own continuous severity score), not claimed to be the only one.
-        shortlist_metrics = {}
+        # T5.3: shortlist recall/precision at the registry's declared 10/20/40% budgets. TWO versions:
+        # (a) "pooled" -- all candidates in this cell/budget ranked together, an offline pooled-selection task,
+        # NOT the operational per-op snapshot question (kept for comparability, relabeled per the round-3 review).
+        # (b) "per_op" -- ranked WITHIN each operating point's own 70 candidates, then averaged across ops --
+        # the actual operational answer (a controller can't spend one op's unused slot on another op).
+        shortlist_metrics_pooled = {}
         for policy, d in shortlist.items():
             yt, yp, key = np.array(d["label"]), np.array(d["score"]), np.array(d["key"])
-            shortlist_metrics[policy] = {
+            shortlist_metrics_pooled[policy] = {
                 f"{pct}pct": {"recall": recall_at(yt, yp, key, frac, thr=0.5), "precision": precision_at(yt, yp, key, frac, thr=0.5)}
                 for pct, frac in ((10, 0.10), (20, 0.20), (40, 0.40))
             }
+
+        per_op_shortlist = {p: {f"{pct}pct": {"recall": {}, "precision": {}} for pct in (10, 20, 40)} for p in ("guided", "random", "mc")}
+        for p in ("guided", "random", "mc"):
+            for op in OP_IDS[:N_OPS_USED]:
+                d = shortlist_by_op[p][op]
+                yt, yp, key = np.array(d["label"]), np.array(d["score"]), np.array(d["key"])
+                for pct, frac in ((10, 0.10), (20, 0.20), (40, 0.40)):
+                    per_op_shortlist[p][f"{pct}pct"]["recall"][op] = recall_at(yt, yp, key, frac, thr=0.5)
+                    per_op_shortlist[p][f"{pct}pct"]["precision"][op] = precision_at(yt, yp, key, frac, thr=0.5)
+
+        shortlist_metrics_per_op = {
+            p: {f"{pct}pct": {
+                    "recall_mean_across_ops": float(np.nanmean(list(per_op_shortlist[p][f"{pct}pct"]["recall"].values()))),
+                    "precision_mean_across_ops": float(np.mean(list(per_op_shortlist[p][f"{pct}pct"]["precision"].values()))),
+                } for pct in (10, 20, 40)}
+            for p in ("guided", "random", "mc")
+        }
+        # paired-per-op bootstrap CIs (mc vs guided/random) on shortlist recall/precision -- recall_at can be
+        # NaN for an op with zero severe candidates (a property of the true labels, so it's NaN identically for
+        # every policy at that op); those ops are excluded from the recall CI pairwise, never silently kept as NaN.
+        shortlist_boot_ci = {}
+        for pct in (10, 20, 40):
+            k = f"{pct}pct"
+            mc_recall = np.array([per_op_shortlist["mc"][k]["recall"][op] for op in OP_IDS[:N_OPS_USED]])
+            valid = ~np.isnan(mc_recall)
+            for other in ("guided", "random"):
+                other_recall = np.array([per_op_shortlist[other][k]["recall"][op] for op in OP_IDS[:N_OPS_USED]])
+                shortlist_boot_ci[f"recall_{k}_mc_minus_{other}"] = boot((mc_recall - other_recall)[valid])
+                mc_prec = np.array([per_op_shortlist["mc"][k]["precision"][op] for op in OP_IDS[:N_OPS_USED]])
+                other_prec = np.array([per_op_shortlist[other][k]["precision"][op] for op in OP_IDS[:N_OPS_USED]])
+                shortlist_boot_ci[f"precision_{k}_mc_minus_{other}"] = boot(mc_prec - other_prec)
 
         # T5.8: paired-per-op bootstrap CI on (mc_acc - guided_acc) and (mc_acc - random_acc)
         per_op_mean = {op: {a: float(np.mean(per_op_correct[op][a])) for a in ("guided", "random", "mc")} for op in OP_IDS[:N_OPS_USED]}
@@ -221,10 +242,13 @@ for cell, (q, s, cov) in CELLS.items():
             "mc_queries_total": tot_q_mc, "mc_unique_queries_total": tot_q_mc_unique,
             "guided_queries_per_candidate": tot_q_guided / n_total, "random_queries_per_candidate": tot_q_random / n_total,
             "guided_acc": correct_guided / n_total, "random_acc": correct_random / n_total, "mc_acc": correct_mc / n_total,
-            "shortlist_metrics": shortlist_metrics,
+            "shortlist_metrics_pooled": shortlist_metrics_pooled,
+            "shortlist_metrics_per_op": shortlist_metrics_per_op,
+            "shortlist_boot_ci_per_op": shortlist_boot_ci,
             "boot_ci_per_op": boot_ci,
         }
-        print(cell, budget, {k: v for k, v in results[cell][budget].items() if k not in ("shortlist_metrics",)}, flush=True)
+        print(cell, budget, {k: v for k, v in results[cell][budget].items()
+                              if k not in ("shortlist_metrics_pooled", "shortlist_metrics_per_op")}, flush=True)
     results.setdefault(cell, {})["control_variate_diagnostic"] = control_variate_diagnostic
 
 results["n_ops_used"] = N_OPS_USED

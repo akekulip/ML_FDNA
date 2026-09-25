@@ -3,9 +3,10 @@ critical bugs it found in the adaptive-query experiment (findings 4 and 5)."""
 import inspect
 
 import numpy as np
+from pytest import approx
 
 from fdna import spec, v2, v2data
-from fdna.adaptive_query import predict_from_bounds
+from fdna.adaptive_query import PROB_DECISION_THRESHOLD, predict_from_bounds, resolve
 
 
 def test_prediction_function_has_no_parameter_that_could_carry_the_hidden_control_state():
@@ -52,3 +53,74 @@ def test_mc_samples_from_the_actual_posterior_not_the_prior():
     draws = rng.choice(len(w.CV), size=2000, replace=True, p=pc / pc.sum())
     empirical_p_none = float((draws == np.flatnonzero(none)[0]).mean()) if none.sum() == 1 else float(np.isin(draws, np.flatnonzero(none)).mean())
     assert abs(empirical_p_none - posterior_p_none) < 0.05   # the corrected sampling matches the true posterior, not the prior
+
+
+# ---- repair round 3: resolve()'s stopping-threshold bug (external review finding 2) ----
+# resolve() used to compare qU against spec.SEVERE (0.01, the LOAD-SHED threshold) instead of
+# PROB_DECISION_THRESHOLD (0.5, the PROBABILITY-decision threshold predict_from_bounds actually uses -- these
+# tests use the review's own 4-state witness (CV=[[0,0],[0,1],[1,0],[1,1]], y=[.02,.02,0,0]) plus two more
+# constructed to hit the positive-certificate and exact-tie branches, hand-verified against `bounds`/
+# `posterior_mass_bounds` before being written here (not just asserted to match the fixed code's own output).
+_CV4 = np.array([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+_Y4 = np.array([.02, .02, 0., 0.])
+
+
+def test_resolve_certifies_negative_early_review_witness():
+    """The review's own witness: after querying only the 2 extreme controls (budget allows up to 4), qL=0,
+    qU=0.3 -- already <=0.5, so the negative decision is certified. The OLD buggy condition (qU<=spec.SEVERE=
+    0.01) would NOT have stopped here (0.3 is not <=0.01), continuing to use all 4 queries for the same answer."""
+    pc = np.array([0., .2, .1, .7])
+    n, qL, qU = resolve("random_bounds", _Y4, 0., _Y4, pc, 4, np.random.default_rng(7), _CV4, spec.SEVERE)
+    assert n == 2, n
+    assert qL == approx(0.0) and qU == approx(0.3)
+    assert predict_from_bounds(qL, qU) is False
+
+
+def test_resolve_certifies_positive_early():
+    """Constructed so qL alone exceeds 0.5 after just the 2 extreme queries: pc concentrates enough mass on the
+    one control whose lower bound is already above tau. Positive certification stops just as early as negative."""
+    pc = np.array([.6, .1, .1, .2])
+    n, qL, qU = resolve("random_bounds", _Y4, 0., _Y4, pc, 4, np.random.default_rng(3), _CV4, spec.SEVERE)
+    assert n == 2, n
+    assert qL == approx(0.6)
+    assert predict_from_bounds(qL, qU) is True
+
+
+def test_resolve_exact_tie_at_probability_threshold_certifies_negative():
+    """Boundary case: qU lands EXACTLY on PROB_DECISION_THRESHOLD (0.5) after 2 queries. `<=` must fire (a tie
+    is a valid negative certificate: qU can only shrink further, so the eventual (qL+qU)/2 can never exceed 0.5
+    from this point on)."""
+    pc = np.array([0., .5, 0., .5])
+    n, qL, qU = resolve("random_bounds", _Y4, 0., _Y4, pc, 4, np.random.default_rng(1), _CV4, spec.SEVERE)
+    assert n == 2, n
+    assert qU == approx(PROB_DECISION_THRESHOLD)
+    assert predict_from_bounds(qL, qU) is False
+
+
+def test_resolve_per_candidate_rng_is_independent_of_other_candidates_consumption():
+    """Repair round 3: the script used to share ONE rng object across all 70 outages for a given (op,budget),
+    sequentially advanced -- so a candidate's random_bounds() draws depended on how many draws EVERY PRIOR
+    candidate happened to consume (which itself depends on how early each one's stopping rule fired). Fixed by
+    seeding a fresh rng per (op_id, outage, budget) inside the per-candidate loop, not shared across outages.
+
+    Demonstrated concretely on a 6-state grid (more than the 2 extreme controls, so `random_bounds` genuinely
+    has more than one candidate index to choose among, and that choice depends on the rng's exact state): the
+    SAME seed produces a DIFFERENT result depending on whether the rng was pre-advanced by an unrelated prior
+    call (simulating the old shared-rng bug) versus fresh (the fixed, per-candidate pattern) -- confirmed
+    numerically before writing this assertion, not assumed."""
+    cv6 = np.array([[0.], [0.2], [0.4], [0.6], [0.8], [1.0]])
+    y6 = np.array([.02, .015, .012, .008, .005, 0.])
+    pc = np.array([.05, .15, .2, .2, .2, .2])
+
+    pre_advanced = np.random.default_rng(99)
+    pre_advanced.integers(0, 100, size=5)   # stands in for an unrelated earlier candidate's draws
+    result_pre_advanced = resolve("random_bounds", y6, 0., y6, pc, 4, pre_advanced, cv6, spec.SEVERE)
+
+    fresh = np.random.default_rng(99)       # same seed, never touched by anything else -- the fixed pattern
+    result_fresh = resolve("random_bounds", y6, 0., y6, pc, 4, fresh, cv6, spec.SEVERE)
+
+    assert result_pre_advanced != result_fresh, (
+        "expected the pre-advanced and fresh rng to diverge on this scenario -- if they now agree, the "
+        "scenario itself may have stopped being RNG-sensitive and needs reconstructing, not the assertion "
+        "loosened"
+    )
