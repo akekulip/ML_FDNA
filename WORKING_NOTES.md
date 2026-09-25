@@ -56,10 +56,49 @@ fixed immediately and verified (full suite 84->85 passed, script output byte-ide
 Stage R5 (capacity_floor) and R6 (this journal update) are also done -- see results/phase5/RUN_JOURNAL.md for
 the full consolidated account. The whole repair round (R0-R6) is complete.
 
+## Phase 5 repair round 2 (2026-09-25): independent SECOND review of the repair round, in progress
+The Stage R0-R6 repair round above (commit 842e6a9) was pushed, then independently reviewed a SECOND time
+(`ML_FDNA_842e6a9_Repair_Review.md`, committed in the repo root). Verdict: the repairs were real, but one fix
+(DeepSets permutation invariance) was still incomplete, plus several completeness/test-quality/documentation
+gaps. Every claim independently reproduced against the live repo before any fix was written (same discipline as
+round 1). Fixed in two commits (4a2c630 doc-only; 87b4943 code + retrain):
+- **T1 (doc fixes):** RUN_JOURNAL/CLAIM_LEDGER's "three disjoint train/val/test groups on both axes" corrected
+  (TEST intentionally reuses all 60 ops); capacity-floor's "~1.5%" MAE improvement corrected to 0.551% (the
+  actual capacity-vs-island comparison; 1.543% was capacity-vs-plain, a different comparison); missed-severe
+  "38/38/38 both control states" corrected to 47/47/47 full-control, 38/38/38 no-control.
+- **T2:** two vacuous regression guards (a literal self-comparison, and a tautological check given its own
+  definition) in the matched-recurrent script replaced with genuine independent reconstructions from canonical
+  (no-split-prefix) keys.
+- **T3 (the substantive one):** DeepSets' readout was STILL concatenating raw, unpermuted risk features after
+  pooling -- the dedicated test used equal risk values and couldn't detect it. Fixed (risk folded into its own
+  edge token; one shared scaler across all 3 risk slots, new `src/fdna/nn/pairset_features.py`), retrained,
+  verified genuinely invariant end-to-end on the actual checkpoint. **Result: g2_fixed's lead over DeepSets
+  WIDENED (round 1's -0.011/-0.007 -> -0.0386/-0.0380) -- round 1's improvement was itself partly an artifact of
+  the remaining non-invariance; GBM is now the real second-closest arm.**
+- **T4:** residual-model diagnostic protocol added (zero-init + free lambda scalar, dual value-MSE/R-precision
+  checkpoint selection, 3 predeclared seeds, a tiny-batch overfit check -- caught and fixed two of my OWN bugs
+  in this new check's row-selection logic before trusting it). Confirms no optimization bug; residual arm's
+  failure looks like genuinely no transferable signal at this label budget.
+- **T5:** adaptive-query benchmark completeness -- decision-aware stopping (genuinely saves queries), unique-
+  query/cache accounting, the registry's declared shortlist recall/precision (previously absent), a paired-per-op
+  bootstrap CI (MC significantly beats guided at every budget, p<0.05; MC vs random significant at low-mid
+  budgets only), and a cached-data-only control-variate diagnostic (favorable for 97% of candidates, promising
+  future work, not yet a policy).
+Full suite: 86 passed both commits. See `results/phase5/{STAGE3_ADAPTIVE_QUERY,STAGE4_MATCHED_RECURRENT}.md` and
+`results/phase4/CLAIM_LEDGER.md` rows 11-13 for full detail.
+**T6 (independent re-verification) is DONE and PASSED.** A qa-verifier subagent that authored none of these
+fixes independently verified all 6 items: it reran the FULL training script itself (not cached), reran the eval
+and adaptive-query scripts (byte-identical output), wrote its own witness scripts (unequal risks, nonzero
+control vector, run against the actual retrained checkpoint) to re-derive the DeepSets invariance claim rather
+than trusting the pytest suite alone, hand-recomputed the control-variate diagnostic on 3 real candidates, and
+independently recomputed the capacity-floor percentages and one bootstrap CI from raw JSON. Verdict: PASS on all
+6, no regressions (86/86 both before and after its reruns), no blockers. Repair round 2 (T1-T6) is complete.
+
 ## Open / next (needs Philip)
-1. Push the local commits? (asked before every push) -- none of the Stage R0-R5 repair commits have been pushed.
-2. Stage R4's independent verification report, once it arrives: resolve anything it flags before treating Phase 5's
-   corrected conclusions as final.
+1. Push the local commits? (asked before every push) -- the Stage R0-R6 round-1 commits were pushed; the
+   repair-round-2 commits (4a2c630, 87b4943) have NOT been pushed yet.
+2. T6's independent verification report, once it arrives: resolve anything it flags before treating this
+   round's corrected conclusions (especially the DeepSets/GBM ranking reversal) as final.
 3. Direction (unchanged, still open): (a) benchmark + protocol paper (workshop/IEEE Access tier); (b) pre-registered scale experiment (large dependency graph, approximate-posterior oracle, headroom gate first);
    (c) N-1->N-2 label-efficiency method; (d) second topology (IEEE-118).
 4. Commits authored by Philip only, no attribution lines.

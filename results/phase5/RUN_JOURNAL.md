@@ -136,3 +136,100 @@ evidentiary status of an existing claim without changing its qualitative directi
 overturns g2's own confirmatory result (row 5c) or the earlier Phase 4 findings not implicated by any of the 10
 findings. Tests: 85 pass. Commits: R0 through this stage, each its own commit, none pushed without explicit
 request.
+
+## Repair round 2 (2026-09-25): an independent SECOND review of the repair round, Stages T1-T6
+Philip supplied `ML_FDNA_842e6a9_Repair_Review.md`, an independent review of the repair round above (commit
+842e6a9, itself already independently qa-verified). Verdict: the repairs were real, but the DeepSets
+permutation-invariance fix was still incomplete, plus several completeness/test-quality/documentation gaps.
+**Every claim was independently reproduced against the live repo before any fix was written** (same discipline
+as round 1) -- committed to `results/phase4/CLAIM_LEDGER.md` rows 11-13 as verified findings before writing a
+repair plan, exactly as round 1's evidence review was.
+
+**T1 (doc-only, commit 4a2c630).** Three prose/arithmetic errors of my own, all confirmed by direct
+recomputation: (1) RUN_JOURNAL/CLAIM_LEDGER claimed "three genuinely disjoint train/val/test groups on both
+axes" -- false, since TEST intentionally reuses all 60 operating points (the known-operating-point axis),
+correctly stated in STAGE4_MATCHED_RECURRENT.md itself but overstated in these summary lines; corrected. (2)
+The capacity-floor MAE improvement was reported as "~1.5%" when comparing capacity-clip to island-clip, but that
+specific comparison is actually 0.551% -- 1.543% is capacity-clip vs. PLAIN uncorrected g2, a different
+comparison the sentence conflated with; corrected, both numbers now reported with their correct comparison
+named explicitly. (3) The missed-severe count was reported as "38/38/38 both control states," but full_control
+is actually 47/47/47 (the table two lines above the wrong sentence in STAGE2.md already had this right);
+corrected.
+
+**T2 (bundled into the code commit, 87b4943).** Two vacuous regression guards in
+`scripts/p5_matched_recurrent_experiment_v2.py`: `assert np.allclose(y-g2, y-g2)` literally compared an array
+to itself; `assert np.allclose(rtr+g2tr, ytr)` was an algebraic tautology given `rtr := ytr-g2tr` two lines
+above -- neither could ever fail regardless of a real misalignment bug. Fixed with a genuine independent
+reconstruction of `y`/`g2` directly from the raw `n1`/`n2`/`n3` tables via the canonical key alone (sampled and
+checked on 300 rows per split), and canonical `(op_id, outage, cv_idx)` keys (no more split-name prefix, which
+had made the overlap check's intersection empty by construction regardless of real overlap).
+
+**T3 (the substantive fix).** The DeepSets readout concatenated raw, per-edge risk features AFTER pooling, in
+a fixed slot order -- a genuine unordered-edge quantity handled asymmetrically, one layer downstream of the bug
+round 1 already fixed. The dedicated test used EQUAL risk values (1.0,1.0,1.0) and only permuted columns 0-5,
+so it was structurally blind to this defect -- permuting three identical numbers changes nothing. Fixed: risk
+now travels inside its own edge token as a 4th component (`edge_enc` 3->4, `readout` tail reduced to just
+`[F,c1..c5]`); preprocessing now fits ONE shared scaler across all 3 risk slots
+(`src/fdna/nn/pairset_features.py`, a new module extracting the previously-duplicated, previously-untestable
+feature-building logic out of the two top-level scripts). Verified genuinely invariant end-to-end (unequal
+risks, full raw-features->scaler->model pipeline, all 6 relabelings generated programmatically via
+`column_perm_for_vertex_perm`, tolerance calibrated against measured fp32/fp64 rounding) on the actual retrained
+checkpoint: max spread 1.49e-8 vs. tolerance 1e-6.
+
+**Retrained result: g2_fixed's lead over DeepSets WIDENED, not shrank further** -- from round 1's
+partially-fixed -0.011/-0.007 to **-0.0386/-0.0380**, now clearly the second-WORST arm (behind only the
+residual network), with GBM (-0.0026/-0.0036) the real second-closest arm to g2_fixed. The most defensible
+reading: round 1's apparently dramatic improvement was itself partly an artifact of the model still leaking
+non-invariant, per-scenario information through the unpooled readout tail -- a genuinely invariant model cannot
+exploit that, and its true generalisation performance is worse than the partially-fixed version's looked.
+
+**T4.** A residual-model diagnostic protocol, since the arm's failure had never been properly diagnosed:
+`ResidualNet`'s final layer is now zero-initialized with a separate free scalar `lam`
+(`prediction = g2 + lam*r_theta(X)`), making the zero-correction point a real, reachable step-(-1) state rather
+than an accident of checkpoint selection never being evaluated before the first optimizer step (`g2_fixed`'s own
+row in the arm table IS that baseline). Checkpoint selection now tracks both value-MSE and posterior-composed
+R-precision (extracted to `fdna.evalutil.evaluate_rprec_for_preds`/`sample_posterior_and_truth` for reuse),
+selecting by R-precision. Three predeclared seeds (0,1,2) all converge to the identical 0.8691 diagnostic
+R-precision at different epochs and different final `lam` -- a striking, consistent result. A tiny-batch
+overfit sanity check (12 rows) confirms the network CAN memorize real signal, ruling out an optimization bug --
+this check itself went through two of my own successive design bugs before it was trustworthy: the first
+version took literal rows 0:12, which happened to come from a triple with EXACTLY zero residual (vacuous pass);
+the fix (top-12 by |residual|) then clustered into near-duplicate rows from one or two blocks sharing a roughly
+constant large residual, giving near-zero variance despite large magnitude (vacuous threshold in the other
+direction); the final version selects one row per DISTINCT outage/op block, guaranteeing genuine diversity.
+Both bugs were caught by inspecting the actual selected values before trusting the check, not assumed correct
+from the code reading like a docstring.
+
+**T5.** The adaptive-query benchmark didn't implement several things its own registry declared: (1)
+decision-aware stopping -- `resolve()` used to keep querying until every posterior-support control state was
+individually resolved, strictly stronger than the binary decision needs (`qL>0.5` or `qU<=tau` alone already
+certifies it); fixed, and measurably reduces queries used at the same accuracy (e.g. 6.72 vs. 7.56
+queries/candidate at budget 16, P1). (2) Unique-query/cache accounting for the MC baseline -- up to ~40% of its
+draws are cache-hittable duplicates at high budgets. (3) Shortlist recall/precision at the registry's declared
+10/20/40% budgets, absent before, now computed via `fdna.evalutil.recall_at`/`precision_at`. (4) A paired-per-op
+bootstrap CI on the headline "MC beats both bound-based policies" claim, which had none before -- MC
+significantly beats guided at EVERY budget in both cells (p<0.05 throughout, mostly p<0.01); MC vs. random is
+significant at low-to-mid budgets only, losing significance at the highest budgets tested. (5) A cheap,
+cached-data-only diagnostic for the review's proposed g2-as-control-variate estimator: favorable for 97% of
+candidates (median variance ratio exactly 0 -- for the typical candidate, g2's threshold call matches the true
+label across the ENTIRE posterior support), a promising direction for future work, not implemented as a policy
+this round.
+
+**T6 -- independent re-verification, mandatory per the same discipline as round 1.** A qa-verifier subagent
+that authored none of the T1-T5 fixes independently verified all 6 items, and went further than round 1's
+verification pass: it reran the FULL training script itself from scratch (not trusting the committed JSON), reran
+the eval and adaptive-query scripts (byte-identical output to the committed artifacts), wrote its OWN witness
+scripts (unequal risk values, nonzero control vector, run against the actual retrained checkpoint) to
+independently re-derive the DeepSets invariance claim rather than only rerunning the shipped pytest suite,
+hand-recomputed the control-variate diagnostic formula on 3 real candidates by hand, and independently
+recomputed the capacity-floor percentages and one bootstrap CI directly from the raw JSON. **Verdict: PASS on
+all 6 items, no regressions (86/86 both before and after its reruns), no blockers.**
+
+**Verdict on this repair round.** Every finding from the second review was real, fixed, and independently
+reverified by an agent that authored none of the fixes -- the same standard as round 1. Unlike round 1, where
+every corrected finding either changed a practical conclusion or downgraded a claim's evidentiary status, THIS
+round's most consequential finding (T3) changed a conclusion that round 1 itself had just revised: DeepSets is
+not "roughly tied with GBM" after all, it is now clearly the second-worst learned arm, and GBM is the real
+runner-up to g2_fixed. The headline across both rounds is unchanged throughout: g2_fixed remains the lead
+method, no learned arm is promoted. Tests: 86 pass. Commits: 4a2c630 (T1), 87b4943 (T2-T5), neither pushed
+without explicit request.
