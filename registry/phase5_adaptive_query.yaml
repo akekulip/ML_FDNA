@@ -1,0 +1,19 @@
+# Phase 5 Stage 3: bounded adaptive-query screening experiment. Committed before scoring (uses only cached
+# label tables, no new LP solves; the "budget" is queries against the ALREADY-COMPUTED n3_confirm.npz table,
+# standing in for LP solves in a fully faithful way since the true values are the same either way).
+hypothesis: >
+  A g2-guided monotone-bound acquisition policy resolves severe/not-severe classification for the confirmatory
+  candidate pool using materially fewer oracle queries than random acquisition or direct posterior Monte Carlo,
+  at matched or better classification quality.
+setting: common-observation snapshot (section 7's second setting) -- one hidden state/observation drawn per
+  operating point, shared across all 70 candidate outages at that operating point; the evaluator uses the
+  shared hidden state to generate realized truth, the policy may not access it.
+tau: 0.01 (spec.SEVERE, unchanged).
+candidate_pool: the 70 confirmatory triples, all 60 fresh operating points (data_hik/manifest_k3_confirm.json).
+policies: {g2_guided_bounds, random_bounds, direct_mc, oracle_full (ceiling, labeled, excluded from practical winner selection)}.
+budget_curve: predeclared, per-candidate query cap in {2, 4, 6, 8, 12, 16}, published in full regardless of outcome.
+metrics: total queries charged (cold-start, includes the y_single/y_pair queries needed to build g2's guidance
+  for the guided policy only -- charged explicitly, not free); classification accuracy/recall/precision against
+  the TRUE severe/not-severe label at the true hidden control; shortlist recall/precision at 10/20/40% budgets.
+promotion_gate: >=25% fewer total charged queries than the best practical baseline (random_bounds or direct_mc)
+  at classification quality within 0.01 of that baseline -- fixed before any result is read.

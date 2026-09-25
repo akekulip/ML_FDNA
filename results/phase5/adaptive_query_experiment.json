@@ -1,0 +1,118 @@
+{
+ "P1_v2b": {
+  "2": {
+   "n_candidates": 1400,
+   "guided_queries_total": 2800,
+   "random_queries_total": 2800,
+   "mc_queries_total": 2800,
+   "guided_queries_per_candidate": 2.0,
+   "random_queries_per_candidate": 2.0,
+   "guided_acc": 0.7307142857142858,
+   "random_acc": 0.7307142857142858,
+   "mc_acc": 0.91
+  },
+  "4": {
+   "n_candidates": 1400,
+   "guided_queries_total": 4010,
+   "random_queries_total": 4010,
+   "mc_queries_total": 5600,
+   "guided_queries_per_candidate": 2.8642857142857143,
+   "random_queries_per_candidate": 2.8642857142857143,
+   "guided_acc": 0.8807142857142857,
+   "random_acc": 0.8678571428571429,
+   "mc_acc": 0.9114285714285715
+  },
+  "8": {
+   "n_candidates": 1400,
+   "guided_queries_total": 6368,
+   "random_queries_total": 6430,
+   "mc_queries_total": 11200,
+   "guided_queries_per_candidate": 4.548571428571429,
+   "random_queries_per_candidate": 4.5928571428571425,
+   "guided_acc": 0.9507142857142857,
+   "random_acc": 0.9692857142857143,
+   "mc_acc": 0.8085714285714286
+  },
+  "16": {
+   "n_candidates": 1400,
+   "guided_queries_total": 10665,
+   "random_queries_total": 11267,
+   "mc_queries_total": 11200,
+   "guided_queries_per_candidate": 7.617857142857143,
+   "random_queries_per_candidate": 8.047857142857143,
+   "guided_acc": 0.9364285714285714,
+   "random_acc": 0.9507142857142857,
+   "mc_acc": 0.89
+  },
+  "32": {
+   "n_candidates": 1400,
+   "guided_queries_total": 18711,
+   "random_queries_total": 20729,
+   "mc_queries_total": 11200,
+   "guided_queries_per_candidate": 13.365,
+   "random_queries_per_candidate": 14.80642857142857,
+   "guided_acc": 0.9571428571428572,
+   "random_acc": 0.9664285714285714,
+   "mc_acc": 0.8371428571428572
+  }
+ },
+ "P2_v2c": {
+  "2": {
+   "n_candidates": 1400,
+   "guided_queries_total": 2800,
+   "random_queries_total": 2800,
+   "mc_queries_total": 2800,
+   "guided_queries_per_candidate": 2.0,
+   "random_queries_per_candidate": 2.0,
+   "guided_acc": 0.8957142857142857,
+   "random_acc": 0.8957142857142857,
+   "mc_acc": 0.8814285714285715
+  },
+  "4": {
+   "n_candidates": 1400,
+   "guided_queries_total": 4010,
+   "random_queries_total": 4010,
+   "mc_queries_total": 5600,
+   "guided_queries_per_candidate": 2.8642857142857143,
+   "random_queries_per_candidate": 2.8642857142857143,
+   "guided_acc": 0.9307142857142857,
+   "random_acc": 0.9314285714285714,
+   "mc_acc": 0.8707142857142857
+  },
+  "8": {
+   "n_candidates": 1400,
+   "guided_queries_total": 6351,
+   "random_queries_total": 6430,
+   "mc_queries_total": 11200,
+   "guided_queries_per_candidate": 4.536428571428571,
+   "random_queries_per_candidate": 4.5928571428571425,
+   "guided_acc": 0.8964285714285715,
+   "random_acc": 0.9192857142857143,
+   "mc_acc": 0.8728571428571429
+  },
+  "16": {
+   "n_candidates": 1400,
+   "guided_queries_total": 10686,
+   "random_queries_total": 11270,
+   "mc_queries_total": 11200,
+   "guided_queries_per_candidate": 7.632857142857143,
+   "random_queries_per_candidate": 8.05,
+   "guided_acc": 0.9142857142857143,
+   "random_acc": 0.9485714285714286,
+   "mc_acc": 0.86
+  },
+  "32": {
+   "n_candidates": 1400,
+   "guided_queries_total": 18199,
+   "random_queries_total": 20068,
+   "mc_queries_total": 11200,
+   "guided_queries_per_candidate": 12.999285714285714,
+   "random_queries_per_candidate": 14.334285714285715,
+   "guided_acc": 0.9807142857142858,
+   "random_acc": 0.99,
+   "mc_acc": 0.7835714285714286
+  }
+ },
+ "n_ops_used": 20,
+ "note": "resolution/stopping is defined over the posterior-supported control set (qL==qU), not the whole 1024-grid; queries_per_candidate < budget indicates genuine early stopping."
+}
